@@ -112,9 +112,11 @@ export default async function ProjectPage({
               <CardDescription>{project._count.participants} people</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button variant="outline" className="w-full" disabled>
-                Coming Soon
-              </Button>
+              <Link href={`/project/${id}/participants`}>
+                <Button variant="outline" className="w-full">
+                  Manage Participants
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 
