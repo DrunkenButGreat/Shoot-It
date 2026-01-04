@@ -100,9 +100,11 @@ export default async function ProjectPage({
               <CardDescription>{project._count.moodboardGroups} groups</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button variant="outline" className="w-full" disabled>
-                Coming Soon
-              </Button>
+              <Link href={`/project/${id}/moodboard`}>
+                <Button variant="outline" className="w-full">
+                  Manage Moodboard
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 
