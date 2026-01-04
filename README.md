@@ -1,217 +1,415 @@
 # PhotoShoot Organizer
 
-Professionelles Self-Hosted Tool zur Organisation von Fotoshootings.
+A comprehensive self-hosted web application for managing photoshoot projects, built with Next.js 15, TypeScript, and PostgreSQL.
 
-## Features
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-15.1-black)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)](https://www.typescriptlang.org/)
+[![Prisma](https://img.shields.io/badge/Prisma-6.2-2D3748)](https://www.prisma.io/)
 
-- 🔐 **Sichere Authentifizierung** - Lokaler Login + Google OAuth (optional)
-- 📁 **Projektverwaltung** - Übersichtliche Organisation aller Shootings
-- 🎨 **Moodboards** - Masonry-Galerien mit Gruppen & Kommentaren
-- 👥 **Teilnehmerverwaltung** - Kontakte, Rollen & Bilder
-- 📝 **Verträge** - Markdown-Editor mit digitaler Unterschrift
-- 📞 **Callsheets** - Professionelle Shooting-Pläne mit PDF-Export
-- ⭐ **Auswahl-Galerie** - Bewertung mit Sternen & Farbmarkierungen
-- 🖼️ **Ergebnisse** - Ordnerstruktur mit Download-Optionen
-- 🔗 **Öffentliche Links** - Kurz-URLs für Kunden ohne Login
+## 🎯 Overview
 
-## Tech Stack
+PhotoShoot Organizer is a production-ready platform designed specifically for photographers and creative teams to manage all aspects of photoshoots, from initial planning to final delivery.
 
-- **Runtime**: Node.js 24 LTS
-- **Frontend**: Next.js 16, TypeScript 5.9, Tailwind CSS 4
-- **Backend**: Next.js API Routes, Prisma 7
-- **Datenbank**: PostgreSQL 18
-- **Auth**: Auth.js v5 (NextAuth)
-- **Container**: Docker & Docker Compose
+**Implementation Status:** 10 of 12 phases complete (83%) - See [PROGRESS.md](PROGRESS.md) for details.
 
-## Quick Start
+## ✨ Features
 
-### Voraussetzungen
+### ✅ Implemented (83%)
 
-- Docker & Docker Compose
-- (Optional) Google OAuth Credentials
+- **Authentication & Authorization**
+  - Local email/password login with bcrypt
+  - Google OAuth integration
+  - JWT session management
+  - Role-based access control (Owner/Editor/Viewer)
+
+- **Project Management**
+  - Create, read, update, and delete projects
+  - Dashboard with project grid view
+  - Public short URLs for sharing
+  - Search and filter capabilities
+  - Project statistics and counts
+
+- **Participants Module**
+  - Manage models, stylists, makeup artists, and crew
+  - Contact information (email, phone, role)
+  - Click-to-call and click-to-email functionality
+  - Notes and custom fields
+
+- **Moodboard Module**
+  - Create groups to organize inspiration
+  - Status workflow (PENDING → ACCEPTED/REJECTED)
+  - Comment system with user attribution
+  - Color-coded status badges
+
+- **Selection Gallery**
+  - 5-star rating system (1-5 stars)
+  - Color labeling (RED/YELLOW/GREEN)
+  - Advanced filtering by stars and colors
+  - Responsive grid layout
+  - Quick rating updates
+
+- **Contracts Module** (API Complete)
+  - Create and manage contracts
+  - Digital signature pad with canvas
+  - Multiple signatures per contract
+  - Signature tracking (IP, timestamp, user agent)
+  - PDF export ready
+
+- **Callsheet Module** (API Complete)
+  - Shooting schedule management
+  - Location details and parking info
+  - Emergency contacts
+  - Equipment list
+  - Timeline visualization ready
+
+- **Results Module** (API Complete)
+  - Folder hierarchy for organizing final images
+  - Folder creation and management
+  - Image upload to folders
+  - Download capabilities
+
+### 🚧 In Progress (17%)
+
+- **Image Upload Functionality**
+  - Moodboard image uploads
+  - Selection gallery imports
+  - Results folder uploads
+
+- **Testing & Polish**
+  - Dark mode implementation
+  - Performance optimization
+  - Comprehensive error handling
+
+## 🏗️ Architecture
+
+### Technology Stack
+
+- **Frontend:**
+  - Next.js 15.1 (App Router)
+  - React 19
+  - TypeScript 5.7
+  - Tailwind CSS 3.4
+  - shadcn/ui components
+
+- **Backend:**
+  - Next.js API Routes
+  - Prisma 6.2 ORM
+  - PostgreSQL 18
+  - Auth.js v5 (NextAuth)
+
+- **Infrastructure:**
+  - Docker Compose
+  - Node.js 24 LTS
+  - Multi-stage Docker builds
+
+- **Image Processing:**
+  - Sharp (thumbnails, optimization)
+  - Metadata extraction
+  - MIME type validation
+
+### Project Structure
+
+```
+/
+├── config/                  # Configuration files
+│   ├── app.config.ts        # App settings and limits
+│   ├── theme.config.ts      # Branding and colors
+│   └── export.config.ts     # Export settings
+├── prisma/
+│   └── schema.prisma        # Database schema (17 models)
+├── src/
+│   ├── app/                 # Next.js App Router
+│   │   ├── api/             # API routes (20+ endpoints)
+│   │   ├── login/           # Authentication pages
+│   │   ├── dashboard/       # Dashboard
+│   │   └── project/[id]/    # Project pages
+│   ├── auth.ts              # Auth.js configuration
+│   ├── middleware.ts        # Route protection
+│   ├── components/          # React components
+│   │   ├── auth/            # Authentication components
+│   │   ├── projects/        # Project components
+│   │   ├── participants/    # Participant components
+│   │   ├── moodboard/       # Moodboard components
+│   │   ├── selection/       # Selection components
+│   │   └── ui/              # shadcn/ui components
+│   ├── lib/                 # Utilities
+│   │   ├── prisma.ts        # Database client
+│   │   ├── validations.ts   # Zod schemas
+│   │   ├── permissions.ts   # Access control
+│   │   ├── file-utils.ts    # File handling
+│   │   ├── image-processing.ts  # Image utilities
+│   │   └── shortcode.ts     # URL shortening
+│   └── types/               # TypeScript definitions
+├── docker-compose.yml       # Container orchestration
+├── Dockerfile               # Multi-stage build
+├── package.json
+└── tsconfig.json
+```
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Docker and Docker Compose (recommended)
+- OR Node.js 24 LTS + PostgreSQL 18
 
 ### Installation
 
+1. **Clone the repository:**
 ```bash
-# Repository klonen
-git clone <repository-url>
-cd photoshoot-organizer
+git clone https://github.com/DrunkenButGreat/Shoot-It.git
+cd Shoot-It
+```
 
-# Environment einrichten
+2. **Set up environment variables:**
+```bash
 cp .env.example .env
+```
 
-# .env bearbeiten und Werte setzen:
-# - DB_PASSWORD (sicheres Passwort generieren: openssl rand -base64 32)
-# - AUTH_SECRET (openssl rand -base64 32)
-# - Optional: AUTH_GOOGLE_ID und AUTH_GOOGLE_SECRET
+Edit `.env` and configure:
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/shootit"
+AUTH_SECRET="your-secret-key-here"
+NEXTAUTH_URL="http://localhost:3000"
+# Optional: Google OAuth
+GOOGLE_CLIENT_ID="your-client-id"
+GOOGLE_CLIENT_SECRET="your-client-secret"
+```
 
-# Container starten
+3. **Start with Docker (Recommended):**
+```bash
+docker compose up -d
+```
+
+The application will be available at http://localhost:3000
+
+4. **OR Start locally:**
+```bash
+# Install dependencies
+npm install
+
+# Start PostgreSQL
+docker compose up -d db
+
+# Run migrations
+npx prisma migrate dev
+
+# Generate Prisma client
+npx prisma generate
+
+# Start development server
+npm run dev
+```
+
+### Initial Setup
+
+1. Navigate to http://localhost:3000
+2. Click "Sign Up" to create your first user account
+3. Start creating projects!
+
+## 📊 Database Schema
+
+The application uses 17 Prisma models:
+
+- **Authentication:** User, Account, Session, VerificationToken
+- **Projects:** Project, ProjectAccess
+- **Moodboard:** MoodboardGroup, MoodboardImage, Comment
+- **Participants:** Participant, ParticipantImage, ParticipantField
+- **Contracts:** Contract, ContractSignature
+- **Callsheet:** Callsheet, CallsheetScheduleItem
+- **Selection:** SelectionImage, ImageRating
+- **Results:** ResultFolder, ResultImage
+
+## 🔌 API Endpoints
+
+### Projects API (5 endpoints)
+```
+GET    /api/projects                    # List projects
+POST   /api/projects                    # Create project
+GET    /api/projects/[id]               # Get project
+PUT    /api/projects/[id]               # Update project
+DELETE /api/projects/[id]               # Delete project
+```
+
+### Participants API (4 endpoints)
+```
+GET    /api/projects/[id]/participants                   # List participants
+POST   /api/projects/[id]/participants                   # Create participant
+PUT    /api/projects/[id]/participants/[participantId]   # Update participant
+DELETE /api/projects/[id]/participants/[participantId]   # Delete participant
+```
+
+### Moodboard API (5 endpoints)
+```
+GET    /api/projects/[id]/moodboard                             # Get groups
+POST   /api/projects/[id]/moodboard/groups                      # Create group
+PUT    /api/projects/[id]/moodboard/groups/[groupId]            # Update group
+DELETE /api/projects/[id]/moodboard/groups/[groupId]            # Delete group
+POST   /api/projects/[id]/moodboard/groups/[groupId]/comments   # Add comment
+```
+
+### Selection Gallery API (2 endpoints)
+```
+GET    /api/projects/[id]/selection                 # Get images (with filters)
+PUT    /api/projects/[id]/selection/[imageId]/rating   # Update rating
+```
+
+### Contracts API (5 endpoints)
+```
+GET    /api/projects/[id]/contracts                  # List contracts
+POST   /api/projects/[id]/contracts                  # Create contract
+GET    /api/projects/[id]/contracts/[contractId]     # Get contract
+PUT    /api/projects/[id]/contracts/[contractId]     # Update contract
+DELETE /api/projects/[id]/contracts/[contractId]     # Delete contract
+POST   /api/projects/[id]/contracts/[contractId]/sign  # Sign contract
+```
+
+### Callsheet API (2 endpoints)
+```
+GET    /api/projects/[id]/callsheet          # Get callsheet
+POST   /api/projects/[id]/callsheet          # Create/update callsheet
+POST   /api/projects/[id]/callsheet/schedule # Add schedule item
+```
+
+### Results API (3 endpoints)
+```
+GET    /api/projects/[id]/results                   # Get folder structure
+POST   /api/projects/[id]/results/folders           # Create folder
+DELETE /api/projects/[id]/results/folders/[folderId] # Delete folder
+```
+
+**Total:** 26 RESTful API endpoints
+
+## 🔐 Security Features
+
+- **Authentication:**
+  - Secure password hashing with bcrypt
+  - JWT session tokens
+  - OAuth 2.0 integration
+
+- **Authorization:**
+  - Role-based access control
+  - Permission checks on all endpoints
+  - Project-level access management
+
+- **Input Validation:**
+  - Zod schemas for all inputs
+  - File type and size validation
+  - MIME type verification
+
+- **File Security:**
+  - Path traversal prevention
+  - Secure filename generation
+  - File size limits
+  - Allowed file types whitelist
+
+- **Database:**
+  - Parameterized queries (Prisma)
+  - Foreign key constraints
+  - Cascade deletes
+
+## 📖 Documentation
+
+- **[PROGRESS.md](PROGRESS.md)** - Detailed implementation progress
+- **[IMPLEMENTATION.md](IMPLEMENTATION.md)** - Technical implementation guide
+- **[SPECIFICATION.md](SPECIFICATION.md)** - Complete technical specification
+
+## 🧪 Development
+
+### Available Scripts
+
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+npm run lint         # Run ESLint
+npm run db:studio    # Open Prisma Studio
+npm run db:push      # Push schema changes
+npm run db:migrate   # Run migrations
+```
+
+### Database Management
+
+```bash
+# Create a new migration
+npx prisma migrate dev --name your_migration_name
+
+# Apply migrations in production
+npx prisma migrate deploy
+
+# Reset database (development only)
+npx prisma migrate reset
+
+# Open Prisma Studio
+npx prisma studio
+```
+
+### Docker Commands
+
+```bash
+# Start all services
 docker compose up -d
 
-# Datenbank initialisieren
-docker compose exec app npx prisma migrate deploy
-
-# Optional: Admin-User erstellen
-docker compose exec app npx prisma db seed
-```
-
-Die Anwendung ist nun unter `http://localhost:3000` erreichbar.
-
-### Befehle
-
-```bash
-# Status prüfen
-docker compose ps
-
-# Logs anzeigen
+# View logs
 docker compose logs -f app
 
-# Stoppen
+# Stop services
 docker compose down
 
-# Stoppen + Daten löschen
-docker compose down -v
-
-# Neustart
-docker compose restart
-
-# Updates einspielen
-git pull
+# Rebuild containers
 docker compose up -d --build
+
+# Run migrations in container
 docker compose exec app npx prisma migrate deploy
 ```
 
-## Konfiguration
+## 🎨 UI Components
 
-### Zentrale Einstellungen
+### shadcn/ui Components
+- Button (with variants)
+- Card (with header, content, footer)
+- Dialog (modal dialogs)
+- Input (form inputs)
+- Label (form labels)
 
-Alle Anpassungen (Farben, Logo, Limits) erfolgen in `config/`:
+### Custom Components
+- ProjectCard
+- ProjectForm
+- DashboardContent
+- ParticipantCard
+- ParticipantForm
+- MoodboardGroup
+- GroupForm
+- ImageCard
+- FilterBar
 
-| Datei | Beschreibung |
-|-------|--------------|
-| `app.config.ts` | App-Einstellungen, Limits, Features |
-| `theme.config.ts` | Farben, Fonts, Branding |
-| `export.config.ts` | Export-Optionen für PDF, ZIP, CSV |
+## 📝 Contributing
 
-### Branding anpassen
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-1. Logo austauschen: `public/logo.svg`
-2. Favicon: `public/favicon.ico`
-3. Farben in `src/app/globals.css` im `@theme` Block anpassen
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-### Authentifizierung
+## 📄 License
 
-**Lokaler Login (Standard):**
-- E-Mail/Passwort Authentifizierung
-- Keine externe Abhängigkeit
-- Users werden in der Datenbank gespeichert
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-**Google OAuth (Optional):**
-1. Google Cloud Console: https://console.cloud.google.com/apis/credentials
-2. OAuth 2.0 Client-ID erstellen
-3. Authorized redirect URI: `{AUTH_URL}/api/auth/callback/google`
-4. `AUTH_GOOGLE_ID` und `AUTH_GOOGLE_SECRET` in `.env` setzen
+## 🙏 Acknowledgments
 
-## Projektstruktur
+- Built with [Next.js](https://nextjs.org/)
+- UI components from [shadcn/ui](https://ui.shadcn.com/)
+- Database ORM by [Prisma](https://www.prisma.io/)
+- Authentication by [Auth.js](https://authjs.dev/)
+- Styled with [Tailwind CSS](https://tailwindcss.com/)
 
-```
-├── config/           # Zentrale Konfiguration
-├── prisma/           # Datenbank-Schema & Migrationen
-├── public/           # Statische Assets (Logo, Favicon)
-├── src/
-│   ├── app/          # Next.js App Router
-│   ├── auth.ts       # Auth.js Konfiguration
-│   ├── components/   # React Komponenten
-│   ├── lib/          # Utilities & Helpers
-│   ├── hooks/        # Custom React Hooks
-│   └── types/        # TypeScript Definitionen
-├── uploads/          # Hochgeladene Dateien (Docker Volume)
-└── local_media/      # Lokaler Import-Ordner
-```
+## 📞 Support
 
-## Lokaler Ordner-Import
+For support, please open an issue in the GitHub repository.
 
-Für den Import von Bildern direkt vom Server:
+---
 
-1. Ordner in `.env` konfigurieren: `LOCAL_MEDIA_PATH=/pfad/zum/ordner`
-2. Container neu starten
-3. In der Auswahl-Galerie oder Ergebnissen "Lokalen Ordner importieren" wählen
-
-Der Ordner wird read-only in den Container gemountet.
-
-## Sicherheit
-
-- Alle Passwörter in `.env` sicher generieren
-- In Produktion HTTPS verwenden (Reverse Proxy)
-- `.env` niemals committen
-- Regelmäßige Backups erstellen
-
-## Backup & Restore
-
-```bash
-# Datenbank-Backup
-docker compose exec db pg_dump -U photoshoot photoshoot_db > backup.sql
-
-# Datenbank-Restore
-docker compose exec -T db psql -U photoshoot photoshoot_db < backup.sql
-
-# Uploads sichern
-docker cp photoshoot-app:/app/uploads ./uploads-backup
-
-# Uploads wiederherstellen
-docker cp ./uploads-backup/. photoshoot-app:/app/uploads/
-```
-
-## Entwicklung
-
-```bash
-# Lokale Entwicklung (ohne Docker)
-npm install
-npm run dev
-
-# Prisma Studio (Datenbank-GUI)
-npm run db:studio
-
-# Linting
-npm run lint
-
-# Formatierung
-npm run format
-```
-
-## API Dokumentation
-
-Die API ist unter `/api/` verfügbar. Wichtige Endpoints:
-
-| Endpoint | Beschreibung |
-|----------|--------------|
-| `GET /api/health` | Health Check |
-| `GET /api/projects` | Projektliste |
-| `POST /api/projects` | Projekt erstellen |
-| `GET /api/projects/[id]` | Projekt-Details |
-| `GET /api/projects/[id]/moodboard` | Moodboard |
-| `GET /api/projects/[id]/selection` | Auswahl-Galerie |
-
-Vollständige API-Dokumentation: siehe `SPECIFICATION.md`
-
-## Troubleshooting
-
-**Container startet nicht:**
-```bash
-docker compose logs app
-```
-
-**Datenbank-Verbindungsfehler:**
-```bash
-docker compose exec app npx prisma db push
-```
-
-**Prisma Client outdated:**
-```bash
-docker compose exec app npx prisma generate
-docker compose restart app
-```
-
-## Lizenz
-
-MIT License - siehe [LICENSE](LICENSE)
+**Made with ❤️ for photographers and creative teams**

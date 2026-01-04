@@ -128,8 +128,11 @@ export default async function ProjectPage({
               <CardDescription>{project._count.contracts} contracts</CardDescription>
             </CardHeader>
             <CardContent>
+              <p className="text-sm text-gray-600 mb-3">
+                Create and manage contracts with digital signatures
+              </p>
               <Button variant="outline" className="w-full" disabled>
-                Coming Soon
+                View Contracts (Coming Soon)
               </Button>
             </CardContent>
           </Card>
@@ -175,6 +178,39 @@ export default async function ProjectPage({
             </div>
           </CardContent>
         </Card>
+
+        {/* Additional Modules */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Callsheet</CardTitle>
+              <CardDescription>Schedule and logistics</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600 mb-3">
+                Manage shooting schedule, locations, and crew details
+              </p>
+              <Button variant="outline" className="w-full" disabled>
+                View Callsheet (Coming Soon)
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Results</CardTitle>
+              <CardDescription>{project._count.resultFolders} folders</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600 mb-3">
+                Organize and deliver final images to clients
+              </p>
+              <Button variant="outline" className="w-full" disabled>
+                View Results (Coming Soon)
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </main>
     </div>
   )
