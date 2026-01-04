@@ -1,6 +1,8 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import UserMenu from "@/components/auth/UserMenu"
+import { DashboardContent } from "@/components/projects/DashboardContent"
+import prisma from "@/lib/prisma"
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -8,6 +10,22 @@ export default async function DashboardPage() {
   if (!session) {
     redirect("/login")
   }
+
+  // Fetch user's projects
+  const projects = await prisma.project.findMany({
+    where: {
+      OR: [
+        { ownerId: session.user.id },
+        {
+          access: {
+            some: { userId: session.user.id },
+          },
+        },
+      ],
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 20,
+  })
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -25,20 +43,7 @@ export default async function DashboardPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6 flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900">My Projects</h2>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-            + New Project
-          </button>
-        </div>
-
-        {/* Projects Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-white rounded-lg border border-gray-200 p-6 text-center">
-            <p className="text-gray-500">No projects yet</p>
-            <p className="text-sm text-gray-400 mt-2">Create your first project to get started</p>
-          </div>
-        </div>
+        <DashboardContent projects={projects} />
       </main>
     </div>
   )
