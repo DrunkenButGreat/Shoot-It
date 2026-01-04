@@ -1,0 +1,383 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== AUTHENTICATION ====================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  password      String?   // Für lokalen Login (bcrypt hash)
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Auth Relations
+  accounts      Account[]
+  sessions      Session[]
+  
+  // App Relations
+  ownedProjects     Project[]        @relation("ProjectOwner")
+  projectAccess     ProjectAccess[]
+  participantLinks  Participant[]    @relation("UserParticipant")
+  comments          Comment[]
+  signatures        ContractSignature[]
+  imageRatings      ImageRating[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ==================== PROJECTS ====================
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  date        DateTime
+  location    String
+  address     String?
+  shortCode   String   @unique  // Für öffentliche Kurz-URLs
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Owner
+  ownerId     String
+  owner       User     @relation("ProjectOwner", fields: [ownerId], references: [id])
+
+  // Relations
+  access          ProjectAccess[]
+  moodboardGroups MoodboardGroup[]
+  participants    Participant[]
+  contracts       Contract[]
+  callsheet       Callsheet?
+  selectionImages SelectionImage[]
+  resultFolders   ResultFolder[]
+
+  @@index([shortCode])
+  @@index([ownerId])
+}
+
+model ProjectAccess {
+  id        String      @id @default(cuid())
+  projectId String
+  userId    String
+  role      ProjectRole @default(VIEWER)
+  createdAt DateTime    @default(now())
+
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+}
+
+enum ProjectRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+// ==================== MOODBOARD ====================
+
+model MoodboardGroup {
+  id          String          @id @default(cuid())
+  name        String
+  description String?         @db.Text
+  order       Int             @default(0)
+  status      MoodboardStatus @default(PENDING)
+  projectId   String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  images      MoodboardImage[]
+  comments    Comment[]
+
+  @@index([projectId])
+}
+
+enum MoodboardStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model MoodboardImage {
+  id        String   @id @default(cuid())
+  filename  String
+  path      String
+  thumbnail String?
+  width     Int?
+  height    Int?
+  size      Int?
+  order     Int      @default(0)
+  groupId   String
+  createdAt DateTime @default(now())
+
+  group     MoodboardGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  groupId   String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  group     MoodboardGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
+}
+
+// ==================== PARTICIPANTS ====================
+
+model Participant {
+  id          String   @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  role        String?  // z.B. "Model", "MUA", "Stylist", "Fotograf"
+  notes       String?  @db.Text
+  projectId   String
+  userId      String?  // Verknüpfung mit User-Account falls vorhanden
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user        User?    @relation("UserParticipant", fields: [userId], references: [id])
+  images      ParticipantImage[]
+  customFields ParticipantField[]
+
+  @@index([projectId])
+  @@index([userId])
+  @@index([email])
+}
+
+model ParticipantImage {
+  id            String   @id @default(cuid())
+  filename      String
+  path          String
+  thumbnail     String?
+  participantId String
+  createdAt     DateTime @default(now())
+
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@index([participantId])
+}
+
+model ParticipantField {
+  id            String @id @default(cuid())
+  key           String
+  value         String
+  participantId String
+
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@unique([participantId, key])
+}
+
+// ==================== CONTRACTS ====================
+
+model Contract {
+  id          String   @id @default(cuid())
+  title       String
+  content     String   @db.Text  // Markdown
+  projectId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  signatures  ContractSignature[]
+
+  @@index([projectId])
+}
+
+model ContractSignature {
+  id          String   @id @default(cuid())
+  contractId  String
+  userId      String?
+  name        String   // Name des Unterzeichners
+  email       String
+  signature   String   @db.Text  // Base64 encoded signature image
+  ipAddress   String?
+  userAgent   String?
+  signedAt    DateTime @default(now())
+
+  contract    Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  user        User?    @relation(fields: [userId], references: [id])
+
+  @@index([contractId])
+}
+
+// ==================== CALLSHEET ====================
+
+model Callsheet {
+  id              String   @id @default(cuid())
+  projectId       String   @unique
+  
+  // Zeitplan
+  callTime        DateTime?
+  startTime       DateTime?
+  endTime         DateTime?
+  wrapTime        DateTime?
+  
+  // Location Details
+  locationName    String?
+  locationAddress String?
+  locationNotes   String?  @db.Text
+  parkingInfo     String?  @db.Text
+  
+  // Kontakte
+  emergencyContact String?
+  emergencyPhone   String?
+  
+  // Zusätzliche Infos
+  weatherInfo     String?
+  dresscode       String?
+  equipmentList   String?  @db.Text
+  additionalNotes String?  @db.Text
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  scheduleItems   CallsheetScheduleItem[]
+}
+
+model CallsheetScheduleItem {
+  id          String    @id @default(cuid())
+  callsheetId String
+  time        DateTime
+  duration    Int?      // Minuten
+  activity    String
+  notes       String?
+  order       Int       @default(0)
+
+  callsheet   Callsheet @relation(fields: [callsheetId], references: [id], onDelete: Cascade)
+
+  @@index([callsheetId])
+}
+
+// ==================== SELECTION GALLERY ====================
+
+model SelectionImage {
+  id          String   @id @default(cuid())
+  filename    String
+  path        String
+  thumbnail   String?
+  width       Int?
+  height      Int?
+  size        Int?
+  projectId   String
+  importedAt  DateTime @default(now())
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  ratings     ImageRating[]
+
+  @@index([projectId])
+  @@index([filename])
+}
+
+model ImageRating {
+  id        String       @id @default(cuid())
+  imageId   String
+  userId    String
+  stars     Int?         @db.SmallInt  // 1-5
+  color     RatingColor?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  image     SelectionImage @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([imageId, userId])
+  @@map("image_rating")
+}
+
+enum RatingColor {
+  RED
+  YELLOW
+  GREEN
+}
+
+// ==================== RESULTS ====================
+
+model ResultFolder {
+  id          String   @id @default(cuid())
+  name        String
+  path        String
+  parentId    String?
+  projectId   String
+  createdAt   DateTime @default(now())
+
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parent      ResultFolder? @relation("FolderHierarchy", fields: [parentId], references: [id])
+  children    ResultFolder[] @relation("FolderHierarchy")
+  images      ResultImage[]
+
+  @@index([projectId])
+  @@index([parentId])
+}
+
+model ResultImage {
+  id          String   @id @default(cuid())
+  filename    String
+  path        String
+  thumbnail   String?
+  width       Int?
+  height      Int?
+  size        Int?
+  folderId    String?
+  createdAt   DateTime @default(now())
+
+  folder      ResultFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+
+  @@index([folderId])
+}

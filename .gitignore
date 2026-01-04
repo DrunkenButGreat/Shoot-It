@@ -1,0 +1,54 @@
+# Dependencies
+node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# Testing
+/coverage
+
+# Next.js
+/.next/
+/out/
+next-env.d.ts
+
+# Production
+/build
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env*.local
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Docker
+docker-compose.override.yml
+
+# Uploads and media
+uploads/
+!uploads/.gitkeep
+local_media/
+!local_media/.gitkeep
+
+# Prisma
+prisma/dev.db
+prisma/dev.db-journal
