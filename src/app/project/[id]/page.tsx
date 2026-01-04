@@ -42,6 +42,7 @@ export default async function ProjectPage({
           participants: true,
           contracts: true,
           selectionImages: true,
+          resultFolders: true,
         },
       },
     },
@@ -128,12 +129,11 @@ export default async function ProjectPage({
               <CardDescription>{project._count.contracts} contracts</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600 mb-3">
-                Create and manage contracts with digital signatures
-              </p>
-              <Button variant="outline" className="w-full" disabled>
-                View Contracts (Coming Soon)
-              </Button>
+              <Link href={`/project/${id}/contracts`}>
+                <Button variant="outline" className="w-full">
+                  Manage Contracts
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 
@@ -187,12 +187,11 @@ export default async function ProjectPage({
               <CardDescription>Schedule and logistics</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600 mb-3">
-                Manage shooting schedule, locations, and crew details
-              </p>
-              <Button variant="outline" className="w-full" disabled>
-                View Callsheet (Coming Soon)
-              </Button>
+              <Link href={`/project/${id}/callsheet`}>
+                <Button variant="outline" className="w-full">
+                  Manage Callsheet
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 
@@ -202,12 +201,11 @@ export default async function ProjectPage({
               <CardDescription>{project._count.resultFolders} folders</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600 mb-3">
-                Organize and deliver final images to clients
-              </p>
-              <Button variant="outline" className="w-full" disabled>
-                View Results (Coming Soon)
-              </Button>
+              <Link href={`/project/${id}/results`}>
+                <Button variant="outline" className="w-full">
+                  Manage Results
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </div>
