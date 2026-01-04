@@ -140,9 +140,11 @@ export default async function ProjectPage({
               <CardDescription>{project._count.selectionImages} images</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button variant="outline" className="w-full" disabled>
-                Coming Soon
-              </Button>
+              <Link href={`/project/${id}/selection`}>
+                <Button variant="outline" className="w-full">
+                  Selection Gallery
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </div>
