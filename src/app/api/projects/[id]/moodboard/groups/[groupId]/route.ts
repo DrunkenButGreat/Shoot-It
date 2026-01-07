@@ -62,6 +62,9 @@ export async function PUT(
   }
 }
 
+import { unlink, rm } from 'fs/promises'
+import path from 'path'
+
 // DELETE /api/projects/[id]/moodboard/groups/[groupId] - Delete a group
 export async function DELETE(
   request: NextRequest,
@@ -79,6 +82,22 @@ export async function DELETE(
     const canEdit = await canEditProject(session.user.id, id)
     if (!canEdit) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    // Get group images to delete them from filesystem
+    const group = await prisma.moodboardGroup.findUnique({
+      where: { id: groupId },
+      include: { images: true }
+    })
+
+    if (group) {
+      // Delete images from filesystem
+      const groupDir = path.join(process.cwd(), 'uploads', 'moodboard', id, groupId)
+      try {
+        await rm(groupDir, { recursive: true, force: true })
+      } catch (err) {
+        console.error('Error deleting group directory:', err)
+      }
     }
 
     await prisma.moodboardGroup.delete({

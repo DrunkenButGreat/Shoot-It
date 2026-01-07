@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import ImageUpload from '../moodboard/ImageUpload';
 
 type Folder = {
   id: string;
@@ -35,7 +36,7 @@ export function FolderTree({
 
   const handleDelete = async () => {
     if (!selectedFolder) return;
-    
+
     setIsDeleting(true);
     try {
       const response = await fetch(`/api/projects/${projectId}/results/folders/${selectedFolder.id}`, {
@@ -57,7 +58,7 @@ export function FolderTree({
   const buildTree = () => {
     const rootFolders = folders.filter(f => !f.parentId);
     const childMap = new Map<string, Folder[]>();
-    
+
     folders.forEach(folder => {
       if (folder.parentId) {
         if (!childMap.has(folder.parentId)) {
@@ -75,16 +76,24 @@ export function FolderTree({
             <span className="font-medium">{folder.name}</span>
             <span className="text-sm text-gray-500">({folder._count.images} images)</span>
           </div>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => {
-              setSelectedFolder(folder);
-              setShowDeleteDialog(true);
-            }}
-          >
-            Delete
-          </Button>
+          <div className="flex gap-2">
+            <ImageUpload
+              uploadUrl={`/api/projects/${projectId}/results/folders/${folder.id}/images`}
+              onSuccess={() => onDelete()}
+              label="Upload"
+              compact
+            />
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                setSelectedFolder(folder);
+                setShowDeleteDialog(true);
+              }}
+            >
+              Delete
+            </Button>
+          </div>
         </div>
         {childMap.has(folder.id) && (
           <div className="mt-1">

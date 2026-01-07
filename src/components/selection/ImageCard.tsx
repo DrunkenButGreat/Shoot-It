@@ -23,9 +23,10 @@ interface ImageCardProps {
   image: SelectionImage
   projectId: string
   onRatingUpdated?: () => void
+  onImageClick?: () => void
 }
 
-export function ImageCard({ image, projectId, onRatingUpdated }: ImageCardProps) {
+export function ImageCard({ image, projectId, onRatingUpdated, onImageClick }: ImageCardProps) {
   const currentRating = image.ratings[0]
   const [stars, setStars] = useState<number>(currentRating?.stars || 0)
   const [color, setColor] = useState<string | null>(currentRating?.color || null)
@@ -82,11 +83,22 @@ export function ImageCard({ image, projectId, onRatingUpdated }: ImageCardProps)
 
   return (
     <Card className={`overflow-hidden ${color ? getColorClass(color) : ""}`}>
-      {/* Image placeholder */}
-      <div className="aspect-square bg-gray-200 relative">
-        <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-xs p-2 text-center break-all">
-          {image.filename}
-        </div>
+      {/* Image */}
+      <div
+        className="aspect-square bg-gray-100 relative overflow-hidden cursor-zoom-in group"
+        onClick={onImageClick}
+      >
+        {image.path ? (
+          <img
+            src={image.path}
+            alt={image.filename}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-xs p-2 text-center break-all">
+            {image.filename}
+          </div>
+        )}
       </div>
 
       {/* Rating controls */}
@@ -101,11 +113,10 @@ export function ImageCard({ image, projectId, onRatingUpdated }: ImageCardProps)
               className="disabled:opacity-50"
             >
               <Star
-                className={`h-5 w-5 ${
-                  rating <= stars
-                    ? "fill-yellow-400 text-yellow-400"
-                    : "text-gray-300"
-                }`}
+                className={`h-5 w-5 ${rating <= stars
+                  ? "fill-yellow-400 text-yellow-400"
+                  : "text-gray-300"
+                  }`}
               />
             </button>
           ))}
@@ -116,29 +127,26 @@ export function ImageCard({ image, projectId, onRatingUpdated }: ImageCardProps)
           <button
             onClick={() => handleColorClick("RED")}
             disabled={isUpdating}
-            className={`w-6 h-6 rounded-full border-2 ${
-              color === "RED"
-                ? "bg-red-500 border-red-700"
-                : "bg-red-200 border-red-300 hover:bg-red-300"
-            } disabled:opacity-50`}
+            className={`w-6 h-6 rounded-full border-2 ${color === "RED"
+              ? "bg-red-500 border-red-700"
+              : "bg-red-200 border-red-300 hover:bg-red-300"
+              } disabled:opacity-50`}
           />
           <button
             onClick={() => handleColorClick("YELLOW")}
             disabled={isUpdating}
-            className={`w-6 h-6 rounded-full border-2 ${
-              color === "YELLOW"
-                ? "bg-yellow-500 border-yellow-700"
-                : "bg-yellow-200 border-yellow-300 hover:bg-yellow-300"
-            } disabled:opacity-50`}
+            className={`w-6 h-6 rounded-full border-2 ${color === "YELLOW"
+              ? "bg-yellow-500 border-yellow-700"
+              : "bg-yellow-200 border-yellow-300 hover:bg-yellow-300"
+              } disabled:opacity-50`}
           />
           <button
             onClick={() => handleColorClick("GREEN")}
             disabled={isUpdating}
-            className={`w-6 h-6 rounded-full border-2 ${
-              color === "GREEN"
-                ? "bg-green-500 border-green-700"
-                : "bg-green-200 border-green-300 hover:bg-green-300"
-            } disabled:opacity-50`}
+            className={`w-6 h-6 rounded-full border-2 ${color === "GREEN"
+              ? "bg-green-500 border-green-700"
+              : "bg-green-200 border-green-300 hover:bg-green-300"
+              } disabled:opacity-50`}
           />
         </div>
       </div>

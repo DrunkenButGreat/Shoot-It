@@ -115,6 +115,9 @@ export async function PUT(
   }
 }
 
+import { rm } from 'fs/promises'
+import path from 'path'
+
 // DELETE /api/projects/[id] - Delete a project
 export async function DELETE(
   request: NextRequest,
@@ -131,7 +134,7 @@ export async function DELETE(
     // Only the owner can delete a project
     const project = await prisma.project.findUnique({
       where: { id },
-      select: { ownerId: true },
+      include: { moodboardGroups: { select: { id: true } } },
     })
 
     if (!project) {
@@ -140,6 +143,23 @@ export async function DELETE(
 
     if (project.ownerId !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    // Clean up filesystem
+    try {
+      // 1. Delete Selection images
+      const selectionDir = path.join(process.cwd(), 'uploads', 'selection', id)
+      await rm(selectionDir, { recursive: true, force: true })
+
+      // 2. Delete Results images
+      const resultsDir = path.join(process.cwd(), 'uploads', 'results', id)
+      await rm(resultsDir, { recursive: true, force: true })
+
+      // 3. Delete Moodboard images
+      const moodboardDir = path.join(process.cwd(), 'uploads', 'moodboard', id)
+      await rm(moodboardDir, { recursive: true, force: true })
+    } catch (err) {
+      console.error('Error cleaning up project files:', err)
     }
 
     await prisma.project.delete({

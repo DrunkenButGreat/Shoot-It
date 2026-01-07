@@ -4,6 +4,9 @@ import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ImageCard } from "./ImageCard"
 import { FilterBar } from "./FilterBar"
+import ImageUpload from "../moodboard/ImageUpload"
+import Lightbox from "yet-another-react-lightbox"
+import "yet-another-react-lightbox/styles.css"
 
 interface Rating {
   id: string
@@ -25,8 +28,8 @@ interface SelectionContentProps {
   userId: string
 }
 
-export function SelectionContent({ projectId, initialImages, userId }: SelectionContentProps) {
-  const [images] = useState(initialImages)
+export function SelectionContent({ projectId, initialImages: images, userId }: SelectionContentProps) {
+  const [index, setIndex] = useState(-1)
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -36,7 +39,7 @@ export function SelectionContent({ projectId, initialImages, userId }: Selection
 
   const handleFilterChange = (filterType: string, value: string | null) => {
     const params = new URLSearchParams(searchParams.toString())
-    
+
     if (value) {
       params.set(filterType, value)
     } else {
@@ -64,16 +67,32 @@ export function SelectionContent({ projectId, initialImages, userId }: Selection
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {images.map((image) => (
+          {images.map((image, i) => (
             <ImageCard
               key={image.id}
               image={image}
               projectId={projectId}
               onRatingUpdated={handleRatingUpdated}
+              onImageClick={() => setIndex(i)}
             />
           ))}
+          <div className="aspect-[4/5]">
+            <ImageUpload
+              uploadUrl={`/api/projects/${projectId}/selection/images`}
+              onSuccess={() => router.refresh()}
+              label="Import Image"
+              className="h-full border-none bg-gray-50/50"
+            />
+          </div>
         </div>
       )}
+
+      <Lightbox
+        index={index}
+        open={index >= 0}
+        close={() => setIndex(-1)}
+        slides={images.map((img) => ({ src: img.path }))}
+      />
     </>
   )
 }

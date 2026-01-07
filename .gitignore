@@ -44,10 +44,10 @@ yarn-error.log*
 docker-compose.override.yml
 
 # Uploads and media
-uploads/
-!uploads/.gitkeep
-local_media/
-!local_media/.gitkeep
+/uploads/
+!/uploads/.gitkeep
+/local_media/
+!/local_media/.gitkeep
 
 # Prisma
 prisma/dev.db

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { FolderForm } from './FolderForm';
 import { FolderTree } from './FolderTree';
@@ -18,22 +19,18 @@ type Folder = {
   };
 };
 
-export function ResultsContent({ 
-  projectId, 
-  initialFolders 
-}: { 
+export function ResultsContent({
+  projectId,
+  initialFolders: folders
+}: {
   projectId: string;
   initialFolders: Folder[];
 }) {
-  const [folders, setFolders] = useState(initialFolders);
   const [isFolderFormOpen, setIsFolderFormOpen] = useState(false);
+  const router = useRouter();
 
-  const refreshFolders = async () => {
-    const response = await fetch(`/api/projects/${projectId}/results`);
-    if (response.ok) {
-      const data = await response.json();
-      setFolders(data.folders);
-    }
+  const refreshFolders = () => {
+    router.refresh();
   };
 
   return (

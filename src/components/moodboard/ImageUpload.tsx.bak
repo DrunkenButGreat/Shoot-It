@@ -1,0 +1,38 @@
+"use client"
+
+import { useState, useRef } from "react"
+import { Button } from "@/components/ui/button"
+import { Upload, Loader2 } from "lucide-react"
+
+interface ImageUploadProps {
+  onUpload: (data: any) => void
+}
+
+export default function ImageUpload({ onUpload }: ImageUploadProps) {
+  const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+    const formData = new FormData()
+    formData.append("file", file)
+
+    try {
+      const response = await fetch(window.location.pathname.replace(/\/page$/, "") + "/images", {
+        // This is a bit hacky, but MoodboardGroup passes projectId and groupId via props.
+        // Actually, let's make the API URL more predictable or pass it as a prop.
+      })
+      // Wait, let's just pass the upload URL as a prop to be cleaner.
+    } catch (error) {
+      console.error("Upload error:", error)
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  // Refined version below
+  return null 
+}

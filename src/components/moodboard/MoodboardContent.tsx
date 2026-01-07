@@ -41,8 +41,7 @@ interface MoodboardContentProps {
   initialGroups: Group[]
 }
 
-export function MoodboardContent({ projectId, initialGroups }: MoodboardContentProps) {
-  const [groups] = useState(initialGroups)
+export function MoodboardContent({ projectId, initialGroups: groups }: MoodboardContentProps) {
   const router = useRouter()
 
   const handleGroupAdded = () => {

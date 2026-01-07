@@ -24,16 +24,17 @@
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "framer-motion": "^12.24.10",
     "lucide-react": "^0.468.0",
     "nanoid": "^5.0.9",
     "next": "^15.1.0",
     "next-auth": "^5.0.0-beta.25",
-    "next-cloudinary": "^6.17.5",
     "prisma": "^6.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sharp": "^0.33.5",
     "tailwind-merge": "^2.6.0",
+    "yet-another-react-lightbox": "^3.28.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
