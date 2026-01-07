@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:18-alpine
+    container_name: photoshoot-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: photoshoot
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: photoshoot_db
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - photoshoot_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U photoshoot -d photoshoot_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: photoshoot-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://photoshoot:${DB_PASSWORD}@db:5432/photoshoot_db
+      AUTH_SECRET: ${AUTH_SECRET}
+      AUTH_URL: ${AUTH_URL:-http://localhost:3000}
+      AUTH_GOOGLE_ID: ${AUTH_GOOGLE_ID}
+      AUTH_GOOGLE_SECRET: ${AUTH_GOOGLE_SECRET}
+      LOCAL_MEDIA_PATH: ${LOCAL_MEDIA_PATH}
+      NODE_ENV: ${NODE_ENV:-production}
+    volumes:
+      - uploads:/app/uploads
+      - ${LOCAL_MEDIA_PATH:-./local_media}:/app/local_media:ro
+    networks:
+      - photoshoot_network
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db_data:
+    name: photoshoot_db_data
+  uploads:
+    name: photoshoot_uploads
+
+networks:
+  photoshoot_network:
+    name: photoshoot_network
+    driver: bridge
