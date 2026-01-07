@@ -7,7 +7,7 @@ import { canEditProject } from '@/lib/permissions'
 // PUT /api/projects/[id]/participants/[participantId] - Update a participant
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; participantId: string } }
+  { params }: { params: Promise<{ id: string; participantId: string }> }
 ) {
   try {
     const session = await auth()
@@ -15,7 +15,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id, participantId } = params
+    const { id, participantId } = await params
 
     // Check if user can edit this project
     const canEdit = await canEditProject(session.user.id, id)
@@ -27,7 +27,7 @@ export async function PUT(
     const validatedData = participantSchema.partial().parse(body)
 
     const participant = await prisma.participant.update({
-      where: { 
+      where: {
         id: participantId,
         projectId: id,
       },
@@ -51,7 +51,7 @@ export async function PUT(
 // DELETE /api/projects/[id]/participants/[participantId] - Delete a participant
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; participantId: string } }
+  { params }: { params: Promise<{ id: string; participantId: string }> }
 ) {
   try {
     const session = await auth()
@@ -59,7 +59,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id, participantId } = params
+    const { id, participantId } = await params
 
     // Check if user can edit this project
     const canEdit = await canEditProject(session.user.id, id)

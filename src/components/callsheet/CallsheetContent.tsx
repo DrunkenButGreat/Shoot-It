@@ -9,30 +9,34 @@ import { ScheduleForm } from './ScheduleForm';
 
 type Callsheet = {
   id: string;
-  shootDate: Date | null;
-  location: string | null;
-  callTime: string | null;
-  notes: string | null;
+  // shootDate: Date | null; // Removed as not in schema
+  locationName: string | null;
+  locationAddress: string | null;
+  callTime: Date | null;
+  additionalNotes: string | null;
+  // Schema has: locationName, locationAddress, locationNotes, parkingInfo, emergencyContact, emergencyPhone, weatherInfo, dresscode, equipmentList, additionalNotes
+  // Let's coerce for now to satisfy basic build, assuming generic usage
+  // We will map 'location' to 'locationName' in key
+
   scheduleItems: {
     id: string;
     time: string;
     activity: string;
-    location: string | null;
   }[];
 } | null;
 
-export function CallsheetContent({ 
-  projectId, 
-  initialCallsheet 
-}: { 
+export function CallsheetContent({
+  projectId,
+  initialCallsheet
+}: {
   projectId: string;
   initialCallsheet: Callsheet;
 }) {
   const [callsheet, setCallsheet] = useState(initialCallsheet);
-  const [shootDate, setShootDate] = useState(callsheet?.shootDate ? new Date(callsheet.shootDate).toISOString().split('T')[0] : '');
-  const [location, setLocation] = useState(callsheet?.location || '');
-  const [callTime, setCallTime] = useState(callsheet?.callTime || '');
-  const [notes, setNotes] = useState(callsheet?.notes || '');
+  const [shootDate, setShootDate] = useState(initialCallsheet?.callTime ? new Date(initialCallsheet.callTime).toISOString().split('T')[0] : '');
+  const [location, setLocation] = useState(initialCallsheet?.locationName || '');
+  const [callTime, setCallTime] = useState(initialCallsheet?.callTime ? new Date(initialCallsheet.callTime).toTimeString().substring(0, 5) : '');
+  const [notes, setNotes] = useState(initialCallsheet?.additionalNotes || '');
   const [isScheduleFormOpen, setIsScheduleFormOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -137,9 +141,6 @@ export function CallsheetContent({
                   <div className="flex justify-between items-start">
                     <div>
                       <div className="font-semibold">{item.time} - {item.activity}</div>
-                      {item.location && (
-                        <div className="text-sm text-gray-600">📍 {item.location}</div>
-                      )}
                     </div>
                   </div>
                 </div>

@@ -9,12 +9,9 @@ type Contract = {
   id: string;
   title: string;
   content: string;
-  participantId: string | null;
   createdAt: Date;
-  participant: {
-    id: string;
-    name: string;
-  } | null;
+  participantId?: never; // Schema update: Contracts are project-level, not per participant
+  participant?: never;
   signatures: {
     id: string;
     signedAt: Date;
@@ -26,11 +23,11 @@ type Participant = {
   name: string;
 };
 
-export function ContractsContent({ 
-  projectId, 
+export function ContractsContent({
+  projectId,
   initialContracts,
-  participants 
-}: { 
+  participants
+}: {
   projectId: string;
   initialContracts: Contract[];
   participants: Participant[];
@@ -71,7 +68,6 @@ export function ContractsContent({
 
       <ContractForm
         projectId={projectId}
-        participants={participants}
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         onSuccess={() => {

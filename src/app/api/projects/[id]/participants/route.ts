@@ -7,7 +7,7 @@ import { canAccessProject, canEditProject } from '@/lib/permissions'
 // GET /api/projects/[id]/participants - List all participants
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth()
@@ -15,7 +15,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = params
+    const { id } = await params
 
     // Check if user has access to this project
     const hasAccess = await canAccessProject(session.user.id, id)
@@ -50,7 +50,7 @@ export async function GET(
 // POST /api/projects/[id]/participants - Create a new participant
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth()
@@ -58,7 +58,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = params
+    const { id } = await params
 
     // Check if user can edit this project
     const canEdit = await canEditProject(session.user.id, id)

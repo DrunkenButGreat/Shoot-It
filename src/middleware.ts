@@ -7,9 +7,9 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth
 
   // Public routes that don't require authentication
-  const publicRoutes = ["/", "/login", "/api/health"]
+  const publicRoutes = ["/", "/login", "/signup", "/api/health", "/api/auth/register"]
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
-  
+
   // Public short URLs (e.g., /p/abc12345)
   const isPublicShortUrl = pathname.startsWith("/p/")
 

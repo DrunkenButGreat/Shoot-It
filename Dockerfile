@@ -51,4 +51,8 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"]
+# Copy prisma schema for migrations
+COPY --from=builder /app/prisma ./prisma
+
+# Run migrations and start
+CMD ["sh", "-c", "npx prisma@^6.2.0 db push && node server.js"]

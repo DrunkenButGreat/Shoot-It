@@ -10,15 +10,15 @@ import { MoodboardContent } from "@/components/moodboard/MoodboardContent"
 export default async function MoodboardPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
   const session = await auth()
-  
-  if (!session) {
+
+  if (!session?.user?.id) {
     redirect("/login")
   }
 
-  const { id } = params
+  const { id } = await params
 
   // Check access
   const hasAccess = await canAccessProject(session.user.id, id)

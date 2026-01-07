@@ -16,12 +16,7 @@ type Contract = {
   id: string;
   title: string;
   content: string;
-  participantId: string | null;
   createdAt: Date;
-  participant: {
-    id: string;
-    name: string;
-  } | null;
   signatures: {
     id: string;
     signedAt: Date;
@@ -68,8 +63,6 @@ export function ContractCard({
             <div>
               <CardTitle>{contract.title}</CardTitle>
               <CardDescription>
-                {contract.participant && `For: ${contract.participant.name}`}
-                {' • '}
                 Created: {new Date(contract.createdAt).toLocaleDateString()}
               </CardDescription>
             </div>

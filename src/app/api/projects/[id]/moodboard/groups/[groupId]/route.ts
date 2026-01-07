@@ -7,7 +7,7 @@ import { canEditProject } from '@/lib/permissions'
 // PUT /api/projects/[id]/moodboard/groups/[groupId] - Update a group
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; groupId: string } }
+  { params }: { params: Promise<{ id: string; groupId: string }> }
 ) {
   try {
     const session = await auth()
@@ -15,7 +15,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id, groupId } = params
+    const { id, groupId } = await params
 
     // Check if user can edit this project
     const canEdit = await canEditProject(session.user.id, id)
@@ -24,7 +24,7 @@ export async function PUT(
     }
 
     const body = await request.json()
-    
+
     // Allow updating name, description, status, and order
     const updateData: any = {}
     if (body.name !== undefined) updateData.name = body.name
@@ -65,7 +65,7 @@ export async function PUT(
 // DELETE /api/projects/[id]/moodboard/groups/[groupId] - Delete a group
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; groupId: string } }
+  { params }: { params: Promise<{ id: string; groupId: string }> }
 ) {
   try {
     const session = await auth()
@@ -73,7 +73,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id, groupId } = params
+    const { id, groupId } = await params
 
     // Check if user can edit this project
     const canEdit = await canEditProject(session.user.id, id)

@@ -7,7 +7,7 @@ import { canAccessProject } from '@/lib/permissions'
 // PUT /api/projects/[id]/selection/[imageId]/rating - Update rating for an image
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; imageId: string } }
+  { params }: { params: Promise<{ id: string; imageId: string }> }
 ) {
   try {
     const session = await auth()
@@ -15,7 +15,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id, imageId } = params
+    const { id, imageId } = await params
 
     // Check if user has access to this project
     const hasAccess = await canAccessProject(session.user.id, id)

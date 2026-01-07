@@ -7,7 +7,7 @@ import { canAccessProject } from '@/lib/permissions'
 // POST /api/projects/[id]/contracts/[contractId]/sign - Sign a contract
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string; contractId: string } }
+  { params }: { params: Promise<{ id: string; contractId: string }> }
 ) {
   try {
     const session = await auth()
@@ -15,7 +15,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id, contractId } = params
+    const { id, contractId } = await params
 
     // Check if user has access to this project
     const hasAccess = await canAccessProject(session.user.id, id)

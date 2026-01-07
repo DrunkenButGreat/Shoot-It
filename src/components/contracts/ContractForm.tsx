@@ -13,27 +13,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-type Participant = {
-  id: string;
-  name: string;
-};
-
 export function ContractForm({
   projectId,
-  participants,
+
   isOpen,
   onClose,
   onSuccess,
 }: {
   projectId: string;
-  participants: Participant[];
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [participantId, setParticipantId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,14 +42,12 @@ export function ContractForm({
         body: JSON.stringify({
           title,
           content,
-          participantId: participantId || null,
         }),
       });
 
       if (response.ok) {
         setTitle('');
         setContent('');
-        setParticipantId('');
         onSuccess();
       }
     } catch (error) {
@@ -87,22 +78,7 @@ export function ContractForm({
                 required
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="participant">Participant (Optional)</Label>
-              <select
-                id="participant"
-                value={participantId}
-                onChange={(e) => setParticipantId(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md"
-              >
-                <option value="">-- Select Participant --</option>
-                {participants.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+
             <div className="grid gap-2">
               <Label htmlFor="content">Contract Content (Markdown)</Label>
               <textarea

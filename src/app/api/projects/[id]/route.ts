@@ -7,7 +7,7 @@ import { canAccessProject, canEditProject } from '@/lib/permissions'
 // GET /api/projects/[id] - Get a single project
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth()
@@ -15,7 +15,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = params
+    const { id } = await params
 
     // Check if user has access to this project
     const hasAccess = await canAccessProject(session.user.id, id)
@@ -71,7 +71,7 @@ export async function GET(
 // PUT /api/projects/[id] - Update a project
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth()
@@ -79,7 +79,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = params
+    const { id } = await params
 
     // Check if user can edit this project
     const canEdit = await canEditProject(session.user.id, id)
@@ -118,7 +118,7 @@ export async function PUT(
 // DELETE /api/projects/[id] - Delete a project
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth()
@@ -126,7 +126,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = params
+    const { id } = await params
 
     // Only the owner can delete a project
     const project = await prisma.project.findUnique({

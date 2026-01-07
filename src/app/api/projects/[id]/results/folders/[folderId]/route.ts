@@ -6,7 +6,7 @@ import { canEditProject } from '@/lib/permissions'
 // DELETE /api/projects/[id]/results/folders/[folderId] - Delete a folder
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; folderId: string } }
+  { params }: { params: Promise<{ id: string; folderId: string }> }
 ) {
   try {
     const session = await auth()
@@ -14,7 +14,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id, folderId } = params
+    const { id, folderId } = await params
 
     // Check if user can edit this project
     const canEdit = await canEditProject(session.user.id, id)

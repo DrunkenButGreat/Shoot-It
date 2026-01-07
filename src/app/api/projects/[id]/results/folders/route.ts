@@ -7,7 +7,7 @@ import { canEditProject } from '@/lib/permissions'
 // POST /api/projects/[id]/results/folders - Create a folder
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth()
@@ -15,7 +15,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = params
+    const { id } = await params
 
     // Check if user can edit this project
     const canEdit = await canEditProject(session.user.id, id)
@@ -26,9 +26,20 @@ export async function POST(
     const body = await request.json()
     const validatedData = resultFolderSchema.parse(body)
 
+    let path = `/${validatedData.name}`
+    if (validatedData.parentId) {
+      const parent = await prisma.resultFolder.findUnique({
+        where: { id: validatedData.parentId },
+      })
+      if (parent) {
+        path = `${parent.path}/${validatedData.name}`
+      }
+    }
+
     const folder = await prisma.resultFolder.create({
       data: {
         ...validatedData,
+        path,
         projectId: id,
       },
       include: {

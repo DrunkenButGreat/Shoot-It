@@ -7,7 +7,7 @@ import { canAccessProject } from '@/lib/permissions'
 // POST /api/projects/[id]/moodboard/groups/[groupId]/comments - Add a comment
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string; groupId: string } }
+  { params }: { params: Promise<{ id: string; groupId: string }> }
 ) {
   try {
     const session = await auth()
@@ -15,7 +15,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id, groupId } = params
+    const { id, groupId } = await params
 
     // Check if user has access to this project
     const hasAccess = await canAccessProject(session.user.id, id)

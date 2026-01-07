@@ -5,27 +5,27 @@ import crypto from 'crypto'
 export function validateUpload(file: File): { valid: boolean; error?: string } {
   // Größenprüfung
   if (file.size > appConfig.limits.maxUploadSize) {
-    return { 
-      valid: false, 
-      error: `File too large (max. ${appConfig.limits.maxUploadSize / 1024 / 1024}MB)` 
+    return {
+      valid: false,
+      error: `File too large (max. ${appConfig.limits.maxUploadSize / 1024 / 1024}MB)`
     }
   }
-  
+
   // Typ-Prüfung
   const ext = path.extname(file.name).toLowerCase().slice(1)
-  if (!appConfig.imageProcessing.supportedFormats.includes(ext)) {
+  if (!appConfig.imageProcessing.supportedFormats.includes(ext as any)) {
     return { valid: false, error: `Format not supported: ${ext}` }
   }
-  
+
   // MIME-Type Prüfung
   const allowedMimes = [
-    'image/jpeg', 'image/png', 'image/webp', 
+    'image/jpeg', 'image/png', 'image/webp',
     'image/gif', 'image/tiff', 'image/heic'
   ]
   if (!allowedMimes.includes(file.type)) {
     return { valid: false, error: 'Invalid file type' }
   }
-  
+
   return { valid: true }
 }
 

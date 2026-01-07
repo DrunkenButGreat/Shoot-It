@@ -1,21 +1,21 @@
 import { Suspense } from 'react';
-import { getServerSession } from 'next-auth';
+import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
-import { authOptions } from '@/auth';
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 import { canAccessProject } from '@/lib/permissions';
 import Link from 'next/link';
 import { ContractsContent } from '@/components/contracts/ContractsContent';
 
-export default async function ContractsPage({ params }: { params: { id: string } }) {
-  const session = await getServerSession(authOptions);
-  
-  if (!session?.user?.email) {
-    redirect('/login');
+export default async function ContractsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    redirect("/login")
   }
 
   const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
+    where: { id: session.user.id },
   });
 
   if (!user) {
@@ -23,7 +23,7 @@ export default async function ContractsPage({ params }: { params: { id: string }
   }
 
   const project = await prisma.project.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
 
   if (!project || !(await canAccessProject(user.id, project.id))) {
@@ -31,14 +31,9 @@ export default async function ContractsPage({ params }: { params: { id: string }
   }
 
   const contracts = await prisma.contract.findMany({
-    where: { projectId: params.id },
+    where: { projectId: id },
     include: {
-      participant: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
+
       signatures: {
         select: {
           id: true,
@@ -50,7 +45,7 @@ export default async function ContractsPage({ params }: { params: { id: string }
   });
 
   const participants = await prisma.participant.findMany({
-    where: { projectId: params.id },
+    where: { projectId: id },
     select: {
       id: true,
       name: true,
@@ -60,7 +55,7 @@ export default async function ContractsPage({ params }: { params: { id: string }
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
-        <Link href={`/project/${params.id}`} className="text-blue-600 hover:underline">
+        <Link href={`/project/${id}`} className="text-blue-600 hover:underline">
           ← Back to Project
         </Link>
       </div>
@@ -68,8 +63,8 @@ export default async function ContractsPage({ params }: { params: { id: string }
       <h1 className="text-3xl font-bold mb-6">Contracts - {project.name}</h1>
 
       <Suspense fallback={<div>Loading...</div>}>
-        <ContractsContent 
-          projectId={params.id} 
+        <ContractsContent
+          projectId={id}
           initialContracts={contracts}
           participants={participants}
         />

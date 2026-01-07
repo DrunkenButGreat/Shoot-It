@@ -57,3 +57,22 @@ export const moodboardGroupSchema = z.object({
 export const commentSchema = z.object({
   content: z.string().min(1).max(5000),
 })
+
+export const scheduleItemSchema = z.object({
+  time: z.string().datetime(),
+  duration: z.number().int().optional(),
+  activity: z.string().min(1).max(200),
+  notes: z.string().max(1000).optional(),
+  order: z.number().int().default(0),
+})
+
+export const resultFolderSchema = z.object({
+  name: z.string().min(1).max(100),
+  parentId: z.string().optional(),
+})
+
+export const registerSchema = z.object({
+  name: z.string().min(2).max(100),
+  email: z.string().email(),
+  password: z.string().min(6),
+})
