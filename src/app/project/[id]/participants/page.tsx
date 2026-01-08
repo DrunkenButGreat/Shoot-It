@@ -33,8 +33,19 @@ export default async function ParticipantsPage({
       select: {
         id: true,
         name: true,
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            role: true,
+            bio: true,
+            image: true,
+          }
+        }
       },
-    }),
+    }) as any,
     prisma.participant.findMany({
       where: { projectId: id },
       include: {
@@ -54,6 +65,32 @@ export default async function ParticipantsPage({
 
   if (!project) {
     redirect("/dashboard")
+  }
+
+  // Check if owner is already in the participants list
+  const ownerInParticipants = participants.some(p => p.userId === project.owner.id || p.email === project.owner.email)
+
+  const allParticipants = [...participants]
+
+  if (!ownerInParticipants) {
+    // Add owner as a virtual participant or first item
+    allParticipants.unshift({
+      id: `owner-${project.owner.id}`,
+      name: project.owner.name || "Owner",
+      email: project.owner.email,
+      phone: project.owner.phone,
+      role: project.owner.role || "Project Owner",
+      notes: project.owner.bio,
+      createdAt: new Date(),
+      images: [],
+      customFields: [],
+      userId: project.owner.id,
+      user: {
+        id: project.owner.id,
+        name: project.owner.name,
+        image: project.owner.image,
+      }
+    } as any)
   }
 
   return (
@@ -80,7 +117,7 @@ export default async function ParticipantsPage({
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <ParticipantsContent projectId={id} initialParticipants={participants} />
+        <ParticipantsContent projectId={id} initialParticipants={allParticipants} />
       </main>
     </div>
   )
