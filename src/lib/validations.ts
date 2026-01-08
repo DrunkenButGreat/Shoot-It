@@ -6,6 +6,7 @@ export const projectSchema = z.object({
   date: z.string().datetime(),
   location: z.string().min(1).max(200),
   address: z.string().max(500).optional(),
+  isArchived: z.boolean().optional(),
 })
 
 export const participantSchema = z.object({
