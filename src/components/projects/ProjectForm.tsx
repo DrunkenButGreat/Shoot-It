@@ -14,6 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
+import { LayoutGrid, Columns, Check } from "lucide-react"
 
 interface ProjectFormProps {
   onSuccess?: () => void
@@ -31,6 +32,7 @@ interface ProjectFormProps {
     showSelectionPublicly: boolean
     showCallsheetPublicly: boolean
     showResultsPublicly: boolean
+    galleryLayout: string
   }
 }
 
@@ -50,6 +52,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
     showSelectionPublicly: initialData?.showSelectionPublicly ?? false,
     showCallsheetPublicly: initialData?.showCallsheetPublicly ?? false,
     showResultsPublicly: initialData?.showResultsPublicly ?? false,
+    galleryLayout: initialData?.galleryLayout || "masonry",
   })
 
   const isEditing = !!initialData
@@ -93,6 +96,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
             showSelectionPublicly: false,
             showCallsheetPublicly: false,
             showResultsPublicly: false,
+            galleryLayout: "masonry",
           })
         }
         onSuccess?.()
@@ -232,6 +236,56 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
                     onChange={(checked) => setFormData({ ...formData, showResultsPublicly: checked })}
                   />
                 </div>
+              </div>
+            )}
+
+            {formData.isPublic && (
+              <div className="space-y-3 pt-2 border-t border-gray-100">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Gallery Style</Label>
+                  <div className="flex flex-wrap gap-1 bg-gray-100 p-1 rounded-lg">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, galleryLayout: "justified" })}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${formData.galleryLayout === "justified"
+                        ? "bg-white text-blue-600 shadow-sm"
+                        : "text-gray-500 hover:text-gray-700"
+                        }`}
+                    >
+                      <LayoutGrid className="h-3.5 w-3.5" />
+                      Justified
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, galleryLayout: "masonry" })}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${formData.galleryLayout === "masonry"
+                        ? "bg-white text-blue-600 shadow-sm"
+                        : "text-gray-500 hover:text-gray-700"
+                        }`}
+                    >
+                      <Columns className="h-3.5 w-3.5" />
+                      Masonry
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, galleryLayout: "grid" })}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${formData.galleryLayout === "grid"
+                        ? "bg-white text-blue-600 shadow-sm"
+                        : "text-gray-500 hover:text-gray-700"
+                        }`}
+                    >
+                      <LayoutGrid className="h-3.5 w-3.5" />
+                      Grid
+                    </button>
+                  </div>
+                </div>
+                <p className="text-[10px] text-muted-foreground italic leading-tight">
+                  {formData.galleryLayout === "justified"
+                    ? "Images fill rows and end flush at the bottom (Google Photos style)."
+                    : formData.galleryLayout === "masonry"
+                      ? "Columns are balanced for a clean bottom edge."
+                      : "Uniform squares for a structured look."}
+                </p>
               </div>
             )}
           </div>

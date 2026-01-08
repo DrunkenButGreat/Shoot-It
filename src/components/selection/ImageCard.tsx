@@ -24,9 +24,11 @@ interface ImageCardProps {
   projectId: string
   onRatingUpdated?: () => void
   onImageClick?: () => void
+  masonry?: boolean
+  justified?: boolean
 }
 
-export function ImageCard({ image, projectId, onRatingUpdated, onImageClick }: ImageCardProps) {
+export function ImageCard({ image, projectId, onRatingUpdated, onImageClick, masonry, justified }: ImageCardProps) {
   const currentRating = image.ratings[0]
   const [stars, setStars] = useState<number>(currentRating?.stars || 0)
   const [color, setColor] = useState<string | null>(currentRating?.color || null)
@@ -82,17 +84,17 @@ export function ImageCard({ image, projectId, onRatingUpdated, onImageClick }: I
   }
 
   return (
-    <Card className={`overflow-hidden ${color ? getColorClass(color) : ""}`}>
+    <Card className={`overflow-hidden ${color ? getColorClass(color) : ""} ${justified ? "h-full flex flex-col" : ""}`}>
       {/* Image */}
       <div
-        className="aspect-square bg-gray-100 relative overflow-hidden cursor-zoom-in group"
+        className={`${justified ? "h-[240px]" : masonry ? "" : "aspect-square"} bg-gray-100 relative overflow-hidden cursor-zoom-in group flex-shrink-0`}
         onClick={onImageClick}
       >
         {image.path ? (
           <img
             src={image.path}
             alt={image.filename}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className={`w-full ${justified || !masonry ? "h-full object-cover" : "h-auto"} group-hover:scale-105 transition-transform duration-300`}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-xs p-2 text-center break-all">

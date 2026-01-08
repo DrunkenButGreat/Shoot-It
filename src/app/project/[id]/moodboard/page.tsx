@@ -33,8 +33,9 @@ export default async function MoodboardPage({
       select: {
         id: true,
         name: true,
-      },
-    }),
+        galleryLayout: true,
+      } as any,
+    }) as any,
     prisma.moodboardGroup.findMany({
       where: { projectId: id },
       include: {
@@ -87,7 +88,7 @@ export default async function MoodboardPage({
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <MoodboardContent projectId={id} initialGroups={groups} />
+        <MoodboardContent projectId={id} initialGroups={groups} galleryLayout={project.galleryLayout} />
       </main>
     </div>
   )

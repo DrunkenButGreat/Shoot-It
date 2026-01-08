@@ -47,8 +47,12 @@ export async function POST(
         // Ensure directory exists
         await mkdir(uploadDir, { recursive: true })
 
-        const filePath = path.join(uploadDir, secureFilename)
-        await writeFile(filePath, buffer)
+        const imagePath = path.join(uploadDir, secureFilename)
+        await writeFile(imagePath, buffer)
+
+        // Get image metadata
+        const sharp = (await import("sharp")).default
+        const metadata = await sharp(buffer).metadata()
 
         const dbPath = `/api/uploads/${relativeDir}/${secureFilename}`.replace(/\\/g, '/')
 
@@ -57,7 +61,9 @@ export async function POST(
                 filename: file.name,
                 path: dbPath,
                 projectId: id,
-                thumbnail: dbPath
+                thumbnail: dbPath,
+                width: metadata.width,
+                height: metadata.height
             }
         })
 

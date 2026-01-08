@@ -47,8 +47,12 @@ export async function POST(
         // Ensure directory exists
         await mkdir(uploadDir, { recursive: true })
 
-        const filePath = path.join(uploadDir, secureFilename)
-        await writeFile(filePath, buffer)
+        const imagePath = path.join(uploadDir, secureFilename)
+        await writeFile(imagePath, buffer)
+
+        // Get image metadata
+        const sharp = (await import("sharp")).default
+        const metadata = await sharp(buffer).metadata()
 
         // Database record
         const count = await prisma.moodboardImage.count({
@@ -63,7 +67,9 @@ export async function POST(
                 path: dbPath,
                 order: count,
                 groupId,
-                thumbnail: dbPath // For now, use the same path
+                thumbnail: dbPath,
+                width: metadata.width,
+                height: metadata.height
             }
         })
 

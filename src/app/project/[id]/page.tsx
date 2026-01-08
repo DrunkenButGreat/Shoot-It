@@ -77,7 +77,7 @@ export default async function ProjectPage({
               </Button>
             </Link>
             {isOwner && (
-              <ProjectActions project={project} />
+              <ProjectActions project={project as any} />
             )}
           </div>
         </div>

@@ -8,15 +8,23 @@ interface Image {
     id: string
     path: string
     filename: string
+    width?: number | null
+    height?: number | null
 }
 
 interface PublicGalleryProps {
     images: Image[]
-    columns?: number
+    columns?: number // Not used for justified
     aspectRatio?: "square" | "portrait"
+    layout?: "grid" | "masonry" | "columns" | "justified"
 }
 
-export function PublicGallery({ images, columns = 4, aspectRatio = "square" }: PublicGalleryProps) {
+export function PublicGallery({
+    images,
+    columns = 4,
+    aspectRatio = "square",
+    layout = "masonry"
+}: PublicGalleryProps) {
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
     const [mounted, setMounted] = useState(false)
 
@@ -60,6 +68,15 @@ export function PublicGallery({ images, columns = 4, aspectRatio = "square" }: P
         if (selectedIndex !== null) {
             setSelectedIndex((selectedIndex - 1 + images.length) % images.length)
         }
+    }
+
+    // Distribute images into columns for masonry-balanced
+    const getColumnsData = () => {
+        const cols: { image: Image; index: number }[][] = Array.from({ length: columns }, () => [])
+        images.forEach((image, index) => {
+            cols[index % columns].push({ image, index })
+        })
+        return cols
     }
 
     const lightbox = selectedIndex !== null && mounted ? createPortal(
@@ -113,32 +130,121 @@ export function PublicGallery({ images, columns = 4, aspectRatio = "square" }: P
 
     return (
         <>
-            <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-${columns} gap-4`}>
-                {images.map((image, index) => (
-                    <div
-                        key={image.id}
-                        className={`${aspectClass} relative rounded-xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all border border-gray-100 bg-gray-50`}
-                        onClick={() => openLightbox(index)}
-                    >
-                        <img
-                            src={image.path}
-                            alt={image.filename}
-                            className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
-                            onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=Error+Loading+Image'
-                            }}
-                        />
-                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <ZoomIn className="text-white h-8 w-8" />
+            {layout === "grid" ? (
+                <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-${columns} gap-4`}>
+                    {images.map((image, index) => (
+                        <div
+                            key={image.id}
+                            className={`${aspectClass} relative rounded-xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all border border-gray-100 bg-gray-50`}
+                            onClick={() => openLightbox(index)}
+                        >
+                            <img
+                                src={image.path}
+                                alt={image.filename}
+                                className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=Error+Loading+Image'
+                                }}
+                            />
+                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <ZoomIn className="text-white h-8 w-8" />
+                            </div>
                         </div>
-                    </div>
-                ))}
-                {images.length === 0 && (
-                    <div className="col-span-full py-12 text-center border-2 border-dashed border-gray-100 rounded-2xl text-gray-400 font-medium">
-                        No images yet.
-                    </div>
-                )}
-            </div>
+                    ))}
+                </div>
+            ) : layout === "columns" ? (
+                <div className={`columns-2 sm:columns-3 md:columns-${columns} gap-4 space-y-4`}>
+                    {images.map((image, index) => (
+                        <div
+                            key={image.id}
+                            className="relative break-inside-avoid rounded-xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all border border-gray-100 bg-gray-50 mb-4"
+                            onClick={() => openLightbox(index)}
+                        >
+                            <img
+                                src={image.path}
+                                alt={image.filename}
+                                className="w-full h-auto transition-transform duration-500 group-hover:scale-110 block"
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=Error+Loading+Image'
+                                }}
+                            />
+                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <ZoomIn className="text-white h-8 w-8" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : layout === "justified" ? (
+                /* Justified Layout (Google Photos style) */
+                <div className="flex flex-wrap gap-4">
+                    {images.map((image, index) => {
+                        // Use stored dimensions or fallback to 4:3
+                        const width = image.width || 400
+                        const height = image.height || 300
+                        const aspect = width / height
+
+                        return (
+                            <div
+                                key={image.id}
+                                className="relative rounded-xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all border border-gray-100 bg-gray-50 mb-0"
+                                style={{
+                                    flexGrow: aspect * 100,
+                                    flexBasis: `${aspect * 200}px`,
+                                    height: '280px'
+                                }}
+                                onClick={() => openLightbox(index)}
+                            >
+                                <img
+                                    src={image.path}
+                                    alt={image.filename}
+                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 block"
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=Error+Loading+Image'
+                                    }}
+                                />
+                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <ZoomIn className="text-white h-8 w-8" />
+                                </div>
+                            </div>
+                        )
+                    })}
+                    {/* Add invisible items to prevent the last row from stretching too much */}
+                    <div className="flex-[1000] h-0" />
+                </div>
+            ) : (
+                /* Balanced Masonry */
+                <div className={`flex gap-4 items-start`}>
+                    {getColumnsData().map((column, colIdx) => (
+                        <div key={colIdx} className="flex-1 flex flex-col gap-4">
+                            {column.map(({ image, index }) => (
+                                <div
+                                    key={image.id}
+                                    className="relative rounded-xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all border border-gray-100 bg-gray-50 h-fit"
+                                    onClick={() => openLightbox(index)}
+                                >
+                                    <img
+                                        src={image.path}
+                                        alt={image.filename}
+                                        className="w-full h-auto transition-transform duration-500 group-hover:scale-110 block"
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=Error+Loading+Image'
+                                        }}
+                                    />
+                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <ZoomIn className="text-white h-8 w-8" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {images.length === 0 && (
+                <div className="py-12 text-center border-2 border-dashed border-gray-100 rounded-2xl text-gray-400 font-medium">
+                    No images yet.
+                </div>
+            )}
 
             {lightbox}
         </>

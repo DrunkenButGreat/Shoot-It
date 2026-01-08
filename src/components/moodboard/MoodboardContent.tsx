@@ -39,9 +39,10 @@ interface Group {
 interface MoodboardContentProps {
   projectId: string
   initialGroups: Group[]
+  galleryLayout?: string
 }
 
-export function MoodboardContent({ projectId, initialGroups: groups }: MoodboardContentProps) {
+export function MoodboardContent({ projectId, initialGroups: groups, galleryLayout }: MoodboardContentProps) {
   const router = useRouter()
 
   const handleGroupAdded = () => {
@@ -77,6 +78,7 @@ export function MoodboardContent({ projectId, initialGroups: groups }: Moodboard
               key={group.id}
               group={group}
               projectId={projectId}
+              galleryLayout={galleryLayout}
               onUpdate={handleGroupUpdated}
               onDelete={handleGroupDeleted}
             />

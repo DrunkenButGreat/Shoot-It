@@ -43,11 +43,12 @@ interface Group {
 interface MoodboardGroupProps {
   group: Group
   projectId: string
+  galleryLayout?: string
   onUpdate?: () => void
   onDelete?: () => void
 }
 
-export function MoodboardGroup({ group, projectId, onUpdate, onDelete }: MoodboardGroupProps) {
+export function MoodboardGroup({ group, projectId, galleryLayout, onUpdate, onDelete }: MoodboardGroupProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [showComments, setShowComments] = useState(false)
   const [newComment, setNewComment] = useState("")
@@ -208,28 +209,84 @@ export function MoodboardGroup({ group, projectId, onUpdate, onDelete }: Moodboa
           </div>
         </CardHeader>
         <CardContent>
-          {/* Images placeholder */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {group.images.map((image, i) => (
-              <div
-                key={image.id}
-                className="relative aspect-square bg-gray-100 rounded-xl overflow-hidden border border-gray-200 cursor-zoom-in hover:opacity-90 transition-opacity"
-                onClick={() => setIndex(i)}
-              >
-                <img
-                  src={image.path}
-                  alt={image.filename}
-                  className="w-full h-full object-cover"
-                />
+          <div className="space-y-6">
+            {galleryLayout === "grid" ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {group.images.map((image, i) => (
+                  <div
+                    key={image.id}
+                    className="relative aspect-square bg-gray-100 rounded-xl overflow-hidden border border-gray-200 cursor-zoom-in hover:opacity-90 transition-opacity group"
+                    onClick={() => setIndex(i)}
+                  >
+                    <img
+                      src={image.path}
+                      alt={image.filename}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
-            <div className="aspect-square">
-              <ImageUpload
-                uploadUrl={`/api/projects/${projectId}/moodboard/groups/${group.id}/images`}
-                onSuccess={() => onUpdate?.()}
-                className="h-full border-none bg-gray-50/50"
-              />
-            </div>
+            ) : galleryLayout === "justified" ? (
+              <div className="flex flex-wrap gap-4">
+                {group.images.map((image, i) => {
+                  const width = (image as any).width || 400
+                  const height = (image as any).height || 300
+                  const aspect = width / height
+                  return (
+                    <div
+                      key={image.id}
+                      className="relative bg-gray-100 rounded-xl overflow-hidden border border-gray-200 cursor-zoom-in hover:opacity-90 transition-all group h-[200px]"
+                      style={{
+                        flexGrow: aspect * 100,
+                        flexBasis: `${aspect * 150}px`,
+                      }}
+                      onClick={() => setIndex(i)}
+                    >
+                      <img
+                        src={image.path}
+                        alt={image.filename}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )
+                })}
+                <div className="flex-[1000] h-0" />
+              </div>
+            ) : (
+              <div className="flex gap-4 items-start">
+                {Array.from({ length: 4 }).map((_, colIdx) => {
+                  const columnImages = group.images.filter((_, i) => i % 4 === colIdx)
+
+                  return (
+                    <div key={colIdx} className="flex-1 flex flex-col gap-4">
+                      {columnImages.map((image) => {
+                        const globalIndex = group.images.findIndex(img => img.id === image.id)
+                        return (
+                          <div
+                            key={image.id}
+                            className="relative bg-gray-100 rounded-xl overflow-hidden border border-gray-200 cursor-zoom-in hover:opacity-90 transition-all group"
+                            onClick={() => setIndex(globalIndex)}
+                          >
+                            <img
+                              src={image.path}
+                              alt={image.filename}
+                              className="w-full h-auto block"
+                            />
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            <ImageUpload
+              uploadUrl={`/api/projects/${projectId}/moodboard/groups/${group.id}/images`}
+              onSuccess={() => onUpdate?.()}
+              className="w-full min-h-[120px] border-dashed bg-gray-50/50 hover:bg-gray-100/30 transition-all rounded-2xl flex flex-col items-center justify-center border-gray-200"
+              label="Add Images to Group"
+            />
           </div>
 
           <Lightbox

@@ -238,7 +238,10 @@ export default async function PublicProjectPage({
                                                 {group.description && <CardDescription>{group.description}</CardDescription>}
                                             </CardHeader>
                                             <CardContent>
-                                                <PublicGallery images={group.images} />
+                                                <PublicGallery
+                                                    images={group.images}
+                                                    layout={project.galleryLayout as any}
+                                                />
                                             </CardContent>
                                         </Card>
                                     ))}
@@ -292,7 +295,11 @@ export default async function PublicProjectPage({
                                 </div>
                                 <Card className="border-none shadow-xl overflow-hidden bg-white/60 backdrop-blur-md">
                                     <CardContent className="pt-6">
-                                        <PublicGallery images={project.selectionImages} aspectRatio="portrait" columns={5} />
+                                        <PublicGallery
+                                            images={project.selectionImages}
+                                            aspectRatio="portrait"
+                                            layout={project.galleryLayout as any}
+                                        />
                                     </CardContent>
                                 </Card>
                             </section>

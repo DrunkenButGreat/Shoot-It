@@ -33,8 +33,9 @@ export default async function SelectionPage({
       select: {
         id: true,
         name: true,
-      },
-    }),
+        galleryLayout: true,
+      } as any,
+    }) as any,
     prisma.selectionImage.findMany({
       where: { projectId: id },
       include: {
@@ -76,7 +77,7 @@ export default async function SelectionPage({
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <SelectionContent projectId={id} initialImages={images} userId={session.user.id} />
+        <SelectionContent projectId={id} initialImages={images} userId={session.user.id} galleryLayout={project.galleryLayout} />
       </main>
     </div>
   )

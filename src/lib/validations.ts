@@ -14,6 +14,7 @@ export const projectSchema = z.object({
   showSelectionPublicly: z.boolean().optional(),
   showCallsheetPublicly: z.boolean().optional(),
   showResultsPublicly: z.boolean().optional(),
+  galleryLayout: z.string().optional(),
 })
 
 export const participantSchema = z.object({
