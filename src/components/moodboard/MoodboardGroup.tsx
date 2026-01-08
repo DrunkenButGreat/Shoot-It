@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import ImageUpload from "./ImageUpload"
+import { LocalMediaPicker } from "../selection/LocalMediaPicker"
 
 import Lightbox from "yet-another-react-lightbox"
 import "yet-another-react-lightbox/styles.css"
@@ -44,11 +45,12 @@ interface MoodboardGroupProps {
   group: Group
   projectId: string
   galleryLayout?: string
+  hasLocalMedia?: boolean
   onUpdate?: () => void
   onDelete?: () => void
 }
 
-export function MoodboardGroup({ group, projectId, galleryLayout, onUpdate, onDelete }: MoodboardGroupProps) {
+export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia, onUpdate, onDelete }: MoodboardGroupProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [showComments, setShowComments] = useState(false)
   const [newComment, setNewComment] = useState("")
@@ -281,12 +283,25 @@ export function MoodboardGroup({ group, projectId, galleryLayout, onUpdate, onDe
               </div>
             )}
 
-            <ImageUpload
-              uploadUrl={`/api/projects/${projectId}/moodboard/groups/${group.id}/images`}
-              onSuccess={() => onUpdate?.()}
-              className="w-full min-h-[120px] border-dashed bg-gray-50/50 hover:bg-gray-100/30 transition-all rounded-2xl flex flex-col items-center justify-center border-gray-200"
-              label="Add Images to Group"
-            />
+            <div className="flex flex-col gap-4">
+              <div className="flex justify-between items-center">
+                <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Import Images</h4>
+                {hasLocalMedia && (
+                  <LocalMediaPicker
+                    projectId={projectId}
+                    onSuccess={() => onUpdate?.()}
+                    importUrl={`/api/projects/${projectId}/moodboard/groups/${group.id}/scan`}
+                    label="Import Folder into Group"
+                  />
+                )}
+              </div>
+              <ImageUpload
+                uploadUrl={`/api/projects/${projectId}/moodboard/groups/${group.id}/images`}
+                onSuccess={() => onUpdate?.()}
+                className="w-full min-h-[120px] border-dashed bg-gray-50/50 hover:bg-gray-100/30 transition-all rounded-2xl flex flex-col items-center justify-center border-gray-200"
+                label="Drag & Drop or Click to Upload"
+              />
+            </div>
           </div>
 
           <Lightbox

@@ -37,8 +37,8 @@ export const signatureSchema = z.object({
 })
 
 export const ratingSchema = z.object({
-  stars: z.number().min(1).max(5).optional(),
-  color: z.enum(['RED', 'YELLOW', 'GREEN']).optional(),
+  stars: z.number().min(1).max(5).optional().nullable(),
+  color: z.enum(['RED', 'YELLOW', 'GREEN']).optional().nullable(),
 })
 
 export const callsheetSchema = z.object({

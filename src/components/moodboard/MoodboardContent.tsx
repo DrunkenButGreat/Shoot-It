@@ -40,9 +40,10 @@ interface MoodboardContentProps {
   projectId: string
   initialGroups: Group[]
   galleryLayout?: string
+  hasLocalMedia?: boolean
 }
 
-export function MoodboardContent({ projectId, initialGroups: groups, galleryLayout }: MoodboardContentProps) {
+export function MoodboardContent({ projectId, initialGroups: groups, galleryLayout, hasLocalMedia }: MoodboardContentProps) {
   const router = useRouter()
 
   const handleGroupAdded = () => {
@@ -79,6 +80,7 @@ export function MoodboardContent({ projectId, initialGroups: groups, galleryLayo
               group={group}
               projectId={projectId}
               galleryLayout={galleryLayout}
+              hasLocalMedia={hasLocalMedia}
               onUpdate={handleGroupUpdated}
               onDelete={handleGroupDeleted}
             />

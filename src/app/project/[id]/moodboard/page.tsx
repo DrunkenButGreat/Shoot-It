@@ -86,9 +86,13 @@ export default async function MoodboardPage({
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <MoodboardContent projectId={id} initialGroups={groups} galleryLayout={project.galleryLayout} />
+        <MoodboardContent
+          projectId={id}
+          initialGroups={groups}
+          galleryLayout={project.galleryLayout}
+          hasLocalMedia={!!process.env.LOCAL_MEDIA_PATH}
+        />
       </main>
     </div>
   )
