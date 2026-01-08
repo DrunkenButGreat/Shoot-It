@@ -86,6 +86,12 @@ model Project {
   address     String?
   shortCode   String   @unique  // Für öffentliche Kurz-URLs
   isPublic    Boolean  @default(false)
+  showMoodboardPublicly   Boolean @default(false)
+  showParticipantsPublicly Boolean @default(false)
+  showContractsPublicly    Boolean @default(false)
+  showSelectionPublicly    Boolean @default(false)
+  showCallsheetPublicly    Boolean @default(false)
+  showResultsPublicly      Boolean @default(false)
   isArchived  Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

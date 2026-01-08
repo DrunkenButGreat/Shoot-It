@@ -7,6 +7,7 @@ import { canAccessProject } from "@/lib/permissions"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ProjectActions } from "@/components/projects/ProjectActions"
+import { PublicLinkCard } from "@/components/projects/PublicLinkCard"
 
 export default async function ProjectPage({
   params,
@@ -180,32 +181,30 @@ export default async function ProjectPage({
           </Card>
         </div>
 
-        {/* Project Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Project Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div>
-              <span className="text-sm font-medium">Owner:</span>{" "}
-              <span className="text-sm text-gray-600">{project.owner.name || project.owner.email}</span>
-            </div>
-            <div>
-              <span className="text-sm font-medium">Short Code:</span>{" "}
-              <code className="text-sm bg-gray-100 px-2 py-1 rounded">{project.shortCode}</code>
-            </div>
-            <div>
-              <span className="text-sm font-medium">Public Link:</span>{" "}
-              <a
-                href={`/p/${project.shortCode}`}
-                className="text-sm text-blue-600 hover:underline"
-                target="_blank"
-              >
-                /p/{project.shortCode}
-              </a>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Project Info & Public Link */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <Card className="border-none shadow-lg bg-white">
+            <CardHeader>
+              <CardTitle className="text-lg">Database Info</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div>
+                <span className="text-sm font-medium">Owner:</span>{" "}
+                <span className="text-sm text-gray-600">{project.owner.name || project.owner.email}</span>
+              </div>
+              <div>
+                <span className="text-sm font-medium">Internal ID:</span>{" "}
+                <code className="text-[10px] bg-gray-100 px-2 py-1 rounded font-mono">{project.id}</code>
+              </div>
+              <div>
+                <span className="text-sm font-medium">Short Code:</span>{" "}
+                <code className="text-sm bg-gray-100 px-2 py-1 rounded">{project.shortCode}</code>
+              </div>
+            </CardContent>
+          </Card>
+
+          <PublicLinkCard project={project as any} />
+        </div>
 
         {/* Additional Modules */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">

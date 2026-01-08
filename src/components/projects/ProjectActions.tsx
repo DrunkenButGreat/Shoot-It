@@ -11,6 +11,13 @@ interface ProjectActionsProps {
         date: Date | null
         location: string | null
         address: string | null
+        isPublic: boolean
+        showMoodboardPublicly: boolean
+        showParticipantsPublicly: boolean
+        showContractsPublicly: boolean
+        showSelectionPublicly: boolean
+        showCallsheetPublicly: boolean
+        showResultsPublicly: boolean
     }
 }
 

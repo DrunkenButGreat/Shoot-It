@@ -7,6 +7,13 @@ export const projectSchema = z.object({
   location: z.string().max(200).optional().nullable(),
   address: z.string().max(500).optional(),
   isArchived: z.boolean().optional(),
+  isPublic: z.boolean().optional(),
+  showMoodboardPublicly: z.boolean().optional(),
+  showParticipantsPublicly: z.boolean().optional(),
+  showContractsPublicly: z.boolean().optional(),
+  showSelectionPublicly: z.boolean().optional(),
+  showCallsheetPublicly: z.boolean().optional(),
+  showResultsPublicly: z.boolean().optional(),
 })
 
 export const participantSchema = z.object({
