@@ -33,6 +33,11 @@ model User {
   comments          Comment[]
   signatures        ContractSignature[]
   imageRatings      ImageRating[]
+
+  // Profile fields for auto-filling participant data
+  phone             String?
+  role              String?
+  bio               String?   @db.Text
 }
 
 model Account {

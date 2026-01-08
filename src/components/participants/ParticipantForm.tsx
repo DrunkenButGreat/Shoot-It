@@ -107,9 +107,31 @@ export function ParticipantForm({ projectId, onSuccess }: ParticipantFormProps) 
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
+                onChange={async (e) => {
+                  const email = e.target.value
+                  setFormData({ ...formData, email })
+
+                  // Simple email validation before checking
+                  if (email.includes("@") && email.includes(".")) {
+                    try {
+                      const response = await fetch(`/api/users/check?email=${encodeURIComponent(email)}`)
+                      if (response.ok) {
+                        const data = await response.json()
+                        if (data.found && data.user) {
+                          setFormData(prev => ({
+                            ...prev,
+                            name: prev.name || data.user.name || "",
+                            phone: prev.phone || data.user.phoneNumber || "",
+                            role: prev.role || data.user.role || "",
+                            notes: prev.notes || data.user.bio || "",
+                          }))
+                        }
+                      }
+                    } catch (error) {
+                      console.error("Failed to check user:", error)
+                    }
+                  }
+                }}
                 placeholder="john@example.com"
               />
             </div>

@@ -2,10 +2,11 @@
 
 import { signOut } from "next-auth/react"
 import { useSession } from "next-auth/react"
+import Link from "next/link"
 
 export default function UserMenu() {
   const { data: session } = useSession()
-  
+
   if (!session?.user) {
     return null
   }
@@ -31,9 +32,15 @@ export default function UserMenu() {
 
       <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
         <div className="py-1">
+          <Link
+            href="/dashboard/profile"
+            className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+          >
+            Mein Profil
+          </Link>
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
-            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-100"
           >
             Sign out
           </button>
