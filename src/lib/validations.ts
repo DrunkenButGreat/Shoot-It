@@ -3,8 +3,8 @@ import { z } from 'zod'
 export const projectSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(5000).optional(),
-  date: z.string().datetime(),
-  location: z.string().min(1).max(200),
+  date: z.string().datetime().optional().nullable(),
+  location: z.string().max(200).optional().nullable(),
   address: z.string().max(500).optional(),
   isArchived: z.boolean().optional(),
 })

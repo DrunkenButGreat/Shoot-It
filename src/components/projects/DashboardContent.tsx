@@ -9,8 +9,8 @@ interface Project {
   id: string
   name: string
   description: string | null
-  date: Date | string
-  location: string
+  date: Date | string | null
+  location: string | null
   shortCode: string
   isArchived: boolean
 }
@@ -40,8 +40,8 @@ export function DashboardContent({ projects }: DashboardContentProps) {
             <button
               onClick={() => setCurrentTab('active')}
               className={`text-sm font-medium pb-1 border-b-2 transition-colors ${currentTab === 'active'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
             >
               Active
@@ -49,8 +49,8 @@ export function DashboardContent({ projects }: DashboardContentProps) {
             <button
               onClick={() => setCurrentTab('archived')}
               className={`text-sm font-medium pb-1 border-b-2 transition-colors ${currentTab === 'archived'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
             >
               Archived

@@ -9,8 +9,8 @@ interface Project {
   id: string
   name: string
   description: string | null
-  date: Date | string
-  location: string
+  date: Date | string | null
+  location: string | null
   shortCode: string
   isArchived: boolean
 }
@@ -20,7 +20,7 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project }: ProjectCardProps) {
-  const projectDate = new Date(project.date)
+  const projectDate = project.date ? new Date(project.date) : null
   const router = useRouter()
   const [isUpdating, setIsUpdating] = useState(false)
 
@@ -75,14 +75,18 @@ export function ProjectCard({ project }: ProjectCardProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-2 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              <span>{projectDate.toLocaleDateString()}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              <span>{project.location}</span>
-            </div>
+            {projectDate && (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <span>{projectDate.toLocaleDateString()}</span>
+              </div>
+            )}
+            {project.location && (
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                <span>{project.location}</span>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

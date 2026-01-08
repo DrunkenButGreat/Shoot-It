@@ -6,6 +6,7 @@ import prisma from "@/lib/prisma"
 import { canAccessProject } from "@/lib/permissions"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { ProjectActions } from "@/components/projects/ProjectActions"
 
 export default async function ProjectPage({
   params,
@@ -59,7 +60,8 @@ export default async function ProjectPage({
     redirect("/dashboard")
   }
 
-  const projectDate = new Date(project.date)
+  const isOwner = project.ownerId === session.user.id
+  const projectDate = project.date ? new Date(project.date) : null
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -73,6 +75,9 @@ export default async function ProjectPage({
                 Back to Projects
               </Button>
             </Link>
+            {isOwner && (
+              <ProjectActions project={project} />
+            )}
           </div>
         </div>
       </header>
@@ -98,14 +103,18 @@ export default async function ProjectPage({
             <p className="text-gray-600">{project.description}</p>
           )}
           <div className="flex gap-4 mt-4 text-sm text-gray-600">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              <span>{projectDate.toLocaleDateString()}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              <span>{project.location}</span>
-            </div>
+            {projectDate && (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <span>{projectDate.toLocaleDateString()}</span>
+              </div>
+            )}
+            {project.location && (
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                <span>{project.location}</span>
+              </div>
+            )}
           </div>
           {project.address && (
             <p className="text-sm text-gray-500 mt-2">{project.address}</p>

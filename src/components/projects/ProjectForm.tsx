@@ -16,51 +16,70 @@ import {
 
 interface ProjectFormProps {
   onSuccess?: () => void
+  initialData?: {
+    id: string
+    name: string
+    description: string | null
+    date: Date | string | null
+    location: string | null
+    address: string | null
+  }
 }
 
-export function ProjectForm({ onSuccess }: ProjectFormProps) {
+export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    date: "",
-    location: "",
-    address: "",
+    name: initialData?.name || "",
+    description: initialData?.description || "",
+    date: initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : "",
+    location: initialData?.location || "",
+    address: initialData?.address || "",
   })
+
+  const isEditing = !!initialData
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      const response = await fetch("/api/projects", {
-        method: "POST",
+      const body: any = { ...formData }
+      if (formData.date) {
+        body.date = new Date(formData.date).toISOString()
+      } else {
+        body.date = null
+      }
+
+      const url = isEditing ? `/api/projects/${initialData.id}` : "/api/projects"
+      const method = isEditing ? "PUT" : "POST"
+
+      const response = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...formData,
-          date: new Date(formData.date).toISOString(),
-        }),
+        body: JSON.stringify(body),
       })
 
       if (response.ok) {
         setOpen(false)
-        setFormData({
-          name: "",
-          description: "",
-          date: "",
-          location: "",
-          address: "",
-        })
+        if (!isEditing) {
+          setFormData({
+            name: "",
+            description: "",
+            date: "",
+            location: "",
+            address: "",
+          })
+        }
         onSuccess?.()
       } else {
         const error = await response.json()
-        alert(error.error || "Failed to create project")
+        alert(error.error || `Failed to ${isEditing ? "update" : "create"} project`)
       }
     } catch (error) {
-      alert("An error occurred while creating the project")
+      alert(`An error occurred while ${isEditing ? "updating" : "creating"} the project`)
     } finally {
       setIsLoading(false)
     }
@@ -69,14 +88,18 @@ export function ProjectForm({ onSuccess }: ProjectFormProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>+ New Project</Button>
+        <Button variant={isEditing ? "outline" : "default"}>
+          {isEditing ? "Edit Project" : "+ New Project"}
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[525px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create New Project</DialogTitle>
+            <DialogTitle>{isEditing ? "Edit Project" : "Create New Project"}</DialogTitle>
             <DialogDescription>
-              Add a new photoshoot project to organize your work.
+              {isEditing
+                ? "Update your photoshoot project details."
+                : "Add a new photoshoot project to organize your work."}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -104,7 +127,7 @@ export function ProjectForm({ onSuccess }: ProjectFormProps) {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="date">Date *</Label>
+              <Label htmlFor="date">Date</Label>
               <Input
                 id="date"
                 type="date"
@@ -112,11 +135,10 @@ export function ProjectForm({ onSuccess }: ProjectFormProps) {
                 onChange={(e) =>
                   setFormData({ ...formData, date: e.target.value })
                 }
-                required
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="location">Location *</Label>
+              <Label htmlFor="location">Location</Label>
               <Input
                 id="location"
                 value={formData.location}
@@ -124,7 +146,6 @@ export function ProjectForm({ onSuccess }: ProjectFormProps) {
                   setFormData({ ...formData, location: e.target.value })
                 }
                 placeholder="New York City"
-                required
               />
             </div>
             <div className="grid gap-2">
@@ -144,7 +165,9 @@ export function ProjectForm({ onSuccess }: ProjectFormProps) {
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Creating..." : "Create Project"}
+              {isLoading
+                ? (isEditing ? "Updating..." : "Creating...")
+                : (isEditing ? "Update Project" : "Create Project")}
             </Button>
           </DialogFooter>
         </form>

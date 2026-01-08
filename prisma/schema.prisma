@@ -81,8 +81,8 @@ model Project {
   id          String   @id @default(cuid())
   name        String
   description String?  @db.Text
-  date        DateTime
-  location    String
+  date        DateTime?
+  location    String?
   address     String?
   shortCode   String   @unique  // Für öffentliche Kurz-URLs
   isPublic    Boolean  @default(false)
