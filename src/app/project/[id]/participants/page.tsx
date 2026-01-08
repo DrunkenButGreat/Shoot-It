@@ -40,6 +40,13 @@ export default async function ParticipantsPage({
       include: {
         images: true,
         customFields: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          },
+        },
       },
       orderBy: { createdAt: 'asc' },
     }),

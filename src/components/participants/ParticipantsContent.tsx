@@ -15,6 +15,11 @@ interface Participant {
   createdAt: Date
   images: any[]
   customFields: any[]
+  user?: {
+    id: string
+    name: string | null
+    image: string | null
+  } | null
 }
 
 interface ParticipantsContentProps {
@@ -22,8 +27,7 @@ interface ParticipantsContentProps {
   initialParticipants: Participant[]
 }
 
-export function ParticipantsContent({ projectId, initialParticipants }: ParticipantsContentProps) {
-  const [participants] = useState(initialParticipants)
+export function ParticipantsContent({ projectId, initialParticipants: participants }: ParticipantsContentProps) {
   const router = useRouter()
 
   const handleParticipantAdded = () => {
