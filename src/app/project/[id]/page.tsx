@@ -45,8 +45,15 @@ export default async function ProjectPage({
           resultFolders: true,
         },
       },
+      participants: {
+        where: { email: session.user.email || undefined },
+        select: { id: true, role: true }
+      }
     },
   })
+
+  const isParticipant = (project?.participants?.length ?? 0) > 0
+  const participantRole = project?.participants?.[0]?.role
 
   if (!project) {
     redirect("/dashboard")
@@ -79,6 +86,11 @@ export default async function ProjectPage({
             {project.isArchived && (
               <span className="bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded border border-amber-200 uppercase tracking-wider">
                 Archived
+              </span>
+            )}
+            {isParticipant && (
+              <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded border border-blue-200 uppercase tracking-wider">
+                {participantRole || 'Participant'}
               </span>
             )}
           </div>

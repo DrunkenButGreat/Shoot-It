@@ -21,6 +21,11 @@ export default async function DashboardPage() {
             some: { userId: session.user.id },
           },
         },
+        {
+          participants: {
+            some: { email: session.user.email },
+          },
+        },
       ],
     },
     orderBy: { createdAt: 'desc' },
