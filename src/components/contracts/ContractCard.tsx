@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Trash2, FileText, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -57,41 +58,51 @@ export function ContractCard({
 
   return (
     <>
-      <Card>
-        <CardHeader>
+      <Card className="overflow-hidden border-none shadow-md hover:shadow-xl transition-all bg-white/90 backdrop-blur-sm group">
+        <CardHeader className="pb-4">
           <div className="flex justify-between items-start">
-            <div>
-              <CardTitle>{contract.title}</CardTitle>
-              <CardDescription>
-                Created: {new Date(contract.createdAt).toLocaleDateString()}
-              </CardDescription>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-slate-500 to-slate-700 flex items-center justify-center shadow-sm">
+                <FileText className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <CardTitle className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                  {contract.title}
+                </CardTitle>
+                <CardDescription className="flex items-center gap-1.5 mt-1">
+                  Created: {new Date(contract.createdAt).toLocaleDateString()}
+                </CardDescription>
+              </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               {isSigned && (
-                <span className="px-2 py-1 bg-green-100 text-green-800 text-sm rounded">
+                <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                  <CheckCircle className="h-3 w-3 mr-1" />
                   Signed
-                </span>
+                </div>
               )}
               <Button
-                variant="destructive"
-                size="sm"
+                variant="ghost"
+                size="icon"
                 onClick={() => setShowDeleteDialog(true)}
+                disabled={isDeleting}
+                className="hover:bg-red-50 hover:text-red-600 transition-colors"
               >
-                Delete
+                <Trash2 className="h-4 w-4" />
               </Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="prose max-w-none">
-            <p className="whitespace-pre-wrap text-sm text-gray-700">
-              {contract.content.substring(0, 200)}
-              {contract.content.length > 200 && '...'}
+        <CardContent className="space-y-4 pt-0">
+          <div className="prose max-w-none pt-2 border-t border-gray-50">
+            <p className="whitespace-pre-wrap text-sm text-gray-600 leading-relaxed italic">
+              "{contract.content.substring(0, 140)}
+              {contract.content.length > 140 && '...'}"
             </p>
           </div>
           {isSigned && (
-            <div className="mt-4 text-sm text-gray-600">
-              Signed on: {new Date(contract.signatures[0].signedAt).toLocaleString()}
+            <div className="mt-2 text-[11px] font-medium text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-100 italic">
+              Last signed: {new Date(contract.signatures[0].signedAt).toLocaleString()}
             </div>
           )}
         </CardContent>

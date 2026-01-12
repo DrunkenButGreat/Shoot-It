@@ -45,26 +45,32 @@ export function ContractsContent({
 
   return (
     <div>
-      <div className="mb-6">
-        <Button onClick={() => setIsFormOpen(true)}>
+      <div className="mb-6 flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-900">
+          Contracts ({contracts.length})
+        </h2>
+        <Button onClick={() => setIsFormOpen(true)} className="gap-2">
           New Contract
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
-        {contracts.length === 0 ? (
-          <p className="text-gray-500">No contracts yet. Create your first contract!</p>
-        ) : (
-          contracts.map((contract) => (
+      {contracts.length === 0 ? (
+        <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+          <p className="text-gray-500 text-lg">No contracts yet</p>
+          <p className="text-sm text-gray-400 mt-2">Create contracts for your participants to sign</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {contracts.map((contract) => (
             <ContractCard
               key={contract.id}
               contract={contract}
               projectId={projectId}
               onDelete={refreshContracts}
             />
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
 
       <ContractForm
         projectId={projectId}

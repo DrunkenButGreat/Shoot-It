@@ -74,7 +74,7 @@ export default async function MoodboardPage({
               <Link href={`/project/${id}`}>
                 <Button variant="ghost" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Project
+                  Zurück zum Projekt
                 </Button>
               </Link>
               <div>
