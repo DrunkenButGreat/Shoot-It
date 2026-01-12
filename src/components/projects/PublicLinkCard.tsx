@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Check, Copy, ExternalLink, Globe, Lock } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 
 interface PublicLinkCardProps {
@@ -19,7 +19,11 @@ interface PublicLinkCardProps {
 
 export function PublicLinkCard({ project }: PublicLinkCardProps) {
     const [copied, setCopied] = useState(false)
-    const publicUrl = typeof window !== 'undefined' ? `${window.location.origin}/p/${project.shortCode}` : `/p/${project.shortCode}`
+    const [publicUrl, setPublicUrl] = useState(`/p/${project.shortCode}`)
+
+    useEffect(() => {
+        setPublicUrl(`${window.location.origin}/p/${project.shortCode}`)
+    }, [project.shortCode])
 
     const copyToClipboard = () => {
         navigator.clipboard.writeText(publicUrl)
