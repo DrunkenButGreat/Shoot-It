@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Share, Check, Copy } from "lucide-react"
+import { useI18n } from "@/components/I18nProvider"
 
 interface Rating {
   id: string
@@ -36,6 +37,7 @@ interface ExportDialogProps {
 type ExportType = 'CAPTURE_ONE' | 'LIGHTROOM' | 'FINDER_EXPLORER'
 
 export function ExportDialog({ images }: ExportDialogProps) {
+  const { t } = useI18n()
   const [exportType, setExportType] = useState<ExportType>('CAPTURE_ONE')
   const [copied, setCopied] = useState(false)
 
@@ -74,21 +76,21 @@ export function ExportDialog({ images }: ExportDialogProps) {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
           <Share className="h-4 w-4" />
-          Export Selection
+          {t('selection.exportTitle')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Auswahl exportieren</DialogTitle>
+          <DialogTitle className="text-2xl font-bold">{t('selection.exportTitle')}</DialogTitle>
           <p className="text-[15px] leading-relaxed text-gray-700 mt-4">
-            Kopiere diese Liste an Dateinamen zum Herausfiltern der Auswahl im Tool deiner Wahl auf deinem PC. 
-            Mehr Infos zur Nutzung und eventuellen Fehlerquellen bei Problemen findest du <span className="text-orange-500 font-medium cursor-pointer hover:underline">in unseren FAQ</span>.
+            {t('selection.exportDescription')} 
+            Mehr Infos zur Nutzung und eventuellen Fehlerquellen bei Problemen findest du <span className="text-orange-500 font-medium cursor-pointer hover:underline">{t('selection.faqLink')}</span>.
           </p>
         </DialogHeader>
         
         <div className="grid gap-6 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="application" className="text-sm font-bold">Anwendung</Label>
+            <Label htmlFor="application" className="text-sm font-bold">{t('selection.app')}</Label>
             <select
               id="application"
               className="flex h-12 w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-all appearance-none cursor-pointer"
@@ -101,28 +103,28 @@ export function ExportDialog({ images }: ExportDialogProps) {
                 backgroundSize: '1.2em'
               }}
             >
-              <option value="CAPTURE_ONE">Capture One & Photo Mech.</option>
-              <option value="LIGHTROOM">Adobe Lightroom</option>
-              <option value="FINDER_EXPLORER">Mac Finder & Windows Explorer</option>
+              <option value="CAPTURE_ONE">{t('selection.captureOne')}</option>
+              <option value="LIGHTROOM">{t('selection.lightroom')}</option>
+              <option value="FINDER_EXPLORER">{t('selection.finder')}</option>
             </select>
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="searchtext" className="text-sm font-bold">Suchtext</Label>
+            <Label htmlFor="searchtext" className="text-sm font-bold">{t('selection.searchText')}</Label>
             <Textarea
               id="searchtext"
               readOnly
               value={exportText}
               className="font-mono text-sm h-[180px] resize-none bg-white border-2 border-slate-200 rounded-xl p-4 focus:ring-0"
             />
-            <p className="text-[12px] text-gray-400">Diesen Text kopieren & einfügen</p>
+            <p className="text-[12px] text-gray-400">{t('selection.copySnippet')}</p>
           </div>
         </div>
 
         <DialogFooter className="sm:justify-between items-center gap-4 py-4 pt-2">
           <DialogClose asChild>
             <Button variant="outline" className="h-12 px-8 rounded-xl border-2 border-slate-200 font-bold hover:bg-slate-50 transition-all">
-              Abbrechen
+              {t('common.cancel')}
             </Button>
           </DialogClose>
           <Button 
@@ -136,11 +138,11 @@ export function ExportDialog({ images }: ExportDialogProps) {
             {copied ? (
               <>
                 <Check className="h-5 w-4 mr-2" />
-                Kopiert!
+                {t('selection.copied')}
               </>
             ) : (
               <>
-                In Zwischenablage kopieren
+                {t('selection.copyToClipboard')}
               </>
             )}
           </Button>

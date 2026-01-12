@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Star } from "lucide-react"
+import { useI18n } from "@/components/I18nProvider"
 
 interface FilterBarProps {
   onFilterChange: (filterType: string, value: string | null) => void
@@ -10,12 +11,14 @@ interface FilterBarProps {
 }
 
 export function FilterBar({ onFilterChange, activeStars = [], activeColors = [] }: FilterBarProps) {
+  const { t } = useI18n();
+
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4">
       <div className="flex flex-wrap gap-4">
         {/* Star filters */}
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-700">Stars:</span>
+          <span className="text-sm font-medium text-gray-700">{t('selection.stars')}:</span>
           <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map((stars) => {
               const isActive = activeStars.includes(stars.toString())
@@ -39,19 +42,19 @@ export function FilterBar({ onFilterChange, activeStars = [], activeColors = [] 
               className="h-8"
               disabled={activeStars.length === 0}
             >
-              Clear
+              {t('common.clear')}
             </Button>
           </div>
         </div>
 
         {/* Color filters */}
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-700">Color:</span>
+          <span className="text-sm font-medium text-gray-700">{t('selection.color')}:</span>
           <div className="flex gap-1">
             {[
-              { id: 'RED', label: 'Red', bg: 'bg-red-50', hover: 'hover:bg-red-100', text: 'text-red-700', border: 'border-red-300', active: 'bg-red-200 border-red-500' },
-              { id: 'YELLOW', label: 'Yellow', bg: 'bg-yellow-50', hover: 'hover:bg-yellow-100', text: 'text-yellow-700', border: 'border-yellow-300', active: 'bg-yellow-200 border-yellow-500' },
-              { id: 'GREEN', label: 'Green', bg: 'bg-green-50', hover: 'hover:bg-green-100', text: 'text-green-700', border: 'border-green-300', active: 'bg-green-200 border-green-500' },
+              { id: 'RED', label: t('selection.red'), bg: 'bg-red-50', hover: 'hover:bg-red-100', text: 'text-red-700', border: 'border-red-300', active: 'bg-red-200 border-red-500' },
+              { id: 'YELLOW', label: t('selection.yellow'), bg: 'bg-yellow-50', hover: 'hover:bg-yellow-100', text: 'text-yellow-700', border: 'border-yellow-300', active: 'bg-yellow-200 border-yellow-500' },
+              { id: 'GREEN', label: t('selection.green'), bg: 'bg-green-50', hover: 'hover:bg-green-100', text: 'text-green-700', border: 'border-green-300', active: 'bg-green-200 border-green-500' },
             ].map((color) => {
               const isActive = activeColors.includes(color.id)
               return (
@@ -73,7 +76,7 @@ export function FilterBar({ onFilterChange, activeStars = [], activeColors = [] 
               className="h-8"
               disabled={activeColors.length === 0}
             >
-              Clear
+              {t('common.clear')}
             </Button>
           </div>
         </div>

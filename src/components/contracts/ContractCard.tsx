@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useI18n } from '@/components/I18nProvider';
 
 type Contract = {
   id: string;
@@ -33,6 +34,7 @@ export function ContractCard({
   projectId: string;
   onDelete: () => void;
 }) {
+  const { t, locale } = useI18n();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -70,7 +72,7 @@ export function ContractCard({
                   {contract.title}
                 </CardTitle>
                 <CardDescription className="flex items-center gap-1.5 mt-1">
-                  Created: {new Date(contract.createdAt).toLocaleDateString()}
+                  {t('contracts.created')}: {new Date(contract.createdAt).toLocaleDateString(locale)}
                 </CardDescription>
               </div>
             </div>
@@ -78,7 +80,7 @@ export function ContractCard({
               {isSigned && (
                 <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
                   <CheckCircle className="h-3 w-3 mr-1" />
-                  Signed
+                  {t('contracts.signed')}
                 </div>
               )}
               <Button
@@ -102,7 +104,7 @@ export function ContractCard({
           </div>
           {isSigned && (
             <div className="mt-2 text-[11px] font-medium text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-100 italic">
-              Last signed: {new Date(contract.signatures[0].signedAt).toLocaleString()}
+              {t('contracts.lastSigned')} {new Date(contract.signatures[0].signedAt).toLocaleString()}
             </div>
           )}
         </CardContent>
@@ -111,17 +113,17 @@ export function ContractCard({
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Contract</DialogTitle>
+            <DialogTitle>{t('contracts.deleteContract')}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{contract.title}"? This action cannot be undone.
+               {t('common.deleteConfirm')} ("{contract.title}")
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
-              {isDeleting ? 'Deleting...' : 'Delete'}
+              {isDeleting ? t('common.loading') : t('common.delete')}
             </Button>
           </DialogFooter>
         </DialogContent>

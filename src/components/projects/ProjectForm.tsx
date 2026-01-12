@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
 import { LayoutGrid, Columns, Check } from "lucide-react"
+import { useI18n } from "@/components/I18nProvider"
 
 interface ProjectFormProps {
   onSuccess?: () => void
@@ -37,6 +38,7 @@ interface ProjectFormProps {
 }
 
 export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -102,10 +104,10 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
         onSuccess?.()
       } else {
         const error = await response.json()
-        alert(error.error || `Failed to ${isEditing ? "update" : "create"} project`)
+        alert(error.error || (isEditing ? t('projectForm.updateProject') : t('projectForm.createProject')))
       }
     } catch (error) {
-      alert(`An error occurred while ${isEditing ? "updating" : "creating"} the project`)
+      alert(t('common.error'))
     } finally {
       setIsLoading(false)
     }
@@ -115,45 +117,45 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant={isEditing ? "outline" : "default"}>
-          {isEditing ? "Edit Project" : "+ New Project"}
+          {isEditing ? t('projectForm.editProject') : `+ ${t('projectForm.newProject')}`}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[525px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>{isEditing ? "Edit Project" : "Create New Project"}</DialogTitle>
+            <DialogTitle>{isEditing ? t('projectForm.editProject') : t('projectForm.createProject')}</DialogTitle>
             <DialogDescription>
               {isEditing
-                ? "Update your photoshoot project details."
-                : "Add a new photoshoot project to organize your work."}
+                ? t('projectForm.isEditingDescription')
+                : t('projectForm.isCreatingDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Project Name *</Label>
+              <Label htmlFor="name">{t('projectForm.projectName')} *</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
-                placeholder="Summer Fashion Shoot"
+                placeholder={t('projectForm.projectNamePlaceholder')}
                 required
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">{t('projectForm.description')}</Label>
               <Input
                 id="description"
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
                 }
-                placeholder="Describe your project..."
+                placeholder={t('projectForm.descriptionPlaceholder')}
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="date">Date</Label>
+              <Label htmlFor="date">{t('projectForm.date')}</Label>
               <Input
                 id="date"
                 type="date"
@@ -164,32 +166,32 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="location">Location</Label>
+              <Label htmlFor="location">{t('projectForm.location')}</Label>
               <Input
                 id="location"
                 value={formData.location}
                 onChange={(e) =>
                   setFormData({ ...formData, location: e.target.value })
                 }
-                placeholder="New York City"
+                placeholder={t('projectForm.locationPlaceholder')}
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="address">Address</Label>
+              <Label htmlFor="address">{t('projectForm.address')}</Label>
               <Input
                 id="address"
                 value={formData.address}
                 onChange={(e) =>
                   setFormData({ ...formData, address: e.target.value })
                 }
-                placeholder="123 Main St, New York, NY 10001"
+                placeholder={t('projectForm.addressPlaceholder')}
               />
             </div>
             <div className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50/50">
               <div className="space-y-0.5">
-                <Label htmlFor="isPublic">Public Access</Label>
+                <Label htmlFor="isPublic">{t('projectForm.publicAccess')}</Label>
                 <p className="text-xs text-muted-foreground">
-                  Allow anyone with the link to view this project.
+                  {t('projectForm.publicAccessDescription')}
                 </p>
               </div>
               <Switch
@@ -203,35 +205,35 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
 
             {formData.isPublic && (
               <div className="space-y-3 pt-2 border-t border-gray-100">
-                <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Module Visibility</Label>
+                <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('projectForm.moduleVisibility')}</Label>
                 <div className="grid grid-cols-2 gap-3">
                   <ModuleToggle
-                    label="Moodboard"
+                    label={t('projectForm.showMoodboard')}
                     value={formData.showMoodboardPublicly}
                     onChange={(checked) => setFormData({ ...formData, showMoodboardPublicly: checked })}
                   />
                   <ModuleToggle
-                    label="Team"
+                    label={t('projectForm.showParticipants')}
                     value={formData.showParticipantsPublicly}
                     onChange={(checked) => setFormData({ ...formData, showParticipantsPublicly: checked })}
                   />
                   <ModuleToggle
-                    label="Selection"
+                    label={t('projectForm.showSelection')}
                     value={formData.showSelectionPublicly}
                     onChange={(checked) => setFormData({ ...formData, showSelectionPublicly: checked })}
                   />
                   <ModuleToggle
-                    label="Contracts"
+                    label={t('projectForm.showContracts')}
                     value={formData.showContractsPublicly}
                     onChange={(checked) => setFormData({ ...formData, showContractsPublicly: checked })}
                   />
                   <ModuleToggle
-                    label="Callsheet"
+                    label={t('projectForm.showCallsheet')}
                     value={formData.showCallsheetPublicly}
                     onChange={(checked) => setFormData({ ...formData, showCallsheetPublicly: checked })}
                   />
                   <ModuleToggle
-                    label="Results"
+                    label={t('projectForm.showResults')}
                     value={formData.showResultsPublicly}
                     onChange={(checked) => setFormData({ ...formData, showResultsPublicly: checked })}
                   />
@@ -242,7 +244,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
             {formData.isPublic && (
               <div className="space-y-3 pt-2 border-t border-gray-100">
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Gallery Style</Label>
+                  <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('projectForm.galleryStyle')}</Label>
                   <div className="flex flex-wrap gap-1 bg-gray-100 p-1 rounded-lg">
                     <button
                       type="button"
@@ -253,7 +255,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
                         }`}
                     >
                       <LayoutGrid className="h-3.5 w-3.5" />
-                      Justified
+                      {t('projectForm.justified')}
                     </button>
                     <button
                       type="button"
@@ -264,7 +266,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
                         }`}
                     >
                       <Columns className="h-3.5 w-3.5" />
-                      Masonry
+                      {t('projectForm.masonry')}
                     </button>
                     <button
                       type="button"
@@ -275,28 +277,28 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
                         }`}
                     >
                       <LayoutGrid className="h-3.5 w-3.5" />
-                      Grid
+                      {t('projectForm.grid')}
                     </button>
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground italic leading-tight">
                   {formData.galleryLayout === "justified"
-                    ? "Images fill rows and end flush at the bottom (Google Photos style)."
+                    ? t('projectForm.justifiedDescription')
                     : formData.galleryLayout === "masonry"
-                      ? "Columns are balanced for a clean bottom edge."
-                      : "Uniform squares for a structured look."}
+                      ? t('projectForm.masonryDescription')
+                      : t('projectForm.gridDescription')}
                 </p>
               </div>
             )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading
-                ? (isEditing ? "Updating..." : "Creating...")
-                : (isEditing ? "Update Project" : "Create Project")}
+                ? (isEditing ? t('common.updating') : t('common.creating'))
+                : (isEditing ? t('common.update') : t('common.create'))}
             </Button>
           </DialogFooter>
         </form>

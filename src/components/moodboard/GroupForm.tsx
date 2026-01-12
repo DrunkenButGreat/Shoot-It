@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { useI18n } from "@/components/I18nProvider"
 
 interface GroupFormProps {
   projectId: string
@@ -20,6 +21,7 @@ interface GroupFormProps {
 }
 
 export function GroupForm({ projectId, onSuccess }: GroupFormProps) {
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -49,10 +51,10 @@ export function GroupForm({ projectId, onSuccess }: GroupFormProps) {
         onSuccess?.()
       } else {
         const error = await response.json()
-        alert(error.error || "Failed to create group")
+        alert(error.error || t('moodboard.errorCreating'))
       }
     } catch (error) {
-      alert("An error occurred while creating the group")
+      alert(t('moodboard.errorCreating'))
     } finally {
       setIsLoading(false)
     }
@@ -61,47 +63,47 @@ export function GroupForm({ projectId, onSuccess }: GroupFormProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>+ New Group</Button>
+        <Button>{t('moodboard.newGroup')}</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[525px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create Moodboard Group</DialogTitle>
+            <DialogTitle>{t('moodboard.createGroup')}</DialogTitle>
             <DialogDescription>
-              Create a new group to organize your moodboard images.
+              {t('moodboard.createGroupDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Group Name *</Label>
+              <Label htmlFor="name">{t('moodboard.groupName')} *</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
-                placeholder="Vintage Vibes"
+                placeholder={t('moodboard.groupNamePlaceholder')}
                 required
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">{t('moodboard.groupDescription')}</Label>
               <Input
                 id="description"
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
                 }
-                placeholder="Describe this mood or style..."
+                placeholder={t('moodboard.groupDescriptionPlaceholder')}
               />
             </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Creating..." : "Create Group"}
+              {isLoading ? t('common.creating') : t('common.create')}
             </Button>
           </DialogFooter>
         </form>

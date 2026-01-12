@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ContractCard } from './ContractCard';
 import { ContractForm } from './ContractForm';
 import { Button } from '@/components/ui/button';
+import { useI18n } from '@/components/I18nProvider';
 
 type Contract = {
   id: string;
@@ -34,6 +35,7 @@ export function ContractsContent({
 }) {
   const [contracts, setContracts] = useState(initialContracts);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const { t } = useI18n();
 
   const refreshContracts = async () => {
     const response = await fetch(`/api/projects/${projectId}/contracts`);
@@ -47,17 +49,17 @@ export function ContractsContent({
     <div>
       <div className="mb-6 flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">
-          Contracts ({contracts.length})
+          {t('contracts.title')} ({contracts.length})
         </h2>
         <Button onClick={() => setIsFormOpen(true)} className="gap-2">
-          New Contract
+          {t('contracts.newContract')}
         </Button>
       </div>
 
       {contracts.length === 0 ? (
         <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-          <p className="text-gray-500 text-lg">No contracts yet</p>
-          <p className="text-sm text-gray-400 mt-2">Create contracts for your participants to sign</p>
+          <p className="text-gray-500 text-lg">{t('contracts.noContracts')}</p>
+          <p className="text-sm text-gray-400 mt-2">{t('contracts.contractsPrompt')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

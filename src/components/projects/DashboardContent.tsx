@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { ProjectCard } from "./ProjectCard"
 import { ProjectForm } from "./ProjectForm"
+import { useI18n } from "@/components/I18nProvider"
 
 interface Project {
   id: string
@@ -22,6 +23,7 @@ interface DashboardContentProps {
 export function DashboardContent({ projects }: DashboardContentProps) {
   const router = useRouter()
   const [currentTab, setCurrentTab] = useState<'active' | 'archived'>('active')
+  const { t } = useI18n();
 
   const handleProjectCreated = () => {
     router.refresh()
@@ -35,7 +37,7 @@ export function DashboardContent({ projects }: DashboardContentProps) {
     <>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">My Projects</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{t('common.myProjects')}</h2>
           <div className="flex gap-4 mt-2">
             <button
               onClick={() => setCurrentTab('active')}
@@ -44,7 +46,7 @@ export function DashboardContent({ projects }: DashboardContentProps) {
                 : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
             >
-              Active
+              {t('common.active')}
             </button>
             <button
               onClick={() => setCurrentTab('archived')}
@@ -53,7 +55,7 @@ export function DashboardContent({ projects }: DashboardContentProps) {
                 : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
             >
-              Archived
+              {t('common.archived')}
             </button>
           </div>
         </div>
@@ -64,10 +66,10 @@ export function DashboardContent({ projects }: DashboardContentProps) {
       {filteredProjects.length === 0 ? (
         <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
           <p className="text-gray-500 text-lg">
-            {currentTab === 'active' ? 'No active projects' : 'No archived projects'}
+            {currentTab === 'active' ? t('common.noActiveProjects') : t('common.noArchivedProjects')}
           </p>
           {currentTab === 'active' && (
-            <p className="text-sm text-gray-400 mt-2">Create your first project to get started</p>
+            <p className="text-sm text-gray-400 mt-2">{t('dashboard.createFirst')}</p>
           )}
         </div>
       ) : (

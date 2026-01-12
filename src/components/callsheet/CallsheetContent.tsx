@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScheduleForm } from './ScheduleForm';
 import { Save, Plus, Clock, MapPin, Calendar, Info } from 'lucide-react';
+import { useI18n } from '@/components/I18nProvider';
 
 type Callsheet = {
   id: string;
@@ -40,6 +41,7 @@ export function CallsheetContent({
   const [notes, setNotes] = useState(initialCallsheet?.additionalNotes || '');
   const [isScheduleFormOpen, setIsScheduleFormOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const { t } = useI18n();
 
   const refreshCallsheet = async () => {
     const response = await fetch(`/api/projects/${projectId}/callsheet`);
@@ -80,13 +82,13 @@ export function CallsheetContent({
       <div className="mb-8 flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">
-            Callsheet
+            {t('callsheet.title')}
           </h2>
-          <p className="text-sm text-gray-500 mt-1 italic">Manage shoot details and timeline</p>
+          <p className="text-sm text-gray-500 mt-1 italic">{t('callsheet.subtitle')}</p>
         </div>
         <Button onClick={handleSave} disabled={isSaving} className="gap-2 shadow-sm">
           <Save className="h-4 w-4" />
-          {isSaving ? 'Saving...' : 'Save Changes'}
+          {isSaving ? t('common.saving') : t('common.saveChanges')}
         </Button>
       </div>
 
@@ -97,14 +99,14 @@ export function CallsheetContent({
             <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Info className="h-4 w-4 text-blue-600" />
-                Shoot Details
+                {t('callsheet.details')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-5 pt-6">
               <div className="grid gap-2">
                 <Label htmlFor="shootDate" className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
                   <Calendar className="h-3 w-3" />
-                  Shoot Date
+                  {t('callsheet.date')}
                 </Label>
                 <Input
                   id="shootDate"
@@ -117,7 +119,7 @@ export function CallsheetContent({
               <div className="grid gap-2">
                 <Label htmlFor="location" className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
                   <MapPin className="h-3 w-3" />
-                  Location
+                  {t('callsheet.location')}
                 </Label>
                 <Input
                   id="location"
@@ -142,13 +144,14 @@ export function CallsheetContent({
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="notes" className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-                  Additional Notes
+                  <Info className="h-3 w-3" />
+                  {t('callsheet.notesTitle')}
                 </Label>
                 <textarea
                   id="notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Essential instructions..."
+                  placeholder={t('callsheet.notesPlaceholder')}
                   className="w-full min-h-[120px] px-3 py-2 border-2 border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-white"
                 />
               </div>
@@ -163,11 +166,11 @@ export function CallsheetContent({
               <div className="flex justify-between items-center">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Clock className="h-4 w-4 text-blue-600" />
-                  Schedule
+                  {t('callsheet.schedule')}
                 </CardTitle>
                 <Button onClick={() => setIsScheduleFormOpen(true)} size="sm" variant="outline" className="gap-2 rounded-xl">
                   <Plus className="h-3 w-3" />
-                  Add Item
+                  {t('callsheet.addItem')}
                 </Button>
               </div>
             </CardHeader>
@@ -189,9 +192,9 @@ export function CallsheetContent({
                 </div>
               ) : (
                 <div className="py-12 text-center bg-slate-50/30 rounded-2xl border-2 border-dashed border-slate-200">
-                  <p className="text-slate-400 font-medium italic">No schedule items yet</p>
+                  <p className="text-slate-400 font-medium italic">{t('callsheet.noItems')}</p>
                   <Button onClick={() => setIsScheduleFormOpen(true)} variant="link" className="mt-2 text-blue-600 font-bold">
-                    Create your first timeline item
+                    {t('callsheet.createFirst')}
                   </Button>
                 </div>
               )}

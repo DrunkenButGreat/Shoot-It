@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react"
 import { useState } from "react"
 import { useSearchParams } from "next/navigation"
+import { useI18n } from "@/components/I18nProvider"
 
 export default function LoginForm() {
   const [email, setEmail] = useState("")
@@ -11,6 +12,7 @@ export default function LoginForm() {
   const [error, setError] = useState("")
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
+  const { t } = useI18n()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,12 +27,12 @@ export default function LoginForm() {
       })
 
       if (result?.error) {
-        setError("Invalid email or password")
+        setError(t("auth.invalidEmail"))
       } else {
         window.location.href = callbackUrl
       }
     } catch (error) {
-      setError("An error occurred. Please try again.")
+      setError(t("auth.errorOccurred"))
     } finally {
       setIsLoading(false)
     }
@@ -44,8 +46,8 @@ export default function LoginForm() {
   return (
     <div className="w-full max-w-md space-y-6">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-gray-900">Welcome back</h1>
-        <p className="mt-2 text-gray-600">Sign in to your account</p>
+        <h1 className="text-3xl font-bold text-gray-900">{t("auth.welcomeBack")}</h1>
+        <p className="mt-2 text-gray-600">{t("auth.signInToAccount")}</p>
       </div>
 
       {error && (
@@ -57,7 +59,7 @@ export default function LoginForm() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-            Email
+            {t("auth.email")}
           </label>
           <input
             id="email"
@@ -72,7 +74,7 @@ export default function LoginForm() {
 
         <div>
           <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-            Password
+            {t("auth.password")}
           </label>
           <input
             id="password"
@@ -90,14 +92,14 @@ export default function LoginForm() {
           disabled={isLoading}
           className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
         >
-          {isLoading ? "Signing in..." : "Sign in"}
+          {isLoading ? t("auth.signingIn") : t("auth.signIn")}
         </button>
       </form>
 
       <div className="text-center text-sm text-gray-600 mt-4">
-        Don&apos;t have an account?{" "}
+        {t("auth.noAccount")}{" "}
         <a href="/signup" className="text-blue-600 hover:underline">
-          Sign up
+          {t("auth.signup")}
         </a>
       </div>
     </div>

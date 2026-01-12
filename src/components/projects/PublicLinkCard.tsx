@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Check, Copy, ExternalLink, Globe, Lock } from "lucide-react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useI18n } from "@/components/I18nProvider"
 
 interface PublicLinkCardProps {
     project: {
@@ -18,6 +19,7 @@ interface PublicLinkCardProps {
 }
 
 export function PublicLinkCard({ project }: PublicLinkCardProps) {
+    const { t } = useI18n()
     const [copied, setCopied] = useState(false)
     const [publicUrl, setPublicUrl] = useState(`/p/${project.shortCode}`)
 
@@ -35,35 +37,35 @@ export function PublicLinkCard({ project }: PublicLinkCardProps) {
         <Card className="border-none shadow-lg bg-white overflow-hidden">
             <CardHeader className="bg-slate-50/50 pb-4">
                 <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">Project Access</CardTitle>
+                    <CardTitle className="text-lg">{t('projectForm.projectAccess')}</CardTitle>
                     {project.isPublic ? (
                         <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-100 text-green-700 border border-green-200">
                             <Globe className="h-3 w-3" />
-                            <span className="text-[10px] font-bold uppercase">Public</span>
+                            <span className="text-[10px] font-bold uppercase">{t('projectForm.public')}</span>
                         </div>
                     ) : (
                         <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-gray-100 text-gray-600 border border-gray-200">
                             <Lock className="h-3 w-3" />
-                            <span className="text-[10px] font-bold uppercase">Private</span>
+                            <span className="text-[10px] font-bold uppercase">{t('projectForm.private')}</span>
                         </div>
                     )}
                 </div>
             </CardHeader>
             <CardContent className="pt-6 space-y-4">
                 <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Owner</label>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('common.owner')}</label>
                     <p className="text-sm font-medium text-gray-900">{project.owner.name || project.owner.email}</p>
                 </div>
 
                 <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Public Link</label>
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('projectForm.publicLink')}</label>
                         <Link
                             href={`/p/${project.shortCode}`}
                             target="_blank"
                             className="text-xs text-blue-600 hover:underline flex items-center gap-1"
                         >
-                            Open <ExternalLink className="h-3 w-3" />
+                            {t('projectForm.open')} <ExternalLink className="h-3 w-3" />
                         </Link>
                     </div>
                     <div className="flex items-center gap-2 group">
@@ -83,7 +85,7 @@ export function PublicLinkCard({ project }: PublicLinkCardProps) {
 
                 {!project.isPublic && (
                     <p className="text-[11px] text-amber-600 bg-amber-50 p-2.5 rounded-lg border border-amber-100 leading-relaxed italic">
-                        <strong>Note:</strong> Public access is currently disabled. Only team members can access this project via login.
+                        <strong>{t('projectForm.note')}</strong> {t('projectForm.publicDisabledNote')}
                     </p>
                 )}
             </CardContent>

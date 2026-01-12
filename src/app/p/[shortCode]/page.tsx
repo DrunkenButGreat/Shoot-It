@@ -7,6 +7,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Clock } from "lucide-react"
 import { PublicGallery } from "@/components/public/PublicGallery"
+import { getLocale, getDictionary } from "@/lib/i18n"
+import { cookies } from "next/headers"
 
 export default async function PublicProjectPage({
     params,
@@ -15,6 +17,9 @@ export default async function PublicProjectPage({
 }) {
     const { shortCode } = await params
     const session = await auth()
+    const cookieStore = await cookies()
+    const locale = getLocale(cookieStore)
+    const dict = await getDictionary(locale)
 
     const project = await prisma.project.findUnique({
         where: { shortCode },
@@ -118,7 +123,7 @@ export default async function PublicProjectPage({
                     <div className="flex flex-wrap items-end justify-between gap-6">
                         <div className="space-y-4">
                             <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-200 border border-blue-500/30 backdrop-blur-md">
-                                Public Showcase
+                                {project.isPublic ? dict.projectForm.public : dict.projectForm.private} {dict.publicProject.showcase}
                             </div>
                             <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight">
                                 {project.name}
@@ -127,7 +132,7 @@ export default async function PublicProjectPage({
                                 {projectDate && (
                                     <div className="flex items-center gap-2">
                                         <Calendar className="h-5 w-5 text-blue-400" />
-                                        <span className="font-medium">{projectDate.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                        <span className="font-medium">{projectDate.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                                     </div>
                                 )}
                                 {project.location && (
@@ -148,7 +153,7 @@ export default async function PublicProjectPage({
                                 </div>
                             )}
                             <div>
-                                <p className="text-xs text-slate-400 font-medium">Project Owner</p>
+                                <p className="text-xs text-slate-400 font-medium">{dict.publicProject.projectOwner}</p>
                                 <p className="text-sm text-white font-bold">{project.owner.name || project.owner.email}</p>
                             </div>
                         </div>
@@ -162,7 +167,7 @@ export default async function PublicProjectPage({
                     <div className="lg:col-span-2 space-y-8">
                         <Card className="border-none shadow-xl shadow-blue-900/5 overflow-hidden bg-white/80 backdrop-blur-md">
                             <CardHeader className="pb-0">
-                                <CardTitle className="text-2xl">Overview</CardTitle>
+                                <CardTitle className="text-2xl">{dict.publicProject.overview}</CardTitle>
                                 {project.description && (
                                     <CardDescription className="text-base text-gray-600 mt-4 leading-relaxed">
                                         {project.description}
@@ -172,48 +177,52 @@ export default async function PublicProjectPage({
                             <CardContent className="pt-8">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <ModuleBox
-                                        title="Moodboard"
+                                        title={dict.project.moodboard}
                                         icon={<ImageIcon className="h-6 w-6" />}
                                         count={project._count.moodboardGroups}
-                                        label="Groups"
+                                        label={dict.project.groups.replace('{count}', '').trim()}
                                         href={session ? `/project/${project.id}/moodboard` : (project.showMoodboardPublicly ? '#moodboard' : '#')}
                                         disabled={!session && !project.showMoodboardPublicly}
+                                        dict={dict}
                                     />
                                     <ModuleBox
-                                        title="Participants"
+                                        title={dict.project.participants}
                                         icon={<Users className="h-6 w-6" />}
                                         count={project._count.participants}
-                                        label="Team Members"
+                                        label={dict.project.people.replace('{count}', '').trim()}
                                         href={session ? `/project/${project.id}/participants` : (project.showParticipantsPublicly ? '#participants' : '#')}
                                         disabled={!session && !project.showParticipantsPublicly}
+                                        dict={dict}
                                     />
                                     <ModuleBox
-                                        title="Selection"
-                                        icon={<ImageIcon className="h-6 w-6" />}
+                                        title={dict.project.selection}
+                                        icon={<CheckSquare className="h-6 w-6" />}
                                         count={project._count.selectionImages}
-                                        label="Images"
+                                        label={dict.project.imagesCount.replace('{count}', '').trim()}
                                         href={session ? `/project/${project.id}/selection` : (project.showSelectionPublicly ? '#selection' : '#')}
                                         disabled={!session && !project.showSelectionPublicly}
+                                        dict={dict}
                                     />
                                     <ModuleBox
-                                        title="Callsheet"
+                                        title={dict.project.callsheet}
                                         icon={<Clock className="h-6 w-6" />}
                                         count={project.callsheet ? 1 : 0}
-                                        label="Details"
+                                        label={dict.project.callsheet}
                                         href={session ? `/project/${project.id}/callsheet` : (project.showCallsheetPublicly ? '#callsheet' : '#')}
                                         disabled={!session && !project.showCallsheetPublicly}
+                                        dict={dict}
                                     />
                                 </div>
 
                                 {!session && (
                                     <div className="mt-8 p-6 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 flex flex-col md:flex-row items-center justify-between gap-4">
                                         <div>
-                                            <h4 className="font-bold text-blue-900 text-lg">Are you part of the team?</h4>
-                                            <p className="text-blue-700 text-sm">Login to access detailed documents, high-res images and the callsheet.</p>
+                                            <h4 className="font-bold text-blue-900 text-lg">{dict.publicProject.areYouTeam}</h4>
+                                            <p className="text-blue-700 text-sm">{dict.publicProject.loginToAccess}</p>
                                         </div>
                                         <Link href={`/login?callbackUrl=/p/${shortCode}`}>
                                             <Button className="bg-blue-600 hover:bg-blue-700 whitespace-nowrap">
-                                                Sign In to Access
+                                                {dict.auth.signIn}
                                             </Button>
                                         </Link>
                                     </div>
@@ -228,7 +237,7 @@ export default async function PublicProjectPage({
                                     <div className="p-2 rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20">
                                         <ImageIcon className="h-5 w-5" />
                                     </div>
-                                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Moodboard</h2>
+                                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.project.moodboard}</h2>
                                 </div>
                                 <div className="space-y-8">
                                     {project.moodboardGroups.map((group: any) => (
@@ -255,7 +264,7 @@ export default async function PublicProjectPage({
                                     <div className="p-2 rounded-xl bg-indigo-500 text-white shadow-lg shadow-indigo-500/20">
                                         <Users className="h-5 w-5" />
                                     </div>
-                                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Team Members</h2>
+                                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.project.participants}</h2>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     {project.participants.map((participant: any) => (
@@ -291,7 +300,7 @@ export default async function PublicProjectPage({
                                     <div className="p-2 rounded-xl bg-amber-500 text-white shadow-lg shadow-amber-500/20">
                                         <ImageIcon className="h-5 w-5" />
                                     </div>
-                                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Selection Gallery</h2>
+                                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.project.selection}</h2>
                                 </div>
                                 <Card className="border-none shadow-xl overflow-hidden bg-white/60 backdrop-blur-md">
                                     <CardContent className="pt-6">
@@ -311,22 +320,22 @@ export default async function PublicProjectPage({
                                     <div className="p-2 rounded-xl bg-rose-500 text-white shadow-lg shadow-rose-500/20">
                                         <Clock className="h-5 w-5" />
                                     </div>
-                                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Callsheet Overview</h2>
+                                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.project.callsheet}</h2>
                                 </div>
                                 <Card className="border-none shadow-xl overflow-hidden bg-white/80 backdrop-blur-sm">
                                     <CardContent className="p-0">
                                         <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100">
                                             <div className="p-6 space-y-4">
-                                                <h3 className="font-bold text-gray-900 uppercase tracking-widest text-xs">Essential Times</h3>
+                                                <h3 className="font-bold text-gray-900 uppercase tracking-widest text-xs">{dict.publicProject.essentialTimes}</h3>
                                                 <div className="grid grid-cols-2 gap-4">
-                                                    <TimeItem label="Call" time={project.callsheet.callTime} color="blue" />
-                                                    <TimeItem label="Start" time={project.callsheet.startTime} color="green" />
-                                                    <TimeItem label="End" time={project.callsheet.endTime} color="orange" />
-                                                    <TimeItem label="Wrap" time={project.callsheet.wrapTime} color="rose" />
+                                                    <TimeItem label={dict.callsheet.call} time={project.callsheet.callTime} color="blue" />
+                                                    <TimeItem label={dict.callsheet.start} time={project.callsheet.startTime} color="green" />
+                                                    <TimeItem label={dict.callsheet.end} time={project.callsheet.endTime} color="orange" />
+                                                    <TimeItem label={dict.callsheet.wrap} time={project.callsheet.wrapTime} color="rose" />
                                                 </div>
                                             </div>
                                             <div className="p-6 space-y-4">
-                                                <h3 className="font-bold text-gray-900 uppercase tracking-widest text-xs">Location Details</h3>
+                                                <h3 className="font-bold text-gray-900 uppercase tracking-widest text-xs">{dict.publicProject.locationDetails}</h3>
                                                 <div className="space-y-2">
                                                     <p className="font-bold text-gray-900">{project.callsheet.locationName || project.location}</p>
                                                     <p className="text-sm text-gray-600 leading-relaxed">{project.callsheet.locationAddress || project.address}</p>
@@ -341,7 +350,7 @@ export default async function PublicProjectPage({
 
                                         {project.callsheet.scheduleItems?.length > 0 && (
                                             <div className="border-t border-gray-100 p-6">
-                                                <h3 className="font-bold text-gray-900 uppercase tracking-widest text-xs mb-6">Schedule</h3>
+                                                <h3 className="font-bold text-gray-900 uppercase tracking-widest text-xs mb-6">{dict.publicProject.schedule}</h3>
                                                 <div className="space-y-4">
                                                     {project.callsheet.scheduleItems.map((item: any) => (
                                                         <div key={item.id} className="flex items-start gap-4 group">
@@ -367,23 +376,23 @@ export default async function PublicProjectPage({
                     <div className="space-y-6">
                         <Card className="border-none shadow-lg bg-white/90 backdrop-blur-sm">
                             <CardHeader>
-                                <CardTitle className="text-lg">Project Info</CardTitle>
+                                <CardTitle className="text-lg">{dict.publicProject.projectInfo}</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="flex items-start gap-3">
                                     <MapPin className="h-5 w-5 text-gray-400 mt-0.5" />
                                     <div>
-                                        <p className="text-sm font-semibold text-gray-900">Location</p>
-                                        <p className="text-sm text-gray-600">{project.location || 'Not set'}</p>
+                                        <p className="text-sm font-semibold text-gray-900">{dict.projectForm.location}</p>
+                                        <p className="text-sm text-gray-600">{project.location || dict.common.tbd}</p>
                                         {project.address && <p className="text-xs text-gray-400 mt-1">{project.address}</p>}
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-3">
                                     <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
                                     <div>
-                                        <p className="text-sm font-semibold text-gray-900">Shoot Date</p>
+                                        <p className="text-sm font-semibold text-gray-900">{dict.projectForm.date}</p>
                                         <p className="text-sm text-gray-600">
-                                            {projectDate ? projectDate.toLocaleDateString() : 'TBD'}
+                                            {projectDate ? projectDate.toLocaleDateString(locale) : dict.common.tbd}
                                         </p>
                                     </div>
                                 </div>
@@ -393,7 +402,7 @@ export default async function PublicProjectPage({
                         {session?.user?.id === project.ownerId && (
                             <Link href={`/project/${project.id}`} className="block">
                                 <Button className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl py-6 h-auto transition-all shadow-lg hover:shadow-slate-900/20">
-                                    Go to Project Management
+                                    {dict.publicProject.goToDashboard}
                                 </Button>
                             </Link>
                         )}
@@ -404,7 +413,7 @@ export default async function PublicProjectPage({
     )
 }
 
-function ModuleBox({ title, icon, count, label, href, disabled }: any) {
+function ModuleBox({ title, icon, count, label, href, disabled, dict }: any) {
     const content = (
         <div className={`p-4 rounded-2xl border transition-all ${disabled ? 'bg-gray-50 border-gray-100 opacity-60' : 'bg-white border-gray-100 hover:border-blue-200 hover:shadow-lg hover:-translate-y-1'}`}>
             <div className="flex items-start justify-between mb-4">
@@ -417,7 +426,7 @@ function ModuleBox({ title, icon, count, label, href, disabled }: any) {
                 </div>
             </div>
             <h3 className="font-bold text-gray-800">{title}</h3>
-            {disabled && <p className="text-[10px] text-gray-400 mt-1 italic">Login required</p>}
+            {disabled && <p className="text-[10px] text-gray-400 mt-1 italic">{dict.publicProject.loginRequired}</p>}
         </div>
     )
 

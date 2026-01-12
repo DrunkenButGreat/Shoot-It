@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useI18n } from '@/components/I18nProvider';
 
 export function ContractForm({
   projectId,
@@ -25,6 +26,7 @@ export function ContractForm({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const { t } = useI18n();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,15 +63,15 @@ export function ContractForm({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>New Contract</DialogTitle>
+          <DialogTitle>{t('contracts.add')}</DialogTitle>
           <DialogDescription>
-            Create a new contract for this project. You can write the contract content in markdown format.
+            {t('projectForm.isCreatingDescription')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="title">Contract Title</Label>
+              <Label htmlFor="title">{t('contracts.title')}</Label>
               <Input
                 id="title"
                 value={title}
@@ -80,12 +82,12 @@ export function ContractForm({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="content">Contract Content (Markdown)</Label>
+              <Label htmlFor="content">{t('contracts.content')}</Label>
               <textarea
                 id="content"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="Enter contract terms and conditions..."
+                placeholder="..."
                 className="w-full min-h-[200px] px-3 py-2 border rounded-md"
                 required
               />
@@ -93,10 +95,10 @@ export function ContractForm({
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : 'Create Contract'}
+              {isSubmitting ? t('common.creating') : t('common.create')}
             </Button>
           </DialogFooter>
         </form>

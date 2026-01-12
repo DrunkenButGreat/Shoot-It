@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import ImageUpload from "./ImageUpload"
 import { LocalMediaPicker } from "../selection/LocalMediaPicker"
+import { useI18n } from "@/components/I18nProvider"
 
 import Lightbox from "yet-another-react-lightbox"
 import "yet-another-react-lightbox/styles.css"
@@ -51,6 +52,7 @@ interface MoodboardGroupProps {
 }
 
 export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia, onUpdate, onDelete }: MoodboardGroupProps) {
+  const { t } = useI18n()
   const [isDeleting, setIsDeleting] = useState(false)
   const [showComments, setShowComments] = useState(false)
   const [newComment, setNewComment] = useState("")
@@ -58,7 +60,7 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
   const [index, setIndex] = useState(-1)
 
   const handleDelete = async () => {
-    if (!confirm(`Are you sure you want to delete the group "${group.name}"?`)) {
+    if (!confirm(t('moodboard.deleteGroupConfirm').replace('{name}', group.name))) {
       return
     }
 
@@ -72,10 +74,10 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
       if (response.ok) {
         onDelete?.()
       } else {
-        alert("Failed to delete group")
+        alert(t('moodboard.deleteGroupError'))
       }
     } catch (error) {
-      alert("An error occurred")
+      alert(t('common.error'))
     } finally {
       setIsDeleting(false)
     }
@@ -285,13 +287,13 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
 
             <div className="flex flex-col gap-4">
               <div className="flex justify-between items-center">
-                <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Import Images</h4>
+                <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider">{t('selection.importImages')}</h4>
                 {hasLocalMedia && (
                   <LocalMediaPicker
                     projectId={projectId}
                     onSuccess={() => onUpdate?.()}
                     importUrl={`/api/projects/${projectId}/moodboard/groups/${group.id}/scan`}
-                    label="Import Folder into Group"
+                    label={t('selection.importToGroup')}
                   />
                 )}
               </div>
@@ -299,7 +301,7 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
                 uploadUrl={`/api/projects/${projectId}/moodboard/groups/${group.id}/images`}
                 onSuccess={() => onUpdate?.()}
                 className="w-full min-h-[120px] border-dashed bg-gray-50/50 hover:bg-gray-100/30 transition-all rounded-2xl flex flex-col items-center justify-center border-gray-200"
-                label="Drag & Drop or Click to Upload"
+                label={t('selection.dragDrop')}
               />
             </div>
           </div>
@@ -323,7 +325,7 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
                         {comment.user.name || comment.user.email}
                       </span>
                       <span className="text-xs text-gray-500">
-                        {new Date(comment.createdAt).toLocaleDateString()}
+                        {new Date(comment.createdAt).toLocaleDateString(locale)}
                       </span>
                     </div>
                     <p className="text-sm text-gray-700">{comment.content}</p>

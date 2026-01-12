@@ -9,6 +9,7 @@ import { LocalMediaPicker } from "./LocalMediaPicker"
 import { ExportDialog } from "./ExportDialog"
 import Lightbox from "yet-another-react-lightbox"
 import "yet-another-react-lightbox/styles.css"
+import { useI18n } from "@/components/I18nProvider"
 
 interface Rating {
   id: string
@@ -38,6 +39,7 @@ export function SelectionContent({ projectId, initialImages: images, userId, gal
   const [index, setIndex] = useState(-1)
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { t } = useI18n();
 
   const handleRatingUpdated = () => {
     router.refresh()
@@ -70,7 +72,7 @@ export function SelectionContent({ projectId, initialImages: images, userId, gal
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-4">
             <h2 className="text-2xl font-bold text-gray-900">
-              Selection Gallery ({images.length} images)
+              {t('selection.title')} ({images.length} {t('selection.images')})
             </h2>
             <div className="flex items-center gap-2">
               {images.length > 0 && (
@@ -96,8 +98,8 @@ export function SelectionContent({ projectId, initialImages: images, userId, gal
       <div className="space-y-8">
         {images.length === 0 ? (
           <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-            <p className="text-gray-500 text-lg">No images yet</p>
-            <p className="text-sm text-gray-400 mt-2">Upload images or import from a local folder to get started</p>
+            <p className="text-gray-500 text-lg">{t('common.noImages')}</p>
+            <p className="text-sm text-gray-400 mt-2">{t('common.uploadPrompt')}</p>
           </div>
         ) : (
           <>
@@ -171,20 +173,20 @@ export function SelectionContent({ projectId, initialImages: images, userId, gal
 
         <div className="flex flex-col gap-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-bold text-gray-900">Import Images</h3>
+            <h3 className="text-lg font-bold text-gray-900">{t('selection.importImages')}</h3>
             {hasLocalMedia && (
               <LocalMediaPicker
                 projectId={projectId}
                 onSuccess={() => router.refresh()}
                 importUrl={`/api/projects/${projectId}/selection/scan`}
-                label="Import from Local Folder"
+                label={t('selection.importLocal')}
               />
             )}
           </div>
           <ImageUpload
             uploadUrl={`/api/projects/${projectId}/selection/images`}
             onSuccess={() => router.refresh()}
-            label="Drag & Drop or Click to Upload"
+            label={t('selection.dragDrop')}
             className="w-full min-h-[160px] border-dashed bg-gray-50/50 hover:bg-gray-100/30 transition-all rounded-2xl flex flex-col items-center justify-center border-gray-200"
           />
         </div>

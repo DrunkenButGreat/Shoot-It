@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { useI18n } from "@/components/I18nProvider"
 
 interface Project {
   id: string
@@ -23,6 +24,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
   const projectDate = project.date ? new Date(project.date) : null
   const router = useRouter()
   const [isUpdating, setIsUpdating] = useState(false)
+  const { t, locale } = useI18n()
 
   const toggleArchive = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -58,7 +60,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
               className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
               onClick={toggleArchive}
               disabled={isUpdating}
-              title={project.isArchived ? "Unarchive" : "Archive"}
+              title={project.isArchived ? t('common.unarchive') : t('common.archive')}
             >
               {project.isArchived ? (
                 <ArchiveRestore className="h-4 w-4" />
@@ -78,7 +80,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
             {projectDate && (
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                <span>{projectDate.toLocaleDateString()}</span>
+                <span>{projectDate.toLocaleDateString(locale)}</span>
               </div>
             )}
             {project.location && (

@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import ImageUpload from '../moodboard/ImageUpload';
+import { useI18n } from '@/components/I18nProvider';
 
 type Folder = {
   id: string;
@@ -30,6 +31,7 @@ export function FolderTree({
   projectId: string;
   onDelete: () => void;
 }) {
+  const { t } = useI18n();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -74,13 +76,13 @@ export function FolderTree({
           <div className="flex items-center gap-2">
             <span className="text-lg">📁</span>
             <span className="font-medium">{folder.name}</span>
-            <span className="text-sm text-gray-500">({folder._count.images} images)</span>
+            <span className="text-sm text-gray-500">({folder._count.images} {t('selection.images')})</span>
           </div>
           <div className="flex gap-2">
             <ImageUpload
               uploadUrl={`/api/projects/${projectId}/results/folders/${folder.id}/images`}
               onSuccess={() => onDelete()}
-              label="Upload"
+              label={t('results.upload')}
               compact
             />
             <Button
@@ -91,7 +93,7 @@ export function FolderTree({
                 setShowDeleteDialog(true);
               }}
             >
-              Delete
+              {t('common.delete')}
             </Button>
           </div>
         </div>
@@ -115,17 +117,17 @@ export function FolderTree({
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Folder</DialogTitle>
+            <DialogTitle>{t('results.deleteTitle')}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{selectedFolder?.name}"? This action cannot be undone.
+              {t('results.deleteConfirm')} ("{selectedFolder?.name}")
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
-              {isDeleting ? 'Deleting...' : 'Delete'}
+              {isDeleting ? t('common.loading') : t('common.delete')}
             </Button>
           </DialogFooter>
         </DialogContent>

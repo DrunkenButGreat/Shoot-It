@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 import { Upload, Loader2, FileImage } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useI18n } from "@/components/I18nProvider"
 
 interface ImageUploadProps {
     uploadUrl: string
@@ -17,11 +18,13 @@ interface ImageUploadProps {
 export default function ImageUpload({
     uploadUrl,
     onSuccess,
-    label = "Upload Image",
+    label,
     className,
     compact,
     children
 }: ImageUploadProps) {
+    const { t } = useI18n()
+    const defaultLabel = label || t('selection.dragAndDrop')
     const [uploadingCount, setUploadingCount] = useState(0)
     const [isDragging, setIsDragging] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -30,7 +33,7 @@ export default function ImageUpload({
         const fileArray = Array.from(files).filter(file => file.type.startsWith("image/"))
 
         if (fileArray.length === 0) {
-            alert("Please upload image files")
+            alert(t('selection.pleaseUploadImages'))
             return
         }
 
@@ -119,8 +122,8 @@ export default function ImageUpload({
                     <div className="absolute inset-0 z-50 flex items-center justify-center rounded-xl bg-blue-500/10 backdrop-blur-[2px] border-2 border-primary border-dashed pointer-events-none">
                         <div className="bg-white p-6 rounded-2xl shadow-2xl border border-blue-200 flex flex-col items-center gap-2 animate-in zoom-in-95 duration-200">
                             <Upload className="h-10 w-10 text-blue-500 animate-bounce" />
-                            <p className="font-bold text-lg">Drop to upload</p>
-                            <p className="text-sm text-gray-500">Add to this group</p>
+                            <p className="font-bold text-lg">{t('moodboard.dropToUpload')}</p>
+                            <p className="text-sm text-gray-500">{t('moodboard.addToGroup')}</p>
                         </div>
                     </div>
                 )}
@@ -129,7 +132,7 @@ export default function ImageUpload({
                 {isUploading && (
                     <div className="absolute top-2 right-2 z-50 bg-white/90 backdrop-blur py-1 px-3 rounded-full shadow-sm border flex items-center gap-2">
                         <Loader2 className="h-3 w-3 animate-spin text-blue-500" />
-                        <span className="text-xs font-medium">Uploading {uploadingCount}...</span>
+                        <span className="text-xs font-medium">{t('selection.uploading').replace('{count}', uploadingCount.toString())}</span>
                     </div>
                 )}
             </div>
@@ -173,12 +176,12 @@ export default function ImageUpload({
                 </div>
 
                 <p className={cn("font-medium text-gray-700", compact ? "text-xs" : "text-sm")}>
-                    {isUploading ? `Uploading ${uploadingCount}...` : isDragging ? "Drop" : label}
+                    {isUploading ? t('selection.uploading').replace('{count}', uploadingCount.toString()) : isDragging ? t('selection.drop') : defaultLabel}
                 </p>
 
                 {!compact && !isUploading && (
                     <p className="text-xs text-gray-400 mt-1">
-                        JPG, PNG, WebP or GIF (max. 10MB)
+                        {t('selection.imageConstraints')}
                     </p>
                 )}
             </div>
@@ -191,7 +194,7 @@ export default function ImageUpload({
                     onClick={() => fileInputRef.current?.click()}
                     className="mt-2"
                 >
-                    Select Files
+                    {t('selection.selectFiles')}
                 </Button>
             )}
 

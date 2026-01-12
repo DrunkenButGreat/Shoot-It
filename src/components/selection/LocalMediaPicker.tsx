@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Folder, Loader2, Import } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useI18n } from "@/components/I18nProvider"
 import {
     Dialog,
     DialogContent,
@@ -20,11 +21,14 @@ interface LocalMediaPickerProps {
     label?: string
 }
 
-export function LocalMediaPicker({ projectId, onSuccess, importUrl, label = "Import from Local Folder" }: LocalMediaPickerProps) {
+export function LocalMediaPicker({ projectId, onSuccess, importUrl, label }: LocalMediaPickerProps) {
+    const { t } = useI18n()
     const [open, setOpen] = useState(false)
     const [folders, setFolders] = useState<string[]>([])
     const [loading, setLoading] = useState(false)
     const [importing, setImporting] = useState<string | null>(null)
+
+    const displayLabel = label || t('selection.importFromLocal')
 
     useEffect(() => {
         if (open) {
@@ -79,9 +83,9 @@ export function LocalMediaPicker({ projectId, onSuccess, importUrl, label = "Imp
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Select Folder to Import</DialogTitle>
+                    <DialogTitle>{t('selection.selectFolder')}</DialogTitle>
                     <DialogDescription>
-                        Choose a folder from your local media storage to import images from.
+                        {t('selection.selectFolderDescription')}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -92,7 +96,7 @@ export function LocalMediaPicker({ projectId, onSuccess, importUrl, label = "Imp
                         </div>
                     ) : folders.length === 0 ? (
                         <div className="text-center py-8 text-gray-500">
-                            No folders found in local media path.
+                            {t('selection.noFoldersFound')}
                         </div>
                     ) : (
                         <div className="h-72 w-full rounded-md border p-2 overflow-y-auto">
@@ -117,7 +121,7 @@ export function LocalMediaPicker({ projectId, onSuccess, importUrl, label = "Imp
                                             ) : (
                                                 <div className="flex items-center gap-1">
                                                     <Import className="h-4 w-4" />
-                                                    <span>Import</span>
+                                                    <span>{t('selection.import')}</span>
                                                 </div>
                                             )}
                                         </Button>
@@ -130,7 +134,7 @@ export function LocalMediaPicker({ projectId, onSuccess, importUrl, label = "Imp
 
                 <DialogFooter className="sm:justify-start">
                     <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
-                        Close
+                        {t('common.cancel')}
                     </Button>
                 </DialogFooter>
             </DialogContent>

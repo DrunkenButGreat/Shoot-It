@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { MoodboardGroup } from "./MoodboardGroup"
 import { GroupForm } from "./GroupForm"
 import { Button } from "@/components/ui/button"
+import { useI18n } from "@/components/I18nProvider"
 
 interface MoodboardImage {
   id: string
@@ -45,6 +46,7 @@ interface MoodboardContentProps {
 
 export function MoodboardContent({ projectId, initialGroups: groups, galleryLayout, hasLocalMedia }: MoodboardContentProps) {
   const router = useRouter()
+  const { t } = useI18n();
 
   const handleGroupAdded = () => {
     router.refresh()
@@ -62,15 +64,15 @@ export function MoodboardContent({ projectId, initialGroups: groups, galleryLayo
     <>
       <div className="mb-6 flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">
-          Moodboard Groups ({groups.length})
+          {t('moodboard.title')} ({groups.length})
         </h2>
         <GroupForm projectId={projectId} onSuccess={handleGroupAdded} />
       </div>
 
       {groups.length === 0 ? (
         <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-          <p className="text-gray-500 text-lg">No moodboard groups yet</p>
-          <p className="text-sm text-gray-400 mt-2">Create groups to organize your inspiration images</p>
+          <p className="text-gray-500 text-lg">{t('moodboard.noGroups')}</p>
+          <p className="text-sm text-gray-400 mt-2">{t('moodboard.groupsPrompt')}</p>
         </div>
       ) : (
         <div className="space-y-8">

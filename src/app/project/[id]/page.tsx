@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ProjectActions } from "@/components/projects/ProjectActions"
 import { PublicLinkCard } from "@/components/projects/PublicLinkCard"
+import { getLocale, getDictionary } from "@/lib/i18n"
+import { cookies } from "next/headers"
 
 export default async function ProjectPage({
   params,
@@ -21,6 +23,9 @@ export default async function ProjectPage({
   }
 
   const { id } = await params
+  const cookieStore = await cookies()
+  const locale = getLocale(cookieStore)
+  const dict = await getDictionary(locale)
 
   // Check access
   const hasAccess = await canAccessProject(session.user.id, id)
@@ -73,7 +78,7 @@ export default async function ProjectPage({
             <Link href="/dashboard">
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Projects
+                {dict.common.backToProjects}
               </Button>
             </Link>
             {isOwner && (
@@ -91,12 +96,12 @@ export default async function ProjectPage({
             <h1 className="text-3xl font-bold text-gray-900">{project.name}</h1>
             {project.isArchived && (
               <span className="bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded border border-amber-200 uppercase tracking-wider">
-                Archived
+                {dict.common.archived}
               </span>
             )}
             {isParticipant && (
               <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded border border-blue-200 uppercase tracking-wider">
-                {participantRole || 'Participant'}
+                {participantRole || dict.common.participant}
               </span>
             )}
           </div>
@@ -107,7 +112,7 @@ export default async function ProjectPage({
             {projectDate && (
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                <span>{projectDate.toLocaleDateString()}</span>
+                <span>{projectDate.toLocaleDateString(locale)}</span>
               </div>
             )}
             {project.location && (
@@ -126,13 +131,13 @@ export default async function ProjectPage({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Moodboard</CardTitle>
-              <CardDescription>{project._count.moodboardGroups} groups</CardDescription>
+              <CardTitle className="text-lg">{dict.project.moodboard}</CardTitle>
+              <CardDescription>{dict.project.groups.replace('{count}', project._count.moodboardGroups.toString())}</CardDescription>
             </CardHeader>
             <CardContent>
               <Link href={`/project/${id}/moodboard`}>
                 <Button variant="outline" className="w-full">
-                  Manage Moodboard
+                  {dict.project.manage} {dict.project.moodboard}
                 </Button>
               </Link>
             </CardContent>
@@ -140,13 +145,13 @@ export default async function ProjectPage({
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Participants</CardTitle>
-              <CardDescription>{project._count.participants} people</CardDescription>
+              <CardTitle className="text-lg">{dict.project.participants}</CardTitle>
+              <CardDescription>{dict.project.people.replace('{count}', project._count.participants.toString())}</CardDescription>
             </CardHeader>
             <CardContent>
               <Link href={`/project/${id}/participants`}>
                 <Button variant="outline" className="w-full">
-                  Manage Participants
+                  {dict.project.manage} {dict.project.participants}
                 </Button>
               </Link>
             </CardContent>
@@ -154,13 +159,13 @@ export default async function ProjectPage({
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Contracts</CardTitle>
-              <CardDescription>{project._count.contracts} contracts</CardDescription>
+              <CardTitle className="text-lg">{dict.project.contracts}</CardTitle>
+              <CardDescription>{dict.project.contractsCount.replace('{count}', project._count.contracts.toString())}</CardDescription>
             </CardHeader>
             <CardContent>
               <Link href={`/project/${id}/contracts`}>
                 <Button variant="outline" className="w-full">
-                  Manage Contracts
+                  {dict.project.manage} {dict.project.contracts}
                 </Button>
               </Link>
             </CardContent>
@@ -168,13 +173,13 @@ export default async function ProjectPage({
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Selection</CardTitle>
-              <CardDescription>{project._count.selectionImages} images</CardDescription>
+              <CardTitle className="text-lg">{dict.project.selection}</CardTitle>
+              <CardDescription>{dict.project.imagesCount.replace('{count}', project._count.selectionImages.toString())}</CardDescription>
             </CardHeader>
             <CardContent>
               <Link href={`/project/${id}/selection`}>
                 <Button variant="outline" className="w-full">
-                  Selection Gallery
+                  {dict.selection.title}
                 </Button>
               </Link>
             </CardContent>
@@ -185,19 +190,19 @@ export default async function ProjectPage({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
           <Card className="border-none shadow-lg bg-white">
             <CardHeader>
-              <CardTitle className="text-lg">Database Info</CardTitle>
+              <CardTitle className="text-lg">{dict.project.databaseInfo}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div>
-                <span className="text-sm font-medium">Owner:</span>{" "}
+                <span className="text-sm font-medium">{dict.common.owner}:</span>{" "}
                 <span className="text-sm text-gray-600">{project.owner.name || project.owner.email}</span>
               </div>
               <div>
-                <span className="text-sm font-medium">Internal ID:</span>{" "}
+                <span className="text-sm font-medium">{dict.project.internalId}:</span>{" "}
                 <code className="text-[10px] bg-gray-100 px-2 py-1 rounded font-mono">{project.id}</code>
               </div>
               <div>
-                <span className="text-sm font-medium">Short Code:</span>{" "}
+                <span className="text-sm font-medium">{dict.project.shortCode}:</span>{" "}
                 <code className="text-sm bg-gray-100 px-2 py-1 rounded">{project.shortCode}</code>
               </div>
             </CardContent>
@@ -210,13 +215,13 @@ export default async function ProjectPage({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Callsheet</CardTitle>
-              <CardDescription>Schedule and logistics</CardDescription>
+              <CardTitle className="text-lg">{dict.project.callsheet}</CardTitle>
+              <CardDescription>{dict.callsheet.subtitle}</CardDescription>
             </CardHeader>
             <CardContent>
               <Link href={`/project/${id}/callsheet`}>
                 <Button variant="outline" className="w-full">
-                  Manage Callsheet
+                  {dict.project.manage} {dict.project.callsheet}
                 </Button>
               </Link>
             </CardContent>
@@ -224,13 +229,13 @@ export default async function ProjectPage({
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Results</CardTitle>
-              <CardDescription>{project._count.resultFolders} folders</CardDescription>
+              <CardTitle className="text-lg">{dict.project.results}</CardTitle>
+              <CardDescription>{dict.project.foldersCount.replace('{count}', project._count.resultFolders.toString())}</CardDescription>
             </CardHeader>
             <CardContent>
               <Link href={`/project/${id}/results`}>
                 <Button variant="outline" className="w-full">
-                  Manage Results
+                  {dict.project.manage} {dict.project.results}
                 </Button>
               </Link>
             </CardContent>
