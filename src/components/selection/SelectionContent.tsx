@@ -45,10 +45,19 @@ export function SelectionContent({ projectId, initialImages: images, userId, gal
   const handleFilterChange = (filterType: string, value: string | null) => {
     const params = new URLSearchParams(searchParams.toString())
 
-    if (value) {
-      params.set(filterType, value)
-    } else {
+    if (value === null) {
       params.delete(filterType)
+    } else {
+      const currentValues = params.getAll(filterType)
+      if (currentValues.includes(value)) {
+        // Remove value if already present (toggle)
+        const newValues = currentValues.filter(v => v !== value)
+        params.delete(filterType)
+        newValues.forEach(v => params.append(filterType, v))
+      } else {
+        // Add value if not present
+        params.append(filterType, value)
+      }
     }
 
     router.push(`?${params.toString()}`)
@@ -71,7 +80,11 @@ export function SelectionContent({ projectId, initialImages: images, userId, gal
             )}
           </div>
         </div>
-        <FilterBar onFilterChange={handleFilterChange} />
+        <FilterBar 
+          onFilterChange={handleFilterChange} 
+          activeStars={searchParams.getAll('stars')}
+          activeColors={searchParams.getAll('color')}
+        />
       </div>
 
       <div className="space-y-8">
