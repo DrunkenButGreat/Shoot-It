@@ -6,6 +6,7 @@ import { ImageCard } from "./ImageCard"
 import { FilterBar } from "./FilterBar"
 import ImageUpload from "../moodboard/ImageUpload"
 import { LocalMediaPicker } from "./LocalMediaPicker"
+import { ExportDialog } from "./ExportDialog"
 import Lightbox from "yet-another-react-lightbox"
 import "yet-another-react-lightbox/styles.css"
 
@@ -71,13 +72,18 @@ export function SelectionContent({ projectId, initialImages: images, userId, gal
             <h2 className="text-2xl font-bold text-gray-900">
               Selection Gallery ({images.length} images)
             </h2>
-            {hasLocalMedia && (
-              <LocalMediaPicker
-                projectId={projectId}
-                onSuccess={() => router.refresh()}
-                importUrl={`/api/projects/${projectId}/selection/scan`}
-              />
-            )}
+            <div className="flex items-center gap-2">
+              {images.length > 0 && (
+                <ExportDialog images={images} />
+              )}
+              {hasLocalMedia && (
+                <LocalMediaPicker
+                  projectId={projectId}
+                  onSuccess={() => router.refresh()}
+                  importUrl={`/api/projects/${projectId}/selection/scan`}
+                />
+              )}
+            </div>
           </div>
         </div>
         <FilterBar 
