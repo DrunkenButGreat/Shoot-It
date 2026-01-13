@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { moodboardGroupSchema } from '@/lib/validations'
-import { canEditProject } from '@/lib/permissions'
+import { canAccessProject } from '@/lib/permissions'
 
 // POST /api/projects/[id]/moodboard/groups - Create a new group
 export async function POST(
@@ -17,9 +17,9 @@ export async function POST(
 
     const { id } = await params
 
-    // Check if user can edit this project
-    const canEdit = await canEditProject(session.user.id, id)
-    if (!canEdit) {
+    // Check if user has access to this project (Participants should be able to create groups too)
+    const hasAccess = await canAccessProject(session.user.id, id)
+    if (!hasAccess) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

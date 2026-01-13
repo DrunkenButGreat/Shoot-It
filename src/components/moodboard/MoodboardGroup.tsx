@@ -66,6 +66,7 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
 
   const isOwner = session?.user?.id === group.ownerId
   const isLinked = projectId !== ""
+  const isLibrary = group.isLibrary
 
   const handleDelete = async () => {
     const confirmMessage = isLinked 
@@ -185,8 +186,8 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
   }
 
   return (
-    <div className={!isOwner && isLinked && group.isLibrary ? "pointer-events-none opacity-80" : ""}>
-      {!isOwner && isLinked && group.isLibrary && (
+    <div className={isLibrary && !isOwner ? "pointer-events-none opacity-80" : ""}>
+      {isLibrary && !isOwner && (
         <div className="bg-amber-50 text-amber-700 text-[10px] px-2 py-0.5 border-b border-amber-100 flex items-center gap-1 justify-center rounded-t-xl">
           <X className="h-3 w-3" /> {t('moodboard.ownerOnlyEdit')}
         </div>
@@ -198,9 +199,9 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
         }
         onSuccess={() => onUpdate?.()}
         className="block"
-        disabled={!isOwner && isLinked && group.isLibrary}
+        disabled={isLibrary && !isOwner}
       >
-        <Card className={!isOwner && isLinked && group.isLibrary ? "rounded-t-none" : ""}>
+        <Card className={isLibrary && !isOwner ? "rounded-t-none" : ""}>
           <CardHeader>
             <div className="flex justify-between items-start">
               <div className="flex-1">
@@ -350,7 +351,7 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
               </div>
             )}
 
-            {(isOwner || !isLinked) && (
+            {(isOwner || !isLibrary) && (
               <div className="flex flex-col gap-4">
                 <div className="flex justify-between items-center">
                   <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider">{t('selection.importImages')}</h4>

@@ -24,14 +24,20 @@ export async function POST(
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 
-        // Check ownership of the group
+        // Check if group is project-specific or library
         const group = await prisma.moodboardGroup.findUnique({
             where: { id: groupId },
-            select: { ownerId: true }
+            select: { ownerId: true, isLibrary: true }
         })
 
-        if (!group || group.ownerId !== session.user.id) {
-            return NextResponse.json({ error: "Forbidden: Only the owner can add images" }, { status: 403 })
+        if (!group) {
+            return NextResponse.json({ error: "Group not found" }, { status: 404 })
+        }
+
+        // If it's a library group, ONLY the owner can add images.
+        // If it's a project group (NOT isLibrary), anyone with canEdit can add images.
+        if (group.isLibrary && group.ownerId !== session.user.id) {
+            return NextResponse.json({ error: "Forbidden: Only the owner can add images to library groups" }, { status: 403 })
         }
 
         const formData = await request.formData()
