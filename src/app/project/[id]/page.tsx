@@ -50,6 +50,7 @@ export default async function ProjectPage({
           contracts: true,
           selectionImages: true,
           resultFolders: true,
+          applications: true,
         },
       },
       participants: {
@@ -240,6 +241,31 @@ export default async function ProjectPage({
               </Link>
             </CardContent>
           </Card>
+
+          {isOwner && (project.allowApplications || project._count.applications > 0) && (
+            <Card className={project._count.applications > 0 ? "border-blue-200 bg-blue-50/20" : ""}>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center justify-between">
+                  {dict.applications.manageApplications}
+                  {project._count.applications > 0 && (
+                    <span className="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
+                      {project._count.applications}
+                    </span>
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  {dict.applications.sectionDescription}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link href={`/project/${id}/applications`}>
+                  <Button variant={project._count.applications > 0 ? "default" : "outline"} className="w-full">
+                    {dict.project.manage}
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </main>
     </div>

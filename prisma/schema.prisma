@@ -34,6 +34,7 @@ model User {
   comments          Comment[]
   signatures        ContractSignature[]
   imageRatings      ImageRating[]
+  applications      ProjectApplication[]
 
   // Profile fields for auto-filling participant data
   phone             String?
@@ -93,6 +94,7 @@ model Project {
   showSelectionPublicly    Boolean @default(false)
   showCallsheetPublicly    Boolean @default(false)
   showResultsPublicly      Boolean @default(false)
+  allowApplications        Boolean @default(false)
   galleryLayout            String  @default("masonry") // "grid" or "masonry"
   isArchived  Boolean  @default(false)
   createdAt   DateTime @default(now())
@@ -110,6 +112,7 @@ model Project {
   callsheet       Callsheet?
   selectionImages SelectionImage[]
   resultFolders   ResultFolder[]
+  applications    ProjectApplication[]
 
   @@index([shortCode])
   @@index([ownerId])
@@ -414,3 +417,49 @@ model ResultImage {
 
   @@index([folderId])
 }
+
+// ==================== APPLICATIONS ====================
+
+model ProjectApplication {
+  id              String             @id @default(cuid())
+  projectId       String
+  userId          String?            // Nullable for guest applications
+  name            String?            // Mandatory for guests
+  email           String?            // Mandatory for guests
+  role            String?
+  message         String?            @db.Text
+  portfolioUrl    String?            @db.Text
+  instagramUrl    String?
+  status          ApplicationStatus  @default(PENDING)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  deletedAt       DateTime?          // For 30-day cleanup after REJECTED
+
+  project         Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user            User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  images          ApplicationImage[]
+
+  @@index([projectId])
+  @@index([userId])
+}
+
+model ApplicationImage {
+  id              String             @id @default(cuid())
+  filename        String
+  path            String
+  thumbnail       String?
+  applicationId   String
+  createdAt       DateTime           @default(now())
+
+  application     ProjectApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+

@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { PublicGallery } from "@/components/public/PublicGallery"
+import { ApplicationForm } from "@/components/projects/ApplicationForm"
 import { getLocale, getDictionary } from "@/lib/i18n"
 import { cookies } from "next/headers"
 
@@ -383,6 +384,27 @@ export default async function PublicProjectPage({
 
                     {/* Right Column: Info & Actions */}
                     <div className="space-y-6">
+                        {project.allowApplications && (
+                            <Card className="border-none shadow-lg bg-gradient-to-br from-blue-600 to-indigo-700 text-white overflow-hidden">
+                                <CardHeader>
+                                    <CardTitle className="text-xl text-white">{dict.applications.sectionTitle}</CardTitle>
+                                    <CardDescription className="text-blue-100 italic">
+                                        {dict.applications.sectionDescription}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <ApplicationForm 
+                                        projectId={project.id} 
+                                        projectName={project.name}
+                                        initialData={{
+                                            name: session?.user?.name || undefined,
+                                            email: session?.user?.email || undefined
+                                        }}
+                                    />
+                                </CardContent>
+                            </Card>
+                        )}
+
                         <Card className="border-none shadow-lg bg-white/90 backdrop-blur-sm">
                             <CardHeader>
                                 <CardTitle className="text-lg">{dict.publicProject.projectInfo}</CardTitle>

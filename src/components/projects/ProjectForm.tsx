@@ -33,6 +33,7 @@ interface ProjectFormProps {
     showSelectionPublicly: boolean
     showCallsheetPublicly: boolean
     showResultsPublicly: boolean
+    allowApplications: boolean
     galleryLayout: string
   }
 }
@@ -54,6 +55,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
     showSelectionPublicly: initialData?.showSelectionPublicly ?? false,
     showCallsheetPublicly: initialData?.showCallsheetPublicly ?? false,
     showResultsPublicly: initialData?.showResultsPublicly ?? false,
+    allowApplications: initialData?.allowApplications ?? false,
     galleryLayout: initialData?.galleryLayout || "masonry",
   })
 
@@ -98,6 +100,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
             showSelectionPublicly: false,
             showCallsheetPublicly: false,
             showResultsPublicly: false,
+            allowApplications: false,
             galleryLayout: "masonry",
           })
         }
@@ -204,9 +207,29 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
             </div>
 
             {formData.isPublic && (
-              <div className="space-y-3 pt-2 border-t border-gray-100">
-                <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('projectForm.moduleVisibility')}</Label>
-                <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="allowApplications">{t('projectForm.allowApplications')}</Label>
+                    <p className="text-[10px] text-gray-500">{t('projectForm.allowApplicationsDescription')}</p>
+                    {!process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && formData.allowApplications && (
+                      <p className="text-[10px] text-red-500 font-bold mt-1">
+                        {t('projectForm.recaptchaMissingWarning')}
+                      </p>
+                    )}
+                  </div>
+                  <Switch
+                    id="allowApplications"
+                    checked={formData.allowApplications}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, allowApplications: checked })
+                    }
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('projectForm.moduleVisibility')}</Label>
+                  <div className="grid grid-cols-2 gap-3">
                   <ModuleToggle
                     label={t('projectForm.showMoodboard')}
                     value={formData.showMoodboardPublicly}
@@ -239,9 +262,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
                   />
                 </div>
               </div>
-            )}
 
-            {formData.isPublic && (
               <div className="space-y-3 pt-2 border-t border-gray-100">
                 <div className="flex items-center justify-between">
                   <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('projectForm.galleryStyle')}</Label>
@@ -289,7 +310,8 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
                       : t('projectForm.gridDescription')}
                 </p>
               </div>
-            )}
+            </div>
+          )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
