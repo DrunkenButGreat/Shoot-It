@@ -44,6 +44,12 @@ export default function UserMenu() {
             >
               {t('auth.profile')}
             </Link>
+            <Link
+              href="/dashboard/moodboards"
+              className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+            >
+              {t('moodboard.privateCollection')}
+            </Link>
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
               className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-100"

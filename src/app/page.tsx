@@ -1,7 +1,9 @@
 import { getLocale, getDictionary } from "@/lib/i18n";
+import { cookies } from "next/headers";
 
 export default async function HomePage() {
-  const locale = await getLocale();
+  const cookieStore = await cookies();
+  const locale = getLocale(cookieStore);
   const t = await getDictionary(locale);
 
   return (

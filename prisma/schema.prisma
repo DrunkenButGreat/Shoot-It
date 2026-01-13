@@ -30,6 +30,7 @@ model User {
   ownedProjects     Project[]        @relation("ProjectOwner")
   projectAccess     ProjectAccess[]
   participantLinks  Participant[]    @relation("UserParticipant")
+  moodboardGroups   MoodboardGroup[] @relation("MoodboardOwner")
   comments          Comment[]
   signatures        ContractSignature[]
   imageRatings      ImageRating[]
@@ -103,7 +104,7 @@ model Project {
 
   // Relations
   access          ProjectAccess[]
-  moodboardGroups MoodboardGroup[]
+  moodboardLinks  ProjectMoodboardLink[]
   participants    Participant[]
   contracts       Contract[]
   callsheet       Callsheet?
@@ -139,17 +140,34 @@ model MoodboardGroup {
   id          String          @id @default(cuid())
   name        String
   description String?         @db.Text
-  order       Int             @default(0)
-  status      MoodboardStatus @default(PENDING)
-  projectId   String
+  isArchived  Boolean         @default(false)
+  ownerId     String
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
-  project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  owner       User            @relation("MoodboardOwner", fields: [ownerId], references: [id])
   images      MoodboardImage[]
-  comments    Comment[]
+  projectLinks ProjectMoodboardLink[]
 
+  @@index([ownerId])
+}
+
+model ProjectMoodboardLink {
+  id        String          @id @default(cuid())
+  projectId String
+  groupId   String
+  status    MoodboardStatus @default(PENDING)
+  order     Int             @default(0)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  project   Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  group     MoodboardGroup  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  comments  Comment[]
+
+  @@unique([projectId, groupId])
   @@index([projectId])
+  @@index([groupId])
 }
 
 enum MoodboardStatus {
@@ -176,17 +194,17 @@ model MoodboardImage {
 }
 
 model Comment {
-  id        String   @id @default(cuid())
-  content   String   @db.Text
-  groupId   String
-  userId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String               @id @default(cuid())
+  content          String               @db.Text
+  moodboardLinkId  String
+  userId           String
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
 
-  group     MoodboardGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  moodboardLink    ProjectMoodboardLink @relation(fields: [moodboardLinkId], references: [id], onDelete: Cascade)
+  user             User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([groupId])
+  @@index([moodboardLinkId])
 }
 
 // ==================== PARTICIPANTS ====================

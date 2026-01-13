@@ -1,13 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { Check, MessageSquare, Trash2, X } from "lucide-react"
+import { Archive, ArchiveRestore, Check, Link as LinkIcon, MessageSquare, Trash2, X } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import ImageUpload from "./ImageUpload"
 import { LocalMediaPicker } from "../selection/LocalMediaPicker"
 import { useI18n } from "@/components/I18nProvider"
+import { useSession } from "next-auth/react"
 
 import Lightbox from "yet-another-react-lightbox"
 import "yet-another-react-lightbox/styles.css"
@@ -36,6 +37,8 @@ interface Group {
   id: string
   name: string
   description: string | null
+  ownerId: string
+  isArchived: boolean
   order: number
   status: string
   images: MoodboardImage[]
@@ -52,24 +55,33 @@ interface MoodboardGroupProps {
 }
 
 export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia, onUpdate, onDelete }: MoodboardGroupProps) {
-  const { t } = useI18n()
+  const { data: session } = useSession()
+  const { t, locale } = useI18n()
   const [isDeleting, setIsDeleting] = useState(false)
   const [showComments, setShowComments] = useState(false)
   const [newComment, setNewComment] = useState("")
   const [isAddingComment, setIsAddingComment] = useState(false)
   const [index, setIndex] = useState(-1)
 
+  const isOwner = session?.user?.id === group.ownerId
+  const isLinked = projectId !== ""
+
   const handleDelete = async () => {
-    if (!confirm(t('moodboard.deleteGroupConfirm').replace('{name}', group.name))) {
+    const confirmMessage = isLinked 
+      ? t('moodboard.deleteGroupConfirm').replace('{name}', group.name) // We might want a different text for "Unlink"
+      : t('moodboard.deleteGroupConfirm').replace('{name}', group.name)
+
+    if (!confirm(confirmMessage)) {
       return
     }
 
     setIsDeleting(true)
     try {
-      const response = await fetch(
-        `/api/projects/${projectId}/moodboard/groups/${group.id}`,
-        { method: "DELETE" }
-      )
+      const url = isLinked 
+        ? `/api/projects/${projectId}/moodboard/groups/${group.id}` 
+        : `/api/user/moodboards/${group.id}`
+        
+      const response = await fetch(url, { method: "DELETE" })
 
       if (response.ok) {
         onDelete?.()
@@ -83,7 +95,24 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
     }
   }
 
+  const handleArchive = async () => {
+    try {
+      const response = await fetch(`/api/user/moodboards/${group.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isArchived: !group.isArchived }),
+      })
+
+      if (response.ok) {
+        onUpdate?.()
+      }
+    } catch (error) {
+      alert("An error occurred")
+    }
+  }
+
   const handleStatusChange = async (status: string) => {
+    if (!isLinked) return
     try {
       const response = await fetch(
         `/api/projects/${projectId}/moodboard/groups/${group.id}`,
@@ -155,63 +184,98 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
   }
 
   return (
-    <ImageUpload
-      uploadUrl={`/api/projects/${projectId}/moodboard/groups/${group.id}/images`}
-      onSuccess={() => onUpdate?.()}
-      className="block"
-    >
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <CardTitle>{group.name}</CardTitle>
-                <span className={`text-xs px-2 py-1 rounded border ${getStatusColor(group.status)}`}>
-                  {getStatusLabel(group.status)}
-                </span>
-              </div>
-              {group.description && (
-                <CardDescription>{group.description}</CardDescription>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleStatusChange("ACCEPTED")}
-                disabled={group.status === "ACCEPTED"}
-              >
-                <Check className="h-4 w-4 text-green-600" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleStatusChange("REJECTED")}
-                disabled={group.status === "REJECTED"}
-              >
-                <X className="h-4 w-4 text-red-600" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowComments(!showComments)}
-              >
-                <MessageSquare className="h-4 w-4" />
-                {group.comments.length > 0 && (
-                  <span className="ml-1 text-xs">{group.comments.length}</span>
+    <div className={!isOwner && isLinked ? "pointer-events-none opacity-80" : ""}>
+      {!isOwner && isLinked && (
+        <div className="bg-amber-50 text-amber-700 text-[10px] px-2 py-0.5 border-b border-amber-100 flex items-center gap-1 justify-center rounded-t-xl">
+          <X className="h-3 w-3" /> {t('moodboard.ownerOnlyEdit')}
+        </div>
+      )}
+      <ImageUpload
+        uploadUrl={isLinked 
+          ? `/api/projects/${projectId}/moodboard/groups/${group.id}/images`
+          : `/api/user/moodboards/${group.id}/images` 
+        }
+        onSuccess={() => onUpdate?.()}
+        className="block"
+        disabled={!isOwner && isLinked}
+      >
+        <Card className={!isOwner && isLinked ? "rounded-t-none" : ""}>
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-2">
+                    <CardTitle>{group.name}</CardTitle>
+                    {isLinked && (
+                      <LinkIcon className="h-4 w-4 text-blue-500" title={t('moodboard.linked')} />
+                    )}
+                  </div>
+                  {isLinked && (
+                    <span className={`text-xs px-2 py-1 rounded border ${getStatusColor(group.status)}`}>
+                      {getStatusLabel(group.status)}
+                    </span>
+                  )}
+                </div>
+                {group.description && (
+                  <CardDescription>{group.description}</CardDescription>
                 )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleDelete}
-                disabled={isDeleting}
-              >
-                <Trash2 className="h-4 w-4 text-red-600" />
-              </Button>
+              </div>
+              <div className="flex gap-2">
+                {isLinked && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleStatusChange("ACCEPTED")}
+                      disabled={group.status === "ACCEPTED"}
+                    >
+                      <Check className="h-4 w-4 text-green-600" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleStatusChange("REJECTED")}
+                      disabled={group.status === "REJECTED"}
+                    >
+                      <X className="h-4 w-4 text-red-600" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowComments(!showComments)}
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      {group.comments?.length > 0 && (
+                        <span className="ml-1 text-xs">{group.comments.length}</span>
+                      )}
+                    </Button>
+                  </>
+                )}
+                
+                {!isLinked && isOwner && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleArchive}
+                    title={group.isArchived ? t('moodboard.unarchive') : t('moodboard.archive')}
+                  >
+                    {group.isArchived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
+                  </Button>
+                )}
+
+                {(isOwner || isLinked) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                  >
+                    <Trash2 className="h-4 w-4 text-red-600" />
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
-        </CardHeader>
+          </CardHeader>
         <CardContent>
           <div className="space-y-6">
             {galleryLayout === "grid" ? (
@@ -285,25 +349,33 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
               </div>
             )}
 
-            <div className="flex flex-col gap-4">
-              <div className="flex justify-between items-center">
-                <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider">{t('selection.importImages')}</h4>
-                {hasLocalMedia && (
-                  <LocalMediaPicker
-                    projectId={projectId}
-                    onSuccess={() => onUpdate?.()}
-                    importUrl={`/api/projects/${projectId}/moodboard/groups/${group.id}/scan`}
-                    label={t('selection.importToGroup')}
-                  />
-                )}
+            {(isOwner || !isLinked) && (
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider">{t('selection.importImages')}</h4>
+                  {hasLocalMedia && (
+                    <LocalMediaPicker
+                      projectId={projectId}
+                      onSuccess={() => onUpdate?.()}
+                      importUrl={isLinked 
+                        ? `/api/projects/${projectId}/moodboard/groups/${group.id}/scan`
+                        : `/api/user/moodboards/${group.id}/scan`
+                      }
+                      label={t('selection.importToGroup')}
+                    />
+                  )}
+                </div>
+                <ImageUpload
+                  uploadUrl={isLinked 
+                    ? `/api/projects/${projectId}/moodboard/groups/${group.id}/images`
+                    : `/api/user/moodboards/${group.id}/images`
+                  }
+                  onSuccess={() => onUpdate?.()}
+                  className="w-full min-h-[120px] border-dashed bg-gray-50/50 hover:bg-gray-100/30 transition-all rounded-2xl flex flex-col items-center justify-center border-gray-200"
+                  label={t('selection.dragDrop')}
+                />
               </div>
-              <ImageUpload
-                uploadUrl={`/api/projects/${projectId}/moodboard/groups/${group.id}/images`}
-                onSuccess={() => onUpdate?.()}
-                className="w-full min-h-[120px] border-dashed bg-gray-50/50 hover:bg-gray-100/30 transition-all rounded-2xl flex flex-col items-center justify-center border-gray-200"
-                label={t('selection.dragDrop')}
-              />
-            </div>
+            )}
           </div>
 
           <Lightbox
@@ -348,5 +420,6 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
         </CardContent>
       </Card>
     </ImageUpload>
+    </div>
   )
 }

@@ -25,34 +25,65 @@ export async function PUT(
 
     const body = await request.json()
 
-    // Allow updating name, description, status, and order
-    const updateData: any = {}
-    if (body.name !== undefined) updateData.name = body.name
-    if (body.description !== undefined) updateData.description = body.description
-    if (body.status !== undefined) updateData.status = body.status
-    if (body.order !== undefined) updateData.order = body.order
+    // 1. Check if we need to update the ProjectMoodboardLink (status, order)
+    if (body.status !== undefined || body.order !== undefined) {
+      await prisma.projectMoodboardLink.update({
+        where: {
+          projectId_groupId: {
+            projectId: id,
+            groupId: groupId
+          }
+        },
+        data: {
+          ...(body.status !== undefined && { status: body.status }),
+          ...(body.order !== undefined && { order: body.order }),
+        }
+      })
+    }
 
-    const group = await prisma.moodboardGroup.update({
-      where: {
-        id: groupId,
-        projectId: id,
-      },
-      data: updateData,
+    // 2. Check if we need to update the MoodboardGroup itself (name, description)
+    if (body.name !== undefined || body.description !== undefined) {
+      // Check if user is the owner of the group
+      const existingGroup = await prisma.moodboardGroup.findUnique({
+        where: { id: groupId },
+        select: { ownerId: true }
+      })
+
+      if (!existingGroup || existingGroup.ownerId !== session.user.id) {
+        // If not the owner, we ignore these changes or return 403 
+        // if they ONLY tried to update these.
+        if (body.status === undefined && body.order === undefined) {
+          return NextResponse.json({ error: 'Forbidden: Only owner can edit group details' }, { status: 403 })
+        }
+      } else {
+        await prisma.moodboardGroup.update({
+          where: { id: groupId },
+          data: {
+            ...(body.name !== undefined && { name: body.name }),
+            ...(body.description !== undefined && { description: body.description }),
+          }
+        })
+      }
+    }
+
+    // Fetch the updated group (via the link context if possible, but the route is group-based)
+    const group = await prisma.moodboardGroup.findUnique({
+      where: { id: groupId },
       include: {
         images: true,
-        comments: {
+        projectLinks: {
+          where: { projectId: id },
           include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                image: true,
-              },
-            },
-          },
-        },
-      },
+            comments: {
+              include: {
+                user: {
+                  select: { id: true, name: true, email: true, image: true }
+                }
+              }
+            }
+          }
+        }
+      }
     })
 
     return NextResponse.json(group)
@@ -84,32 +115,19 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Get group images to delete them from filesystem
-    const group = await prisma.moodboardGroup.findUnique({
-      where: { id: groupId },
-      include: { images: true }
-    })
-
-    if (group) {
-      // Delete images from filesystem
-      const groupDir = path.join(process.cwd(), 'uploads', 'moodboard', id, groupId)
-      try {
-        await rm(groupDir, { recursive: true, force: true })
-      } catch (err) {
-        console.error('Error deleting group directory:', err)
-      }
-    }
-
-    await prisma.moodboardGroup.delete({
+    // Just delete the link, not the group or images
+    await prisma.projectMoodboardLink.delete({
       where: {
-        id: groupId,
-        projectId: id,
+        projectId_groupId: {
+          projectId: id,
+          groupId: groupId,
+        },
       },
     })
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error deleting moodboard group:', error)
+    console.error('Error unlinking moodboard group:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

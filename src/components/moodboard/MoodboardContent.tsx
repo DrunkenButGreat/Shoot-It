@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { MoodboardGroup } from "./MoodboardGroup"
 import { GroupForm } from "./GroupForm"
+import { MoodboardPicker } from "./MoodboardPicker"
 import { Button } from "@/components/ui/button"
 import { useI18n } from "@/components/I18nProvider"
 
@@ -31,6 +32,8 @@ interface Group {
   id: string
   name: string
   description: string | null
+  ownerId: string
+  isArchived: boolean
   order: number
   status: string
   images: MoodboardImage[]
@@ -48,25 +51,20 @@ export function MoodboardContent({ projectId, initialGroups: groups, galleryLayo
   const router = useRouter()
   const { t } = useI18n();
 
-  const handleGroupAdded = () => {
-    router.refresh()
-  }
-
-  const handleGroupUpdated = () => {
-    router.refresh()
-  }
-
-  const handleGroupDeleted = () => {
+  const handleRefresh = () => {
     router.refresh()
   }
 
   return (
     <>
-      <div className="mb-6 flex justify-between items-center">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-2xl font-bold text-gray-900">
           {t('moodboard.title')} ({groups.length})
         </h2>
-        <GroupForm projectId={projectId} onSuccess={handleGroupAdded} />
+        <div className="flex gap-2">
+          <MoodboardPicker projectId={projectId} onLink={handleRefresh} />
+          <GroupForm projectId={projectId} onSuccess={handleRefresh} />
+        </div>
       </div>
 
       {groups.length === 0 ? (
@@ -78,13 +76,13 @@ export function MoodboardContent({ projectId, initialGroups: groups, galleryLayo
         <div className="space-y-8">
           {groups.map((group) => (
             <MoodboardGroup
-              key={group.id}
+              key={`${group.id}-${group.order}`}
               group={group}
               projectId={projectId}
               galleryLayout={galleryLayout}
               hasLocalMedia={hasLocalMedia}
-              onUpdate={handleGroupUpdated}
-              onDelete={handleGroupDeleted}
+              onUpdate={handleRefresh}
+              onDelete={handleRefresh}
             />
           ))}
         </div>

@@ -48,7 +48,7 @@ export async function GET(
         },
         _count: {
           select: {
-            moodboardGroups: true,
+            moodboardLinks: true,
             participants: true,
             contracts: true,
             selectionImages: true,
@@ -134,7 +134,7 @@ export async function DELETE(
     // Only the owner can delete a project
     const project = await prisma.project.findUnique({
       where: { id },
-      include: { moodboardGroups: { select: { id: true } } },
+      include: { moodboardLinks: { select: { id: true } } },
     })
 
     if (!project) {

@@ -23,6 +23,16 @@ export async function POST(
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 
+        // Check ownership of the group
+        const group = await prisma.moodboardGroup.findUnique({
+            where: { id: groupId },
+            select: { ownerId: true }
+        })
+
+        if (!group || group.ownerId !== session.user.id) {
+            return NextResponse.json({ error: "Forbidden: Only the owner can add images" }, { status: 403 })
+        }
+
         const { folderName } = await request.json()
         if (!folderName) {
             return NextResponse.json({ error: "Folder name is required" }, { status: 400 })

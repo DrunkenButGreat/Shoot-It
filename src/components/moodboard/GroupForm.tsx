@@ -16,7 +16,7 @@ import {
 import { useI18n } from "@/components/I18nProvider"
 
 interface GroupFormProps {
-  projectId: string
+  projectId?: string
   onSuccess?: () => void
 }
 
@@ -34,7 +34,11 @@ export function GroupForm({ projectId, onSuccess }: GroupFormProps) {
     setIsLoading(true)
 
     try {
-      const response = await fetch(`/api/projects/${projectId}/moodboard/groups`, {
+      const url = projectId 
+        ? `/api/projects/${projectId}/moodboard/groups`
+        : `/api/user/moodboards`
+
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

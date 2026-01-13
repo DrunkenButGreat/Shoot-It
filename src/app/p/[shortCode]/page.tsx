@@ -1,11 +1,10 @@
 import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
 import { notFound, redirect } from "next/navigation"
-import { Calendar, MapPin, User, FileText, Image as ImageIcon, Users } from "lucide-react"
+import { Calendar, MapPin, User, FileText, Image as ImageIcon, Users, Clock, CheckSquare } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Clock } from "lucide-react"
 import { PublicGallery } from "@/components/public/PublicGallery"
 import { getLocale, getDictionary } from "@/lib/i18n"
 import { cookies } from "next/headers"
@@ -32,13 +31,17 @@ export default async function PublicProjectPage({
                     image: true,
                 },
             },
-            moodboardGroups: {
+            moodboardLinks: {
                 include: {
-                    images: {
-                        orderBy: { createdAt: 'desc' }
+                    group: {
+                        include: {
+                            images: {
+                                orderBy: { createdAt: 'desc' }
+                            }
+                        }
                     }
                 },
-                orderBy: { createdAt: 'asc' }
+                orderBy: { order: 'asc' }
             },
             participants: {
                 include: {
@@ -64,7 +67,7 @@ export default async function PublicProjectPage({
             },
             _count: {
                 select: {
-                    moodboardGroups: true,
+                    moodboardLinks: true,
                     participants: true,
                     contracts: true,
                     selectionImages: true,
@@ -76,6 +79,12 @@ export default async function PublicProjectPage({
     if (!project) {
         notFound()
     }
+
+    const moodboardGroups = (project.moodboardLinks || []).map((link: any) => ({
+        ...link.group,
+        status: link.status,
+        order: link.order
+    }))
 
     // If project is not public, check if user has access
     if (!project.isPublic) {
@@ -179,7 +188,7 @@ export default async function PublicProjectPage({
                                     <ModuleBox
                                         title={dict.project.moodboard}
                                         icon={<ImageIcon className="h-6 w-6" />}
-                                        count={project._count.moodboardGroups}
+                                        count={moodboardGroups.length}
                                         label={dict.project.groups.replace('{count}', '').trim()}
                                         href={session ? `/project/${project.id}/moodboard` : (project.showMoodboardPublicly ? '#moodboard' : '#')}
                                         disabled={!session && !project.showMoodboardPublicly}
@@ -231,7 +240,7 @@ export default async function PublicProjectPage({
                         </Card>
 
                         {/* Public Modules Content */}
-                        {project.showMoodboardPublicly && project.moodboardGroups.length > 0 && (
+                        {project.showMoodboardPublicly && moodboardGroups.length > 0 && (
                             <section id="moodboard" className="space-y-6 scroll-mt-20">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20">
@@ -240,7 +249,7 @@ export default async function PublicProjectPage({
                                     <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.project.moodboard}</h2>
                                 </div>
                                 <div className="space-y-8">
-                                    {project.moodboardGroups.map((group: any) => (
+                                    {moodboardGroups.map((group: any) => (
                                         <Card key={group.id} className="border-none shadow-lg overflow-hidden bg-white/60 backdrop-blur-md">
                                             <CardHeader>
                                                 <CardTitle className="text-xl">{group.name}</CardTitle>

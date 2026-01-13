@@ -45,7 +45,7 @@ export default async function ProjectPage({
       },
       _count: {
         select: {
-          moodboardGroups: true,
+          moodboardLinks: true,
           participants: true,
           contracts: true,
           selectionImages: true,
@@ -132,7 +132,7 @@ export default async function ProjectPage({
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">{dict.project.moodboard}</CardTitle>
-              <CardDescription>{dict.project.groups.replace('{count}', project._count.moodboardGroups.toString())}</CardDescription>
+              <CardDescription>{dict.project.groups.replace('{count}', project._count.moodboardLinks.toString())}</CardDescription>
             </CardHeader>
             <CardContent>
               <Link href={`/project/${id}/moodboard`}>

@@ -27,20 +27,24 @@ export default async function MoodboardPage({
   }
 
   // Fetch project and moodboard groups
-  const [project, groups] = await Promise.all([
+  const [project, links] = await Promise.all([
     prisma.project.findUnique({
       where: { id },
       select: {
         id: true,
         name: true,
         galleryLayout: true,
-      } as any,
-    }) as any,
-    prisma.moodboardGroup.findMany({
+      },
+    }),
+    prisma.projectMoodboardLink.findMany({
       where: { projectId: id },
       include: {
-        images: {
-          orderBy: { order: 'asc' },
+        group: {
+          include: {
+            images: {
+              orderBy: { order: 'asc' },
+            },
+          },
         },
         comments: {
           include: {
@@ -63,6 +67,14 @@ export default async function MoodboardPage({
   if (!project) {
     redirect("/dashboard")
   }
+
+  // Map links to the format the component expects
+  const groups = links.map(link => ({
+    ...link.group,
+    status: link.status,
+    order: link.order,
+    comments: link.comments,
+  }))
 
   return (
     <div className="min-h-screen bg-gray-50">
