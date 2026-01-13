@@ -115,15 +115,34 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Just delete the link, not the group or images
-    await prisma.projectMoodboardLink.delete({
-      where: {
-        projectId_groupId: {
-          projectId: id,
-          groupId: groupId,
-        },
-      },
+    // Fetch the group to see if it's a library group
+    const group = await prisma.moodboardGroup.findUnique({
+      where: { id: groupId },
+      select: { isLibrary: true, ownerId: true }
     })
+
+    if (!group) {
+      return NextResponse.json({ error: 'Group not found' }, { status: 404 })
+    }
+
+    // If it's NOT a library group, delete the group entirely
+    if (!group.isLibrary) {
+      // Only the owner of the group (or project owner) should be able to delete it?
+      // For now, let's just delete it since it's project-specific
+      await prisma.moodboardGroup.delete({
+        where: { id: groupId }
+      })
+    } else {
+      // If it's a library group, ONLY delete the link
+      await prisma.projectMoodboardLink.delete({
+        where: {
+          projectId_groupId: {
+            projectId: id,
+            groupId: groupId,
+          },
+        },
+      })
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

@@ -20,10 +20,11 @@ export default async function MoodboardDashboardPage() {
   const locale = getLocale(cookieStore)
   const dict = await getDictionary(locale)
 
-  // Fetch user's private moodboard collection
+  // Fetch user's private moodboard collection (isLibrary: true)
   const groups = await prisma.moodboardGroup.findMany({
     where: {
       ownerId: session.user.id,
+      isLibrary: true,
     },
     include: {
       images: {

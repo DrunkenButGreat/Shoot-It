@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
     const groups = await prisma.moodboardGroup.findMany({
       where: {
         ownerId: session.user.id,
+        isLibrary: true,
         isArchived: includeArchived ? undefined : false,
         name: {
           contains: search,
@@ -58,6 +59,7 @@ export async function POST(request: NextRequest) {
       data: {
         ...validatedData,
         ownerId: session.user.id,
+        isLibrary: true,
       },
       include: {
         images: true,

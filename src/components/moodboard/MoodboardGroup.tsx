@@ -39,6 +39,7 @@ interface Group {
   description: string | null
   ownerId: string
   isArchived: boolean
+  isLibrary: boolean
   order: number
   status: string
   images: MoodboardImage[]
@@ -184,8 +185,8 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
   }
 
   return (
-    <div className={!isOwner && isLinked ? "pointer-events-none opacity-80" : ""}>
-      {!isOwner && isLinked && (
+    <div className={!isOwner && isLinked && group.isLibrary ? "pointer-events-none opacity-80" : ""}>
+      {!isOwner && isLinked && group.isLibrary && (
         <div className="bg-amber-50 text-amber-700 text-[10px] px-2 py-0.5 border-b border-amber-100 flex items-center gap-1 justify-center rounded-t-xl">
           <X className="h-3 w-3" /> {t('moodboard.ownerOnlyEdit')}
         </div>
@@ -197,16 +198,16 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
         }
         onSuccess={() => onUpdate?.()}
         className="block"
-        disabled={!isOwner && isLinked}
+        disabled={!isOwner && isLinked && group.isLibrary}
       >
-        <Card className={!isOwner && isLinked ? "rounded-t-none" : ""}>
+        <Card className={!isOwner && isLinked && group.isLibrary ? "rounded-t-none" : ""}>
           <CardHeader>
             <div className="flex justify-between items-start">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="flex items-center gap-2">
                     <CardTitle>{group.name}</CardTitle>
-                    {isLinked && (
+                    {isLinked && group.isLibrary && (
                       <LinkIcon className="h-4 w-4 text-blue-500" title={t('moodboard.linked')} />
                     )}
                   </div>
