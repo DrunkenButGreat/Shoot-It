@@ -71,7 +71,7 @@ export function FolderForm({
         <DialogHeader>
           <DialogTitle>{t('results.addFolder')}</DialogTitle>
           <DialogDescription>
-            {t('projectForm.isCreatingDescription')}
+            {t('results.addFolderDescription')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -108,7 +108,7 @@ export function FolderForm({
               {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? t('common.creating') : t('common.create')}
+              {isSubmitting ? t('common.saving') : t('common.create')}
             </Button>
           </DialogFooter>
         </form>

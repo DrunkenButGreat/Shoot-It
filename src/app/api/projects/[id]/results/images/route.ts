@@ -8,7 +8,7 @@ import { generateSecureFilename, validateUpload } from "@/lib/file-utils"
 
 export async function POST(
     request: NextRequest,
-    { params }: { params: Promise<{ id: string; folderId: string }> }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const session = await auth()
@@ -16,7 +16,7 @@ export async function POST(
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
-        const { id, folderId } = await params
+        const { id } = await params
 
         // Check if user has edit access to the project
         const canEdit = await canEditProject(session.user.id, id)
@@ -41,7 +41,7 @@ export async function POST(
         const buffer = Buffer.from(bytes)
 
         const secureFilename = generateSecureFilename(file.name)
-        const relativeDir = path.join("results", id, folderId)
+        const relativeDir = path.join("results", id, "root")
         const uploadDir = path.join(process.cwd(), "uploads", relativeDir)
 
         // Ensure directory exists
@@ -56,15 +56,14 @@ export async function POST(
             data: {
                 filename: file.name,
                 path: dbPath,
-                folderId: folderId,
-                projectId: id,
+                project: { connect: { id } },
                 thumbnail: dbPath
             }
         })
 
         return NextResponse.json(image)
     } catch (error) {
-        console.error("Error uploading result image:", error)
+        console.error("Error uploading result image to root:", error)
         return NextResponse.json(
             { error: "Internal server error" },
             { status: 500 }

@@ -51,6 +51,17 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
           images: true,
         },
       },
+      images: {
+        orderBy: { createdAt: 'asc' },
+      },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  const rootImages = await prisma.resultFile.findMany({
+    where: { 
+      projectId: id,
+      folderId: null
     },
     orderBy: { createdAt: 'asc' },
   });
@@ -78,6 +89,7 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
           <ResultsContent
             projectId={id}
             initialFolders={folders}
+            rootImages={rootImages}
           />
         </Suspense>
       </main>

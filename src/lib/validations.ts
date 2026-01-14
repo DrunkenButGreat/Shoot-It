@@ -78,7 +78,7 @@ export const scheduleItemSchema = z.object({
 
 export const resultFolderSchema = z.object({
   name: z.string().min(1).max(100),
-  parentId: z.string().optional(),
+  parentId: z.string().optional().nullable(),
 })
 
 export const registerSchema = z.object({

@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { PublicGallery } from "@/components/public/PublicGallery"
+import { PublicResults } from "@/components/public/PublicResults"
 import { ApplicationForm } from "@/components/projects/ApplicationForm"
 import { getLocale, getDictionary } from "@/lib/i18n"
 import { cookies } from "next/headers"
@@ -59,6 +60,7 @@ export default async function PublicProjectPage({
             selectionImages: {
                 orderBy: { importedAt: 'desc' }
             },
+            resultFolders: true,
             callsheet: {
                 include: {
                     scheduleItems: {
@@ -222,6 +224,15 @@ export default async function PublicProjectPage({
                                         disabled={!session && !project.showCallsheetPublicly}
                                         dict={dict}
                                     />
+                                    <ModuleBox
+                                        title={dict.project.results}
+                                        icon={<ImageIcon className="h-6 w-6" />}
+                                        count={project.resultFolders.length}
+                                        label={dict.project.foldersCount.replace('{count}', '').trim()}
+                                        href={session ? `/project/${project.id}/results` : (project.showResultsPublicly ? '#results' : '#')}
+                                        disabled={!session && !project.showResultsPublicly}
+                                        dict={dict}
+                                    />
                                 </div>
 
                                 {!session && (
@@ -265,6 +276,18 @@ export default async function PublicProjectPage({
                                         </Card>
                                     ))}
                                 </div>
+                            </section>
+                        )}
+
+                        {project.showResultsPublicly && (
+                            <section id="results" className="space-y-6 scroll-mt-20">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-xl bg-indigo-500 text-white shadow-lg shadow-indigo-500/20">
+                                        <ImageIcon className="h-5 w-5" />
+                                    </div>
+                                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.project.results}</h2>
+                                </div>
+                                <PublicResults projectId={project.id} />
                             </section>
                         )}
 
