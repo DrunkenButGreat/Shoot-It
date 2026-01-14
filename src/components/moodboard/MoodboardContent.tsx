@@ -4,7 +4,9 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { MoodboardGroup } from "./MoodboardGroup"
 import { GroupForm } from "./GroupForm"
+import { MoodboardPicker } from "./MoodboardPicker"
 import { Button } from "@/components/ui/button"
+import { useI18n } from "@/components/I18nProvider"
 
 interface MoodboardImage {
   id: string
@@ -30,6 +32,8 @@ interface Group {
   id: string
   name: string
   description: string | null
+  ownerId: string
+  isArchived: boolean
   order: number
   status: string
   images: MoodboardImage[]
@@ -39,47 +43,46 @@ interface Group {
 interface MoodboardContentProps {
   projectId: string
   initialGroups: Group[]
+  galleryLayout?: string
+  hasLocalMedia?: boolean
 }
 
-export function MoodboardContent({ projectId, initialGroups }: MoodboardContentProps) {
-  const [groups] = useState(initialGroups)
+export function MoodboardContent({ projectId, initialGroups: groups, galleryLayout, hasLocalMedia }: MoodboardContentProps) {
   const router = useRouter()
+  const { t } = useI18n();
 
-  const handleGroupAdded = () => {
-    router.refresh()
-  }
-
-  const handleGroupUpdated = () => {
-    router.refresh()
-  }
-
-  const handleGroupDeleted = () => {
+  const handleRefresh = () => {
     router.refresh()
   }
 
   return (
     <>
-      <div className="mb-6 flex justify-between items-center">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-2xl font-bold text-gray-900">
-          Moodboard Groups ({groups.length})
+          {t('moodboard.title')} ({groups.length})
         </h2>
-        <GroupForm projectId={projectId} onSuccess={handleGroupAdded} />
+        <div className="flex gap-2">
+          <MoodboardPicker projectId={projectId} onLink={handleRefresh} />
+          <GroupForm projectId={projectId} onSuccess={handleRefresh} />
+        </div>
       </div>
 
       {groups.length === 0 ? (
         <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-          <p className="text-gray-500 text-lg">No moodboard groups yet</p>
-          <p className="text-sm text-gray-400 mt-2">Create groups to organize your inspiration images</p>
+          <p className="text-gray-500 text-lg">{t('moodboard.noGroups')}</p>
+          <p className="text-sm text-gray-400 mt-2">{t('moodboard.groupsPrompt')}</p>
         </div>
       ) : (
         <div className="space-y-8">
           {groups.map((group) => (
             <MoodboardGroup
-              key={group.id}
+              key={`${group.id}-${group.order}`}
               group={group}
               projectId={projectId}
-              onUpdate={handleGroupUpdated}
-              onDelete={handleGroupDeleted}
+              galleryLayout={galleryLayout}
+              hasLocalMedia={hasLocalMedia}
+              onUpdate={handleRefresh}
+              onDelete={handleRefresh}
             />
           ))}
         </div>

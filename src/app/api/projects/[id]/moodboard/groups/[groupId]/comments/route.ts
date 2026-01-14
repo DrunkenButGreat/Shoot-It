@@ -26,10 +26,24 @@ export async function POST(
     const body = await request.json()
     const validatedData = commentSchema.parse(body)
 
+    // Find the link first
+    const link = await prisma.projectMoodboardLink.findUnique({
+      where: {
+        projectId_groupId: {
+          projectId: id,
+          groupId,
+        }
+      }
+    })
+
+    if (!link) {
+      return NextResponse.json({ error: 'Project moodboard link not found' }, { status: 404 })
+    }
+
     const comment = await prisma.comment.create({
       data: {
         ...validatedData,
-        groupId,
+        moodboardLinkId: link.id,
         userId: session.user.id,
       },
       include: {

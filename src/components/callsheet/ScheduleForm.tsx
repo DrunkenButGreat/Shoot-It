@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useI18n } from '@/components/I18nProvider';
 
 export function ScheduleForm({
   projectId,
@@ -24,6 +25,7 @@ export function ScheduleForm({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const { t } = useI18n();
   const [time, setTime] = useState('');
   const [activity, setActivity] = useState('');
   const [location, setLocation] = useState('');
@@ -63,49 +65,49 @@ export function ScheduleForm({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Schedule Item</DialogTitle>
+          <DialogTitle>{t('callsheet.add')}</DialogTitle>
           <DialogDescription>
-            Add a new item to the callsheet schedule.
+            {t('projectForm.isCreatingDescription')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="time">Time</Label>
+              <Label htmlFor="time">{t('callsheet.time')}</Label>
               <Input
                 id="time"
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                placeholder="09:00 AM"
+                placeholder="09:00"
                 required
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="activity">Activity</Label>
+              <Label htmlFor="activity">{t('callsheet.activity')}</Label>
               <Input
                 id="activity"
                 value={activity}
                 onChange={(e) => setActivity(e.target.value)}
-                placeholder="Hair & Makeup"
+                placeholder="..."
                 required
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="location">Location (Optional)</Label>
+              <Label htmlFor="location">{t('callsheet.location')}</Label>
               <Input
                 id="location"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                placeholder="Dressing Room 2"
+                placeholder="..."
               />
             </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Adding...' : 'Add Item'}
+              {isSubmitting ? t('common.creating') : t('common.create')}
             </Button>
           </DialogFooter>
         </form>

@@ -27,19 +27,24 @@ export default async function MoodboardPage({
   }
 
   // Fetch project and moodboard groups
-  const [project, groups] = await Promise.all([
+  const [project, links] = await Promise.all([
     prisma.project.findUnique({
       where: { id },
       select: {
         id: true,
         name: true,
+        galleryLayout: true,
       },
     }),
-    prisma.moodboardGroup.findMany({
+    prisma.projectMoodboardLink.findMany({
       where: { projectId: id },
       include: {
-        images: {
-          orderBy: { order: 'asc' },
+        group: {
+          include: {
+            images: {
+              orderBy: { order: 'asc' },
+            },
+          },
         },
         comments: {
           include: {
@@ -63,6 +68,14 @@ export default async function MoodboardPage({
     redirect("/dashboard")
   }
 
+  // Map links to the format the component expects
+  const groups = links.map(link => ({
+    ...link.group,
+    status: link.status,
+    order: link.order,
+    comments: link.comments,
+  }))
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -73,7 +86,7 @@ export default async function MoodboardPage({
               <Link href={`/project/${id}`}>
                 <Button variant="ghost" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Project
+                  Zurück zum Projekt
                 </Button>
               </Link>
               <div>
@@ -85,9 +98,13 @@ export default async function MoodboardPage({
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <MoodboardContent projectId={id} initialGroups={groups} />
+        <MoodboardContent
+          projectId={id}
+          initialGroups={groups}
+          galleryLayout={project.galleryLayout}
+          hasLocalMedia={!!process.env.LOCAL_MEDIA_PATH}
+        />
       </main>
     </div>
   )

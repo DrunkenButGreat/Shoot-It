@@ -3,6 +3,9 @@ import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { canEditProject } from '@/lib/permissions'
 
+import { rm } from 'fs/promises'
+import path from 'path'
+
 // DELETE /api/projects/[id]/results/folders/[folderId] - Delete a folder
 export async function DELETE(
   request: NextRequest,
@@ -20,6 +23,14 @@ export async function DELETE(
     const canEdit = await canEditProject(session.user.id, id)
     if (!canEdit) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    // Delete folder directory from filesystem
+    const folderDir = path.join(process.cwd(), 'uploads', 'results', id, folderId)
+    try {
+      await rm(folderDir, { recursive: true, force: true })
+    } catch (err) {
+      console.error('Error deleting folder directory:', err)
     }
 
     await prisma.resultFolder.delete({

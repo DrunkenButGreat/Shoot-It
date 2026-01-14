@@ -74,4 +74,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session
     },
   },
+  events: {
+    async createUser({ user }) {
+      if (user.email) {
+        await prisma.participant.updateMany({
+          where: { email: user.email },
+          data: { userId: user.id }
+        })
+      }
+    }
+  }
 })

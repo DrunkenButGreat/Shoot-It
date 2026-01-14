@@ -5,10 +5,17 @@ import prisma from '@/lib/prisma';
 import { canAccessProject } from '@/lib/permissions';
 import Link from 'next/link';
 import { ResultsContent } from '@/components/results/ResultsContent';
+import { ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { getLocale, getDictionary } from '@/lib/i18n';
+import { cookies } from 'next/headers';
 
 export default async function ResultsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await auth();
+  const cookieStore = await cookies();
+  const locale = getLocale(cookieStore);
+  const dict = await getDictionary(locale);
 
   if (!session?.user?.id) {
     redirect("/login")
@@ -44,26 +51,48 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
           images: true,
         },
       },
+      images: {
+        orderBy: { createdAt: 'asc' },
+      },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  const rootImages = await prisma.resultFile.findMany({
+    where: { 
+      projectId: id,
+      folderId: null
     },
     orderBy: { createdAt: 'asc' },
   });
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-        <Link href={`/project/${id}`} className="text-blue-600 hover:underline">
-          ← Back to Project
-        </Link>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center gap-4">
+            <Link href={`/project/${id}`}>
+              <Button variant="ghost" size="sm" className="gap-2">
+                <ArrowLeft className="w-4 h-4" />
+                {dict.common.backToProject}
+              </Button>
+            </Link>
+            <h1 className="text-xl font-semibold text-gray-900 line-clamp-1">
+              {dict.project.results} - {project.name}
+            </h1>
+          </div>
+        </div>
+      </header>
 
-      <h1 className="text-3xl font-bold mb-6">Results - {project.name}</h1>
-
-      <Suspense fallback={<div>Loading...</div>}>
-        <ResultsContent
-          projectId={id}
-          initialFolders={folders}
-        />
-      </Suspense>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Suspense fallback={<div className="flex items-center justify-center min-h-[400px]">{dict.common.loading}</div>}>
+          <ResultsContent
+            projectId={id}
+            initialFolders={folders}
+            rootImages={rootImages}
+          />
+        </Suspense>
+      </main>
     </div>
   );
 }

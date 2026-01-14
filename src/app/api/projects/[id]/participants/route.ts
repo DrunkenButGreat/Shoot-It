@@ -69,10 +69,23 @@ export async function POST(
     const body = await request.json()
     const validatedData = participantSchema.parse(body)
 
+    // Check if a user with this email exists to link them
+    let userId = null
+    if (validatedData.email) {
+      const existingUser = await prisma.user.findUnique({
+        where: { email: validatedData.email },
+        select: { id: true }
+      })
+      if (existingUser) {
+        userId = existingUser.id
+      }
+    }
+
     const participant = await prisma.participant.create({
       data: {
         ...validatedData,
         projectId: id,
+        userId: userId,
       },
       include: {
         images: true,

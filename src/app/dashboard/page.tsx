@@ -3,6 +3,8 @@ import { redirect } from "next/navigation"
 import UserMenu from "@/components/auth/UserMenu"
 import { DashboardContent } from "@/components/projects/DashboardContent"
 import prisma from "@/lib/prisma"
+import { getLocale, getDictionary } from "@/lib/i18n"
+import { cookies } from "next/headers"
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -10,6 +12,10 @@ export default async function DashboardPage() {
   if (!session?.user?.id) {
     redirect("/login")
   }
+
+  const cookieStore = await cookies()
+  const locale = getLocale(cookieStore)
+  const dict = await getDictionary(locale)
 
   // Fetch user's projects
   const projects = await prisma.project.findMany({
@@ -19,6 +25,11 @@ export default async function DashboardPage() {
         {
           access: {
             some: { userId: session.user.id },
+          },
+        },
+        {
+          participants: {
+            some: { email: session.user.email },
           },
         },
       ],
@@ -34,7 +45,7 @@ export default async function DashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
-              <h1 className="text-xl font-bold text-gray-900">PhotoShoot Organizer</h1>
+              <h1 className="text-xl font-bold text-gray-900">{dict.dashboard.title}</h1>
             </div>
             <UserMenu />
           </div>

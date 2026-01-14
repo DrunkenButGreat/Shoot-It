@@ -10,15 +10,30 @@ export async function GET(
 ) {
   try {
     const session = await auth()
-    if (!session?.user?.id) {
+    const { id } = await params
+
+    const project = await prisma.project.findUnique({
+      where: { id },
+      select: { isPublic: true, showResultsPublicly: true }
+    })
+
+    if (!project) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+    }
+
+    const isPublicAccess = project.isPublic && project.showResultsPublicly
+
+    if (!session?.user?.id && !isPublicAccess) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = await params
-
-    // Check if user has access to this project
-    const hasAccess = await canAccessProject(session.user.id, id)
-    if (!hasAccess) {
+    // Check if user has access to this project (if not public)
+    if (session?.user?.id) {
+      const hasAccess = await canAccessProject(session.user.id, id)
+      if (!hasAccess && !isPublicAccess) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+    } else if (!isPublicAccess) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -29,16 +44,22 @@ export async function GET(
         images: {
           orderBy: { createdAt: 'desc' },
         },
-        children: {
-          include: {
-            images: true,
-          },
-        },
+        _count: {
+          select: { images: true }
+        }
       },
       orderBy: { createdAt: 'asc' },
     })
 
-    return NextResponse.json({ folders })
+    const rootImages = await prisma.resultFile.findMany({
+      where: { 
+        projectId: id,
+        folderId: null
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    return NextResponse.json({ folders, rootImages })
   } catch (error) {
     console.error('Error fetching results:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

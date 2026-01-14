@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useI18n } from '@/components/I18nProvider';
 
 type Folder = {
   id: string;
@@ -31,6 +32,7 @@ export function FolderForm({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const { t } = useI18n();
   const [name, setName] = useState('');
   const [parentId, setParentId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -67,32 +69,32 @@ export function FolderForm({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>New Folder</DialogTitle>
+          <DialogTitle>{t('results.addFolder')}</DialogTitle>
           <DialogDescription>
-            Create a new folder to organize your results.
+            {t('results.addFolderDescription')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Folder Name</Label>
+              <Label htmlFor="name">{t('results.folderName')}</Label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Final Edits"
+                placeholder="..."
                 required
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="parent">Parent Folder (Optional)</Label>
+              <Label htmlFor="parent">{t('results.parentFolder')}</Label>
               <select
                 id="parent"
                 value={parentId}
                 onChange={(e) => setParentId(e.target.value)}
                 className="w-full px-3 py-2 border rounded-md"
               >
-                <option value="">-- Root Level --</option>
+                <option value="">-- {t('results.rootLevel')} --</option>
                 {folders.map((f) => (
                   <option key={f.id} value={f.id}>
                     {f.name}
@@ -103,10 +105,10 @@ export function FolderForm({
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : 'Create Folder'}
+              {isSubmitting ? t('common.saving') : t('common.create')}
             </Button>
           </DialogFooter>
         </form>

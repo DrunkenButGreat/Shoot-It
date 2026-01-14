@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { moodboardGroupSchema } from '@/lib/validations'
-import { canEditProject } from '@/lib/permissions'
+import { canAccessProject } from '@/lib/permissions'
 
 // POST /api/projects/[id]/moodboard/groups - Create a new group
 export async function POST(
@@ -17,17 +17,17 @@ export async function POST(
 
     const { id } = await params
 
-    // Check if user can edit this project
-    const canEdit = await canEditProject(session.user.id, id)
-    if (!canEdit) {
+    // Check if user has access to this project (Participants should be able to create groups too)
+    const hasAccess = await canAccessProject(session.user.id, id)
+    if (!hasAccess) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const body = await request.json()
     const validatedData = moodboardGroupSchema.parse(body)
 
-    // Get the current max order
-    const maxOrder = await prisma.moodboardGroup.findFirst({
+    // Get the current max order from links
+    const maxOrder = await prisma.projectMoodboardLink.findFirst({
       where: { projectId: id },
       orderBy: { order: 'desc' },
       select: { order: true },
@@ -36,12 +36,20 @@ export async function POST(
     const group = await prisma.moodboardGroup.create({
       data: {
         ...validatedData,
-        projectId: id,
-        order: (maxOrder?.order ?? -1) + 1,
+        ownerId: session.user.id,
+        projectLinks: {
+          create: {
+            projectId: id,
+            order: (maxOrder?.order ?? -1) + 1,
+          }
+        }
       },
       include: {
         images: true,
-        comments: true,
+        projectLinks: {
+          where: { projectId: id },
+          include: { comments: true }
+        },
       },
     })
 

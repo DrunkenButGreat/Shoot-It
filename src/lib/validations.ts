@@ -3,9 +3,19 @@ import { z } from 'zod'
 export const projectSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(5000).optional(),
-  date: z.string().datetime(),
-  location: z.string().min(1).max(200),
+  date: z.string().datetime().optional().nullable(),
+  location: z.string().max(200).optional().nullable(),
   address: z.string().max(500).optional(),
+  isArchived: z.boolean().optional(),
+  isPublic: z.boolean().optional(),
+  showMoodboardPublicly: z.boolean().optional(),
+  showParticipantsPublicly: z.boolean().optional(),
+  showContractsPublicly: z.boolean().optional(),
+  showSelectionPublicly: z.boolean().optional(),
+  showCallsheetPublicly: z.boolean().optional(),
+  showResultsPublicly: z.boolean().optional(),
+  allowApplications: z.boolean().optional(),
+  galleryLayout: z.string().optional(),
 })
 
 export const participantSchema = z.object({
@@ -28,8 +38,8 @@ export const signatureSchema = z.object({
 })
 
 export const ratingSchema = z.object({
-  stars: z.number().min(1).max(5).optional(),
-  color: z.enum(['RED', 'YELLOW', 'GREEN']).optional(),
+  stars: z.number().min(1).max(5).optional().nullable(),
+  color: z.enum(['RED', 'YELLOW', 'GREEN']).optional().nullable(),
 })
 
 export const callsheetSchema = z.object({
@@ -68,7 +78,7 @@ export const scheduleItemSchema = z.object({
 
 export const resultFolderSchema = z.object({
   name: z.string().min(1).max(100),
-  parentId: z.string().optional(),
+  parentId: z.string().optional().nullable(),
 })
 
 export const registerSchema = z.object({

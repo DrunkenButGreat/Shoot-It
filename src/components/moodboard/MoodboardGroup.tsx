@@ -1,10 +1,17 @@
 "use client"
 
 import { useState } from "react"
-import { Check, MessageSquare, Trash2, X } from "lucide-react"
+import { Archive, ArchiveRestore, Check, Link as LinkIcon, MessageSquare, Trash2, X } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import ImageUpload from "./ImageUpload"
+import { LocalMediaPicker } from "../selection/LocalMediaPicker"
+import { useI18n } from "@/components/I18nProvider"
+import { useSession } from "next-auth/react"
+
+import Lightbox from "yet-another-react-lightbox"
+import "yet-another-react-lightbox/styles.css"
 
 interface MoodboardImage {
   id: string
@@ -30,6 +37,9 @@ interface Group {
   id: string
   name: string
   description: string | null
+  ownerId: string
+  isArchived: boolean
+  isLibrary: boolean
   order: number
   status: string
   images: MoodboardImage[]
@@ -39,41 +49,72 @@ interface Group {
 interface MoodboardGroupProps {
   group: Group
   projectId: string
+  galleryLayout?: string
+  hasLocalMedia?: boolean
   onUpdate?: () => void
   onDelete?: () => void
 }
 
-export function MoodboardGroup({ group, projectId, onUpdate, onDelete }: MoodboardGroupProps) {
+export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia, onUpdate, onDelete }: MoodboardGroupProps) {
+  const { data: session } = useSession()
+  const { t, locale } = useI18n()
   const [isDeleting, setIsDeleting] = useState(false)
   const [showComments, setShowComments] = useState(false)
   const [newComment, setNewComment] = useState("")
   const [isAddingComment, setIsAddingComment] = useState(false)
+  const [index, setIndex] = useState(-1)
+
+  const isOwner = session?.user?.id === group.ownerId
+  const isLinked = projectId !== ""
+  const isLibrary = group.isLibrary
 
   const handleDelete = async () => {
-    if (!confirm(`Are you sure you want to delete the group "${group.name}"?`)) {
+    const confirmMessage = isLinked 
+      ? t('moodboard.deleteGroupConfirm').replace('{name}', group.name) // We might want a different text for "Unlink"
+      : t('moodboard.deleteGroupConfirm').replace('{name}', group.name)
+
+    if (!confirm(confirmMessage)) {
       return
     }
 
     setIsDeleting(true)
     try {
-      const response = await fetch(
-        `/api/projects/${projectId}/moodboard/groups/${group.id}`,
-        { method: "DELETE" }
-      )
+      const url = isLinked 
+        ? `/api/projects/${projectId}/moodboard/groups/${group.id}` 
+        : `/api/user/moodboards/${group.id}`
+        
+      const response = await fetch(url, { method: "DELETE" })
 
       if (response.ok) {
         onDelete?.()
       } else {
-        alert("Failed to delete group")
+        alert(t('moodboard.deleteGroupError'))
       }
     } catch (error) {
-      alert("An error occurred")
+      alert(t('common.error'))
     } finally {
       setIsDeleting(false)
     }
   }
 
+  const handleArchive = async () => {
+    try {
+      const response = await fetch(`/api/user/moodboards/${group.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isArchived: !group.isArchived }),
+      })
+
+      if (response.ok) {
+        onUpdate?.()
+      }
+    } catch (error) {
+      alert("An error occurred")
+    }
+  }
+
   const handleStatusChange = async (status: string) => {
+    if (!isLinked) return
     try {
       const response = await fetch(
         `/api/projects/${projectId}/moodboard/groups/${group.id}`,
@@ -145,106 +186,242 @@ export function MoodboardGroup({ group, projectId, onUpdate, onDelete }: Moodboa
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <CardTitle>{group.name}</CardTitle>
-              <span className={`text-xs px-2 py-1 rounded border ${getStatusColor(group.status)}`}>
-                {getStatusLabel(group.status)}
-              </span>
+    <div className={isLibrary && !isOwner ? "pointer-events-none opacity-80" : ""}>
+      {isLibrary && !isOwner && (
+        <div className="bg-amber-50 text-amber-700 text-[10px] px-2 py-0.5 border-b border-amber-100 flex items-center gap-1 justify-center rounded-t-xl">
+          <X className="h-3 w-3" /> {t('moodboard.ownerOnlyEdit')}
+        </div>
+      )}
+      <ImageUpload
+        uploadUrl={isLinked 
+          ? `/api/projects/${projectId}/moodboard/groups/${group.id}/images`
+          : `/api/user/moodboards/${group.id}/images` 
+        }
+        onSuccess={() => onUpdate?.()}
+        className="block"
+        disabled={isLibrary && !isOwner}
+      >
+        <Card className={isLibrary && !isOwner ? "rounded-t-none" : ""}>
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-2">
+                    <CardTitle>{group.name}</CardTitle>
+                    {isLinked && group.isLibrary && (
+                      <LinkIcon className="h-4 w-4 text-blue-500" title={t('moodboard.linked')} />
+                    )}
+                  </div>
+                  {isLinked && (
+                    <span className={`text-xs px-2 py-1 rounded border ${getStatusColor(group.status)}`}>
+                      {getStatusLabel(group.status)}
+                    </span>
+                  )}
+                </div>
+                {group.description && (
+                  <CardDescription>{group.description}</CardDescription>
+                )}
+              </div>
+              <div className="flex gap-2">
+                {isLinked && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleStatusChange("ACCEPTED")}
+                      disabled={group.status === "ACCEPTED"}
+                    >
+                      <Check className="h-4 w-4 text-green-600" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleStatusChange("REJECTED")}
+                      disabled={group.status === "REJECTED"}
+                    >
+                      <X className="h-4 w-4 text-red-600" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowComments(!showComments)}
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      {group.comments?.length > 0 && (
+                        <span className="ml-1 text-xs">{group.comments.length}</span>
+                      )}
+                    </Button>
+                  </>
+                )}
+                
+                {!isLinked && isOwner && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleArchive}
+                    title={group.isArchived ? t('moodboard.unarchive') : t('moodboard.archive')}
+                  >
+                    {group.isArchived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
+                  </Button>
+                )}
+
+                {(isOwner || isLinked) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                  >
+                    <Trash2 className="h-4 w-4 text-red-600" />
+                  </Button>
+                )}
+              </div>
             </div>
-            {group.description && (
-              <CardDescription>{group.description}</CardDescription>
+          </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {galleryLayout === "grid" ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {group.images.map((image, i) => (
+                  <div
+                    key={image.id}
+                    className="relative aspect-square bg-gray-100 rounded-xl overflow-hidden border border-gray-200 cursor-zoom-in hover:opacity-90 transition-opacity group"
+                    onClick={() => setIndex(i)}
+                  >
+                    <img
+                      src={image.path}
+                      alt={image.filename}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : galleryLayout === "justified" ? (
+              <div className="flex flex-wrap gap-4">
+                {group.images.map((image, i) => {
+                  const width = (image as any).width || 400
+                  const height = (image as any).height || 300
+                  const aspect = width / height
+                  return (
+                    <div
+                      key={image.id}
+                      className="relative bg-gray-100 rounded-xl overflow-hidden border border-gray-200 cursor-zoom-in hover:opacity-90 transition-all group h-[200px]"
+                      style={{
+                        flexGrow: aspect * 100,
+                        flexBasis: `${aspect * 150}px`,
+                      }}
+                      onClick={() => setIndex(i)}
+                    >
+                      <img
+                        src={image.path}
+                        alt={image.filename}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )
+                })}
+                <div className="flex-[1000] h-0" />
+              </div>
+            ) : (
+              <div className="flex gap-4 items-start">
+                {Array.from({ length: 4 }).map((_, colIdx) => {
+                  const columnImages = group.images.filter((_, i) => i % 4 === colIdx)
+
+                  return (
+                    <div key={colIdx} className="flex-1 flex flex-col gap-4">
+                      {columnImages.map((image) => {
+                        const globalIndex = group.images.findIndex(img => img.id === image.id)
+                        return (
+                          <div
+                            key={image.id}
+                            className="relative bg-gray-100 rounded-xl overflow-hidden border border-gray-200 cursor-zoom-in hover:opacity-90 transition-all group"
+                            onClick={() => setIndex(globalIndex)}
+                          >
+                            <img
+                              src={image.path}
+                              alt={image.filename}
+                              className="w-full h-auto block"
+                            />
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {(isOwner || !isLibrary) && (
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider">{t('selection.importImages')}</h4>
+                  {hasLocalMedia && (
+                    <LocalMediaPicker
+                      projectId={projectId}
+                      onSuccess={() => onUpdate?.()}
+                      importUrl={isLinked 
+                        ? `/api/projects/${projectId}/moodboard/groups/${group.id}/scan`
+                        : `/api/user/moodboards/${group.id}/scan`
+                      }
+                      label={t('selection.importToGroup')}
+                    />
+                  )}
+                </div>
+                <ImageUpload
+                  uploadUrl={isLinked 
+                    ? `/api/projects/${projectId}/moodboard/groups/${group.id}/images`
+                    : `/api/user/moodboards/${group.id}/images`
+                  }
+                  onSuccess={() => onUpdate?.()}
+                  className="w-full min-h-[120px] border-dashed bg-gray-50/50 hover:bg-gray-100/30 transition-all rounded-2xl flex flex-col items-center justify-center border-gray-200"
+                  label={t('selection.dragDrop')}
+                />
+              </div>
             )}
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleStatusChange("ACCEPTED")}
-              disabled={group.status === "ACCEPTED"}
-            >
-              <Check className="h-4 w-4 text-green-600" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleStatusChange("REJECTED")}
-              disabled={group.status === "REJECTED"}
-            >
-              <X className="h-4 w-4 text-red-600" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowComments(!showComments)}
-            >
-              <MessageSquare className="h-4 w-4" />
-              {group.comments.length > 0 && (
-                <span className="ml-1 text-xs">{group.comments.length}</span>
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDelete}
-              disabled={isDeleting}
-            >
-              <Trash2 className="h-4 w-4 text-red-600" />
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {/* Images placeholder */}
-        {group.images.length === 0 ? (
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-            <p className="text-gray-500">No images yet</p>
-            <p className="text-sm text-gray-400 mt-1">Image upload coming soon</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {group.images.map((image) => (
-              <div key={image.id} className="aspect-square bg-gray-200 rounded"></div>
-            ))}
-          </div>
-        )}
 
-        {/* Comments section */}
-        {showComments && (
-          <div className="mt-6 pt-6 border-t">
-            <h4 className="font-medium mb-3">Comments ({group.comments.length})</h4>
-            <div className="space-y-3 mb-4">
-              {group.comments.map((comment) => (
-                <div key={comment.id} className="bg-gray-50 rounded p-3">
-                  <div className="flex items-start justify-between mb-1">
-                    <span className="font-medium text-sm">
-                      {comment.user.name || comment.user.email}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {new Date(comment.createdAt).toLocaleDateString()}
-                    </span>
+          <Lightbox
+            index={index}
+            open={index >= 0}
+            close={() => setIndex(-1)}
+            slides={group.images.map((img) => ({ src: img.path }))}
+          />
+
+          {/* Comments section */}
+          {showComments && (
+            <div className="mt-6 pt-6 border-t">
+              <h4 className="font-medium mb-3">Comments ({group.comments.length})</h4>
+              <div className="space-y-3 mb-4">
+                {group.comments.map((comment) => (
+                  <div key={comment.id} className="bg-gray-50 rounded p-3">
+                    <div className="flex items-start justify-between mb-1">
+                      <span className="font-medium text-sm">
+                        {comment.user.name || comment.user.email}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {new Date(comment.createdAt).toLocaleDateString(locale)}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700">{comment.content}</p>
                   </div>
-                  <p className="text-sm text-gray-700">{comment.content}</p>
-                </div>
-              ))}
+                ))}
+              </div>
+              <form onSubmit={handleAddComment} className="flex gap-2">
+                <Input
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Add a comment..."
+                  disabled={isAddingComment}
+                />
+                <Button type="submit" disabled={isAddingComment || !newComment.trim()}>
+                  {isAddingComment ? "Adding..." : "Add"}
+                </Button>
+              </form>
             </div>
-            <form onSubmit={handleAddComment} className="flex gap-2">
-              <Input
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Add a comment..."
-                disabled={isAddingComment}
-              />
-              <Button type="submit" disabled={isAddingComment || !newComment.trim()}>
-                {isAddingComment ? "Adding..." : "Add"}
-              </Button>
-            </form>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          )}
+        </CardContent>
+      </Card>
+    </ImageUpload>
+    </div>
   )
 }

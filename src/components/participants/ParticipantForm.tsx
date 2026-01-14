@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { useI18n } from "@/components/I18nProvider"
 
 interface ParticipantFormProps {
   projectId: string
@@ -20,6 +21,7 @@ interface ParticipantFormProps {
 }
 
 export function ParticipantForm({ projectId, onSuccess }: ParticipantFormProps) {
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -67,19 +69,19 @@ export function ParticipantForm({ projectId, onSuccess }: ParticipantFormProps) 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>+ Add Participant</Button>
+        <Button>+ {t('participants.add')}</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[525px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Add Participant</DialogTitle>
+            <DialogTitle>{t('participants.add')}</DialogTitle>
             <DialogDescription>
-              Add a new participant to this photoshoot project.
+              {t('projectForm.isCreatingDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Name *</Label>
+              <Label htmlFor="name">{t('participants.name')} *</Label>
               <Input
                 id="name"
                 value={formData.name}
@@ -91,7 +93,7 @@ export function ParticipantForm({ projectId, onSuccess }: ParticipantFormProps) 
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="role">Role</Label>
+              <Label htmlFor="role">{t('participants.role')}</Label>
               <Input
                 id="role"
                 value={formData.role}
@@ -102,19 +104,41 @@ export function ParticipantForm({ projectId, onSuccess }: ParticipantFormProps) 
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('participants.email')}</Label>
               <Input
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
+                onChange={async (e) => {
+                  const email = e.target.value
+                  setFormData({ ...formData, email })
+
+                  // Simple email validation before checking
+                  if (email.includes("@") && email.includes(".")) {
+                    try {
+                      const response = await fetch(`/api/users/check?email=${encodeURIComponent(email)}`)
+                      if (response.ok) {
+                        const data = await response.json()
+                        if (data.found && data.user) {
+                          setFormData(prev => ({
+                            ...prev,
+                            name: prev.name || data.user.name || "",
+                            phone: prev.phone || data.user.phoneNumber || "",
+                            role: prev.role || data.user.role || "",
+                            notes: prev.notes || data.user.bio || "",
+                          }))
+                        }
+                      }
+                    } catch (error) {
+                      console.error("Failed to check user:", error)
+                    }
+                  }
+                }}
                 placeholder="john@example.com"
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="phone">Phone</Label>
+              <Label htmlFor="phone">{t('participants.phone')}</Label>
               <Input
                 id="phone"
                 value={formData.phone}
@@ -125,23 +149,23 @@ export function ParticipantForm({ projectId, onSuccess }: ParticipantFormProps) 
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="notes">Notes</Label>
+              <Label htmlFor="notes">{t('participants.notes')}</Label>
               <Input
                 id="notes"
                 value={formData.notes}
                 onChange={(e) =>
                   setFormData({ ...formData, notes: e.target.value })
                 }
-                placeholder="Additional information..."
+                placeholder="..."
               />
             </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Adding..." : "Add Participant"}
+              {isLoading ? t('common.creating') : t('common.create')}
             </Button>
           </DialogFooter>
         </form>
