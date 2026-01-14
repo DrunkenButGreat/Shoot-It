@@ -1,10 +1,10 @@
-# PhotoShoot Organizer - Technische Spezifikation v2.0
+# PhotoShoot Organizer - Technische Spezifikation v2.1
 
 ## Projektübersicht
 
 **Projektname:** PhotoShoot Organizer  
-**Version:** 2.0.0  
-**Stand:** Januar 2025  
+**Version:** 1.0.0  
+**Stand:** Januar 2026  
 **Typ:** Self-Hosted Web Application  
 **Zweck:** Umfassendes Tool zur Organisation und Verwaltung von Fotoshootings
 
@@ -18,11 +18,12 @@
 |------------|-------------|---------|
 | Runtime | Node.js | 24.x LTS |
 | Frontend | Next.js (App Router) | 16.1.x |
-| Sprache | TypeScript | 5.9.x |
-| Styling | Tailwind CSS | 4.x |
+| React | React | 19.x |
+| Sprache | TypeScript | 5.7.x |
+| Styling | Tailwind CSS | 3.4.x |
 | UI Components | shadcn/ui | latest |
 | Backend/API | Next.js API Routes + Server Actions | 16.1.x |
-| ORM | Prisma | 7.x |
+| ORM | Prisma | 6.2.x |
 | Datenbank | PostgreSQL | 18.x |
 | Authentifizierung | Auth.js (NextAuth v5) | 5.x |
 | File Storage | Local Volume (Docker) | - |
@@ -435,13 +436,13 @@ model ResultFolder {
   project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   parent      ResultFolder? @relation("FolderHierarchy", fields: [parentId], references: [id])
   children    ResultFolder[] @relation("FolderHierarchy")
-  images      ResultImage[]
+  images      ResultFile[]
 
   @@index([projectId])
   @@index([parentId])
 }
 
-model ResultImage {
+model ResultFile {
   id          String   @id @default(cuid())
   filename    String
   path        String
@@ -832,7 +833,7 @@ photoshoot-organizer/
 
 ```typescript
 // GET /api/projects/[id]/results
-// Response: { folders: ResultFolder[], rootImages: ResultImage[] }
+// Response: { folders: ResultFolder[], rootImages: ResultFile[] }
 
 // POST /api/projects/[id]/results/folders
 // Body: { name: string, parentId?: string }
@@ -840,7 +841,7 @@ photoshoot-organizer/
 
 // POST /api/projects/[id]/results/upload
 // Body: FormData (files, folderId?)
-// Response: { images: ResultImage[] }
+// Response: { images: ResultFile[] }
 
 // POST /api/projects/[id]/results/import
 // Body: { path: string, preserveStructure?: boolean }

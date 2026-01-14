@@ -1,9 +1,9 @@
 # PhotoShoot Organizer
 
-A comprehensive self-hosted web application for managing photoshoot projects, built with Next.js 15, TypeScript, and PostgreSQL.
+A comprehensive self-hosted web application for managing photoshoot projects, built with Next.js 16, TypeScript, and PostgreSQL.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Next.js](https://img.shields.io/badge/Next.js-15.1-black)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.1-black)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)](https://www.typescriptlang.org/)
 [![Prisma](https://img.shields.io/badge/Prisma-6.2-2D3748)](https://www.prisma.io/)
 
@@ -11,11 +11,11 @@ A comprehensive self-hosted web application for managing photoshoot projects, bu
 
 PhotoShoot Organizer is a production-ready platform designed specifically for photographers and creative teams to manage all aspects of photoshoots, from initial planning to final delivery.
 
-**Implementation Status:** 10 of 12 phases complete (83%) - See [PROGRESS.md](PROGRESS.md) for details.
+**Implementation Status:** 11 of 12 phases complete (95%) - See [PROGRESS.md](PROGRESS.md) for details.
 
 ## ✨ Features
 
-### ✅ Implemented (83%)
+### ✅ Implemented (95%)
 
 - **Authentication & Authorization**
   - Local email/password login with bcrypt
@@ -41,6 +41,7 @@ PhotoShoot Organizer is a production-ready platform designed specifically for ph
   - Status workflow (PENDING → ACCEPTED/REJECTED)
   - Comment system with user attribution
   - Color-coded status badges
+  - Multi-image upload and drag-and-drop
 
 - **Selection Gallery**
   - 5-star rating system (1-5 stars)
@@ -48,33 +49,30 @@ PhotoShoot Organizer is a production-ready platform designed specifically for ph
   - Advanced filtering by stars and colors
   - Responsive grid layout
   - Quick rating updates
+  - Local directory import/scanning
 
-- **Contracts Module** (API Complete)
+- **Contracts Module**
   - Create and manage contracts
   - Digital signature pad with canvas
   - Multiple signatures per contract
   - Signature tracking (IP, timestamp, user agent)
   - PDF export ready
 
-- **Callsheet Module** (API Complete)
+- **Callsheet Module**
   - Shooting schedule management
   - Location details and parking info
   - Emergency contacts
   - Equipment list
   - Timeline visualization ready
 
-- **Results Module** (API Complete)
+- **Results Module**
   - Folder hierarchy for organizing final images
   - Folder creation and management
   - Image upload to folders
-  - Download capabilities
+  - Bulk ZIP download with folder preservation
+  - Public selection and download interface
 
-### 🚧 In Progress (17%)
-
-- **Image Upload Functionality**
-  - Moodboard image uploads
-  - Selection gallery imports
-  - Results folder uploads
+### 🚧 In Progress (5%)
 
 - **Testing & Polish**
   - Dark mode implementation
@@ -219,7 +217,7 @@ The application uses 17 Prisma models:
 - **Contracts:** Contract, ContractSignature
 - **Callsheet:** Callsheet, CallsheetScheduleItem
 - **Selection:** SelectionImage, ImageRating
-- **Results:** ResultFolder, ResultImage
+- **Results:** ResultFolder, ResultFile
 
 ## 🔌 API Endpoints
 
