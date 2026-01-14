@@ -1,5 +1,8 @@
 # Agent
 
+- **Versioning**
+  - Respect Semantic Versioning and update the package.json accordingly before each commit
+
 - **DB Migration**
   - Always keep in mind to make it easy upgradeable and maintainable. So if sth changes there need to be a way to upgrade it without loosing data. So try to avoid any data loss or provide a upgrade script
 

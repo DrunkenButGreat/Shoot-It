@@ -34,7 +34,9 @@
     "updating": "Wird aktualisiert...",
     "deleteTitle": "Löschen bestätigen",
     "deleteConfirm": "Bist du sicher? Dieser Vorgang kann nicht rückgängig gemacht werden.",
-    "error": "Fehler"
+    "error": "Fehler",
+    "noResults": "Keine Ergebnisse gefunden",
+    "areYouSure": "Bist du sicher?"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -243,6 +245,7 @@
     "register": "Registrieren",
     "registering": "Wird registriert...",
     "name": "Name",
+    "namePlaceholder": "Max Mustermann",
     "bio": "Bio / Notizen",
     "standardRole": "Standard-Rolle",
     "phoneNumber": "Telefonnummer",
@@ -256,6 +259,11 @@
     "savingProfile": "Wird gespeichert...",
     "profileUpdated": "Profil erfolgreich aktualisiert!",
     "loadingProfile": "Lade Profil..."
+  },
+  "profile": {
+    "title": "Profil",
+    "yourProfile": "Dein Profil",
+    "description": "Fülle dein Profil aus, damit deine Daten automatisch in Projekte übernommen werden."
   },
   "projectForm": {
     "public": "Öffentlich",

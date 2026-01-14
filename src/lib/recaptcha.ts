@@ -2,12 +2,8 @@ export async function verifyRecaptcha(token: string) {
   const secretKey = process.env.RECAPTCHA_SECRET_KEY
 
   if (!secretKey) {
-    if (process.env.NODE_ENV === 'production') {
-      console.error('RECAPTCHA_SECRET_KEY is not set in production. Rejecting verification.')
-      return false
-    }
-    console.warn('RECAPTCHA_SECRET_KEY is not set. Skipping verification in development.')
-    return true
+    console.error('RECAPTCHA_SECRET_KEY is not set. Rejecting registration for security.')
+    return false
   }
 
   try {

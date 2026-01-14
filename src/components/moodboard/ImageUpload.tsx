@@ -153,7 +153,7 @@ export default function ImageUpload({
                 "relative flex flex-col items-center justify-center transition-all duration-200 w-full h-full border-2 border-dashed rounded-xl",
                 compact ? "min-h-[44px] gap-1 p-1" : "min-h-[150px] gap-4 p-4",
                 isDragging ? "border-blue-500 bg-blue-50/50" : "border-gray-200 bg-gray-50/50 hover:bg-gray-100/50",
-                isUploading && "opacity-80 pointer-events-none",
+                (isUploading || disabled) && "opacity-80 pointer-events-none",
                 className
             )}
         >
@@ -164,6 +164,7 @@ export default function ImageUpload({
                 className="hidden"
                 accept="image/*"
                 multiple
+                disabled={disabled || isUploading}
             />
 
             <div className={cn("flex items-center text-center", compact ? "flex-row gap-2" : "flex-col")}>
@@ -195,7 +196,7 @@ export default function ImageUpload({
                 <Button
                     variant="secondary"
                     size="sm"
-                    disabled={isUploading}
+                    disabled={isUploading || disabled}
                     onClick={() => fileInputRef.current?.click()}
                     className="mt-2"
                 >
@@ -203,7 +204,7 @@ export default function ImageUpload({
                 </Button>
             )}
 
-            {compact && !isUploading && (
+            {compact && !isUploading && !disabled && (
                 <button
                     className="absolute inset-0 cursor-pointer"
                     onClick={() => fileInputRef.current?.click()}

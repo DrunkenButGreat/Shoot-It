@@ -70,7 +70,7 @@ export async function getUserRole(
         where: { userId },
       },
       participants: {
-        where: { email: user?.email || undefined },
+        where: { email: user.email },
       },
     },
   })

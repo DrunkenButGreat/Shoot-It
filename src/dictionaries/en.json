@@ -34,7 +34,9 @@
     "updating": "Updating...",
     "deleteTitle": "Confirm Delete",
     "deleteConfirm": "Are you sure? This action cannot be undone.",
-    "error": "Error"
+    "error": "Error",
+    "noResults": "No results found",
+    "areYouSure": "Are you sure?"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -242,6 +244,7 @@
     "register": "Register",
     "registering": "Registering...",
     "name": "Name",
+    "namePlaceholder": "John Doe",
     "bio": "Bio / Notes",
     "standardRole": "Default Role",
     "phoneNumber": "Phone Number",
@@ -255,6 +258,11 @@
     "savingProfile": "Saving...",
     "profileUpdated": "Profile successfully updated!",
     "loadingProfile": "Loading profile..."
+  },
+  "profile": {
+    "title": "Profile",
+    "yourProfile": "Your Profile",
+    "description": "Fill out your profile so your data is automatically included in projects."
   },
   "projectForm": {
     "public": "Public",

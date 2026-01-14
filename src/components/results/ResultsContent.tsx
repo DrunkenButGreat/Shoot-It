@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { FolderForm } from './FolderForm';
 import { FolderTree } from './FolderTree';
-import { FolderPlus, FolderOpen, Download, CheckSquare, Square, Upload } from 'lucide-react';
+import { FolderPlus, FolderOpen, Download, CheckSquare, Square } from 'lucide-react';
 import { useI18n } from '@/components/I18nProvider';
 import { ResultImageGrid } from './ResultImageGrid';
 import ImageUpload from '../moodboard/ImageUpload';

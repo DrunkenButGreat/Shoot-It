@@ -13,7 +13,7 @@ import {
 import ImageUpload from '../moodboard/ImageUpload';
 import { useI18n } from '@/components/I18nProvider';
 import { ResultImageGrid } from './ResultImageGrid';
-import { CheckSquare, Square, ChevronDown, ChevronRight, Folder as FolderIcon, FolderOpen, Trash2, Upload } from 'lucide-react';
+import { CheckSquare, Square, ChevronDown, ChevronRight, Folder as FolderIcon, FolderOpen, Trash2 } from 'lucide-react';
 
 type ResultFile = {
   id: string;
