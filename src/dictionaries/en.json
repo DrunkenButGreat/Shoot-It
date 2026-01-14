@@ -125,7 +125,11 @@
     "addToGroup": "Add to this group",
     "errorCreating": "An error occurred while creating the group.",
     "deleteGroupConfirm": "Are you sure you want to delete the group \"{name}\"?",
-    "deleteGroupError": "Failed to delete group"
+    "deleteGroupError": "Failed to delete group",
+    "noMoodboardsFound": "No moodboards found.",
+    "noImage": "No image",
+    "linking": "Linking...",
+    "addSelection": "Add selection ({count})"
   },
   "participants": {
     "title": "Participants",
@@ -141,7 +145,8 @@
     "notes": "Notes",
     "saving": "Saving...",
     "deleteTitle": "Delete Participant",
-    "deleteConfirm": "Are you sure you want to remove this participant?"
+    "deleteConfirm": "Are you sure you want to remove {name}?",
+    "deleteError": "Error deleting participant"
   },
   "contracts": {
     "title": "Contracts",

@@ -13,6 +13,7 @@ interface ImageUploadProps {
     className?: string
     compact?: boolean
     children?: ReactNode
+    disabled?: boolean
 }
 
 export default function ImageUpload({
@@ -21,7 +22,8 @@ export default function ImageUpload({
     label,
     className,
     compact,
-    children
+    children,
+    disabled
 }: ImageUploadProps) {
     const { t } = useI18n()
     const defaultLabel = label || t('selection.dragAndDrop')
@@ -73,18 +75,21 @@ export default function ImageUpload({
     }
 
     const onDragOver = useCallback((e: React.DragEvent) => {
+        if (disabled) return
         e.preventDefault()
         e.stopPropagation()
         setIsDragging(true)
-    }, [])
+    }, [disabled])
 
     const onDragLeave = useCallback((e: React.DragEvent) => {
+        if (disabled) return
         e.preventDefault()
         e.stopPropagation()
         setIsDragging(false)
-    }, [])
+    }, [disabled])
 
     const onDrop = useCallback((e: React.DragEvent) => {
+        if (disabled) return
         e.preventDefault()
         e.stopPropagation()
         setIsDragging(false)
@@ -93,7 +98,7 @@ export default function ImageUpload({
         if (files && files.length > 0) {
             uploadFiles(files)
         }
-    }, [uploadFiles])
+    }, [uploadFiles, disabled])
 
     const isUploading = uploadingCount > 0
 

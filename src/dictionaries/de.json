@@ -126,7 +126,11 @@
     "addToGroup": "Zu dieser Gruppe hinzufügen",
     "errorCreating": "Ein Fehler beim Erstellen der Gruppe ist aufgetreten.",
     "deleteGroupConfirm": "Bist du sicher, dass du die Gruppe \"{name}\" löschen möchtest?",
-    "deleteGroupError": "Gruppe konnte nicht gelöscht werden"
+    "deleteGroupError": "Gruppe konnte nicht gelöscht werden",
+    "noMoodboardsFound": "Keine Moodboards gefunden.",
+    "noImage": "Kein Bild",
+    "linking": "Verknüpfe...",
+    "addSelection": "Auswahl hinzufügen ({count})"
   },
   "participants": {
     "title": "Beteiligte",
@@ -142,7 +146,8 @@
     "notes": "Notizen",
     "saving": "Speichert...",
     "deleteTitle": "Beteiligten löschen",
-    "deleteConfirm": "Bist du sicher, dass du diesen Beteiligten entfernen möchtest?"
+    "deleteConfirm": "Bist du sicher, dass du {name} entfernen möchtest?",
+    "deleteError": "Fehler beim Löschen vom Beteiligten"
   },
   "contracts": {
     "title": "Verträge",

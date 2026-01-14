@@ -28,8 +28,6 @@ export function LocalMediaPicker({ projectId, onSuccess, importUrl, label }: Loc
     const [loading, setLoading] = useState(false)
     const [importing, setImporting] = useState<string | null>(null)
 
-    const displayLabel = label || t('selection.importFromLocal')
-
     useEffect(() => {
         if (open) {
             fetchFolders()

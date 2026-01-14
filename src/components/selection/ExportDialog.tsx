@@ -13,8 +13,9 @@ import {
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Share, Check, Copy } from "lucide-react"
+import { Share, Check } from "lucide-react"
 import { useI18n } from "@/components/I18nProvider"
+import Link from "next/link"
 
 interface Rating {
   id: string
@@ -82,10 +83,12 @@ export function ExportDialog({ images }: ExportDialogProps) {
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">{t('selection.exportTitle')}</DialogTitle>
-          <p className="text-[15px] leading-relaxed text-gray-700 mt-4">
+          <div className="text-[15px] leading-relaxed text-gray-700 mt-4">
             {t('selection.exportDescription')} 
-            Mehr Infos zur Nutzung und eventuellen Fehlerquellen bei Problemen findest du <span className="text-orange-500 font-medium cursor-pointer hover:underline">{t('selection.faqLink')}</span>.
-          </p>
+            <p className="mt-2 text-sm text-gray-500">
+              {t('selection.faqNote')} <Link href="/faq" className="text-orange-500 font-medium cursor-pointer hover:underline">{t('selection.faqLink')}</Link>.
+            </p>
+          </div>
         </DialogHeader>
         
         <div className="grid gap-6 py-4">

@@ -27,10 +27,11 @@ interface ParticipantCardProps {
 }
 
 export function ParticipantCard({ participant, projectId, onDelete }: ParticipantCardProps) {
+  const { t } = useI18n()
   const [isDeleting, setIsDeleting] = useState(false)
 
   const handleDelete = async () => {
-    if (!confirm(`Möchtest du ${participant.name} wirklich entfernen?`)) {
+    if (!confirm(t('participants.deleteConfirm').replace('{name}', participant.name))) {
       return
     }
 
@@ -44,10 +45,10 @@ export function ParticipantCard({ participant, projectId, onDelete }: Participan
       if (response.ok) {
         onDelete?.()
       } else {
-        alert("Fehler beim Löschen")
+        alert(t('participants.deleteError'))
       }
     } catch (error) {
-      alert("Ein Fehler ist aufgetreten")
+      alert(t('auth.errorOccurred'))
     } finally {
       setIsDeleting(false)
     }

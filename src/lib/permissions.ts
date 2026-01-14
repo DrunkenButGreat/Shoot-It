@@ -61,6 +61,8 @@ export async function getUserRole(
     select: { email: true }
   })
 
+  if (!user) return null
+
   const project = await prisma.project.findUnique({
     where: { id: projectId },
     include: {

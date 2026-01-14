@@ -1,7 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { Locale } from '@/lib/i18n';
+import { useRouter } from 'next/navigation';
 
 type I18nContextType = {
   locale: Locale;
@@ -21,6 +22,7 @@ export function I18nProvider({
   initialLocale: Locale;
   initialDictionary: any;
 }) {
+  const router = useRouter();
   const [locale, setLocaleState] = useState<Locale>(initialLocale);
   const [dictionary, setDictionary] = useState(initialDictionary);
 
@@ -34,8 +36,8 @@ export function I18nProvider({
     const newDict = await import(`@/dictionaries/${newLocale}.json`);
     setDictionary(newDict.default);
     
-    // Optional: Refresh page to apply server-side changes
-    window.location.reload();
+    // Refresh page to apply server-side changes without full reload
+    router.refresh();
   };
 
   const t = (path: string) => {

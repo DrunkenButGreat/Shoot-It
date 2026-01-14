@@ -4,9 +4,14 @@ import UserMenu from "@/components/auth/UserMenu"
 import { ProfileForm } from "@/components/auth/ProfileForm"
 import Link from "next/link"
 import { ChevronLeft } from "lucide-react"
+import { getLocale, getDictionary } from "@/lib/i18n"
+import { cookies } from "next/headers"
 
 export default async function ProfilePage() {
     const session = await auth()
+    const cookieStore = await cookies()
+    const locale = getLocale(cookieStore)
+    const dict = await getDictionary(locale)
 
     if (!session?.user?.id) {
         redirect("/login")
@@ -22,12 +27,12 @@ export default async function ProfilePage() {
                             <Link
                                 href="/dashboard"
                                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                                title="Zurück zum Dashboard"
+                                title={dict.common.backToDashboard}
                             >
                                 <ChevronLeft className="w-5 h-5 text-gray-600" />
                             </Link>
                             <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                                Profil-Einstellungen
+                                {dict.profile.title}
                             </h1>
                         </div>
                         <UserMenu />
@@ -38,9 +43,9 @@ export default async function ProfilePage() {
             {/* Main Content */}
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <div className="mb-8">
-                    <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">Dein Profil</h2>
+                    <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">{dict.profile.yourProfile}</h2>
                     <p className="mt-2 text-lg text-gray-600">
-                        Verwalte deine persönlichen Informationen für alle Shootings.
+                        {dict.profile.description}
                     </p>
                 </div>
 

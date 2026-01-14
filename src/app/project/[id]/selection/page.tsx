@@ -6,6 +6,8 @@ import prisma from "@/lib/prisma"
 import { canAccessProject } from "@/lib/permissions"
 import { Button } from "@/components/ui/button"
 import { SelectionContent } from "@/components/selection/SelectionContent"
+import { getLocale, getDictionary } from "@/lib/i18n"
+import { cookies } from "next/headers"
 
 export default async function SelectionPage({
   params,
@@ -15,6 +17,9 @@ export default async function SelectionPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const session = await auth()
+  const cookieStore = await cookies()
+  const locale = getLocale(cookieStore)
+  const dict = await getDictionary(locale)
 
   if (!session?.user?.id) {
     redirect("/login")
@@ -88,7 +93,7 @@ export default async function SelectionPage({
               <Link href={`/project/${id}`}>
                 <Button variant="ghost" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Zurück zum Projekt
+                  {dict.common.backToProject}
                 </Button>
               </Link>
               <div>

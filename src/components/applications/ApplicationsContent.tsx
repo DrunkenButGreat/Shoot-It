@@ -13,13 +13,10 @@ import {
   Mail, 
   FileText, 
   Calendar,
-  User,
-  Image as ImageIcon,
-  MoreVertical,
-  Download
+  Image as ImageIcon
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
 interface ApplicationsContentProps {
@@ -30,7 +27,6 @@ interface ApplicationsContentProps {
 }
 
 export function ApplicationsContent({ projectId, applications: initialApplications, dict, locale }: ApplicationsContentProps) {
-  const router = useRouter()
   const [applications, setApplications] = useState(initialApplications)
   const [isLoading, setIsLoading] = useState<string | null>(null)
 

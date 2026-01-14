@@ -14,7 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
-import { LayoutGrid, Columns, Check } from "lucide-react"
+import { LayoutGrid, Columns } from "lucide-react"
 import { useI18n } from "@/components/I18nProvider"
 
 interface ProjectFormProps {

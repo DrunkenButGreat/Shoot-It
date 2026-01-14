@@ -112,7 +112,7 @@ export function MoodboardPicker({ projectId, onLink }: MoodboardPickerProps) {
         <div className="flex-1 overflow-y-auto min-h-[300px] pr-2">
           {filteredGroups.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
-              Keine Moodboards gefunden.
+              {t('moodboard.noMoodboardsFound')}
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4">
@@ -131,7 +131,7 @@ export function MoodboardPicker({ projectId, onLink }: MoodboardPickerProps) {
                         <img src={group.images[0].path} className="w-full h-full object-cover" alt="" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">
-                          Kein Bild
+                          {t('moodboard.noImage')}
                         </div>
                       )}
                       {isSelected && (
@@ -142,7 +142,7 @@ export function MoodboardPicker({ projectId, onLink }: MoodboardPickerProps) {
                     </div>
                     <div className="p-3 bg-white">
                       <div className="font-bold text-sm truncate">{group.name}</div>
-                      <div className="text-xs text-gray-500">{group.images?.length || 0} Bilder</div>
+                      <div className="text-xs text-gray-500">{t('project.imagesCount').replace('{count}', (group.images?.length || 0).toString())}</div>
                     </div>
                   </div>
                 )
@@ -153,10 +153,10 @@ export function MoodboardPicker({ projectId, onLink }: MoodboardPickerProps) {
 
         <DialogFooter className="mt-6">
           <Button variant="ghost" onClick={() => setOpen(false)}>
-            Abbrechen
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleLink} disabled={selectedIds.length === 0 || isLoading}>
-            {isLoading ? "Verknüpfe..." : `Auswahl hinzufügen (${selectedIds.length})`}
+            {isLoading ? t('moodboard.linking') : t('moodboard.addSelection').replace('{count}', selectedIds.length.toString())}
           </Button>
         </DialogFooter>
       </DialogContent>

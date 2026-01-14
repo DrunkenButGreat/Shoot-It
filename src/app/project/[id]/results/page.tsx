@@ -7,10 +7,15 @@ import Link from 'next/link';
 import { ResultsContent } from '@/components/results/ResultsContent';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { getLocale, getDictionary } from '@/lib/i18n';
+import { cookies } from 'next/headers';
 
 export default async function ResultsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await auth();
+  const cookieStore = await cookies();
+  const locale = getLocale(cookieStore);
+  const dict = await getDictionary(locale);
 
   if (!session?.user?.id) {
     redirect("/login")
@@ -58,18 +63,18 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
             <Link href={`/project/${id}`}>
               <Button variant="ghost" size="sm" className="gap-2">
                 <ArrowLeft className="w-4 h-4" />
-                Zurück zum Projekt
+                {dict.common.backToProject}
               </Button>
             </Link>
             <h1 className="text-xl font-semibold text-gray-900 line-clamp-1">
-              Final Results - {project.name}
+              {dict.project.results} - {project.name}
             </h1>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Suspense fallback={<div className="flex items-center justify-center min-h-[400px]">Lädt...</div>}>
+        <Suspense fallback={<div className="flex items-center justify-center min-h-[400px]">{dict.common.loading}</div>}>
           <ResultsContent
             projectId={id}
             initialFolders={folders}

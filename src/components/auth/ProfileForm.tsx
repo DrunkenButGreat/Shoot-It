@@ -103,7 +103,7 @@ export function ProfileForm() {
                             id="name"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            placeholder="Dein Name"
+                            placeholder={t('auth.namePlaceholder')}
                             required
                             className="border-gray-200 focus:ring-blue-500"
                         />
