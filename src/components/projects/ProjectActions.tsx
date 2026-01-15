@@ -18,6 +18,7 @@ interface ProjectActionsProps {
         showSelectionPublicly: boolean
         showCallsheetPublicly: boolean
         showResultsPublicly: boolean
+        allowApplications: boolean
         galleryLayout: string
     }
 }

@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Mail, Phone, Trash2, User } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { useI18n } from "@/components/I18nProvider"
 
 interface Participant {
   id: string

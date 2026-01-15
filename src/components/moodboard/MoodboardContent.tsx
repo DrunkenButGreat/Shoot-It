@@ -34,6 +34,7 @@ interface Group {
   description: string | null
   ownerId: string
   isArchived: boolean
+  isLibrary: boolean
   order: number
   status: string
   images: MoodboardImage[]

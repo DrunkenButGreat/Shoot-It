@@ -22,11 +22,15 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const groups = await prisma.moodboardGroup.findMany({
+    const links = await prisma.projectMoodboardLink.findMany({
       where: { projectId: id },
       include: {
-        images: {
-          orderBy: { order: 'asc' },
+        group: {
+          include: {
+            images: {
+              orderBy: { order: 'asc' },
+            },
+          },
         },
         comments: {
           include: {
@@ -44,6 +48,14 @@ export async function GET(
       },
       orderBy: { order: 'asc' },
     })
+
+    // Map links to the format the component expects
+    const groups = links.map(link => ({
+      ...link.group,
+      status: link.status,
+      order: link.order,
+      comments: link.comments,
+    }))
 
     return NextResponse.json({ groups })
   } catch (error) {

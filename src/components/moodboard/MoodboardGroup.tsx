@@ -209,7 +209,9 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
                   <div className="flex items-center gap-2">
                     <CardTitle>{group.name}</CardTitle>
                     {isLinked && group.isLibrary && (
-                      <LinkIcon className="h-4 w-4 text-blue-500" title={t('moodboard.linked')} />
+                      <span title={t('moodboard.linked')}>
+                        <LinkIcon className="h-4 w-4 text-blue-500" />
+                      </span>
                     )}
                   </div>
                   {isLinked && (
