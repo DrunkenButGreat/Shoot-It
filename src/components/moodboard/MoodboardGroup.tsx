@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Archive, ArchiveRestore, Check, Link as LinkIcon, MessageSquare, Trash2, X } from "lucide-react"
+import { Archive, ArchiveRestore, Check, Link as LinkIcon, MessageSquare, Trash2, X, Download, CheckSquare, Square, Loader2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -63,6 +63,9 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
   const [newComment, setNewComment] = useState("")
   const [isAddingComment, setIsAddingComment] = useState(false)
   const [index, setIndex] = useState(-1)
+  const [selectedImageIds, setSelectedImageIds] = useState<string[]>([])
+  const [isDownloading, setIsDownloading] = useState(false)
+  const [isDeletingImages, setIsDeletingImages] = useState(false)
 
   const isOwner = session?.user?.id === group.ownerId
   const isLinked = projectId !== ""
@@ -163,6 +166,75 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
     }
   }
 
+  const handleDownload = async (imageIds: string[] = [], groupIds: string[] = []) => {
+    if (imageIds.length === 0 && groupIds.length === 0) return
+
+    setIsDownloading(true)
+    try {
+      const response = await fetch('/api/moodboards/download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageIds, groupIds }),
+      })
+
+      if (!response.ok) throw new Error('Download failed')
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const filename = groupIds.length > 0 ? `${group.name}_images.zip` : `moodboard_selection.zip`
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error('Download error:', error)
+      alert(t('common.error'))
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+
+  const handleDeleteImages = async (imageIds: string[]) => {
+    const confirmMessage = imageIds.length === 1 
+      ? t('moodboard.deleteImageConfirm') 
+      : t('moodboard.deleteImagesConfirm').replace('{count}', imageIds.length.toString())
+
+    if (!confirm(confirmMessage)) return
+
+    setIsDeletingImages(true)
+    try {
+      const response = await fetch('/api/moodboards/images', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageIds }),
+      })
+
+      if (response.ok) {
+        setSelectedImageIds([])
+        onUpdate?.()
+      } else {
+        alert(t('common.error'))
+      }
+    } catch (error) {
+      console.error('Delete error:', error)
+      alert(t('common.error'))
+    } finally {
+      setIsDeletingImages(false)
+    }
+  }
+
+  const toggleSelectImage = (e: React.MouseEvent, imageId: string) => {
+    e.stopPropagation()
+    setSelectedImageIds(prev => 
+      prev.includes(imageId) 
+        ? prev.filter(id => id !== imageId) 
+        : [...prev, imageId]
+    )
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "ACCEPTED":
@@ -225,6 +297,51 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
                 )}
               </div>
               <div className="flex gap-2">
+                {isOwner && (
+                  <>
+                    {selectedImageIds.length > 0 ? (
+                      <div className="flex gap-1 items-center bg-gray-100 p-1 rounded-lg">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDownload(selectedImageIds)}
+                          disabled={isDownloading}
+                          title={t('moodboard.downloadSelected').replace('{count}', selectedImageIds.length.toString())}
+                        >
+                          {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4 text-blue-600" />}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteImages(selectedImageIds)}
+                          disabled={isDeletingImages}
+                          title={t('moodboard.deleteSelected').replace('{count}', selectedImageIds.length.toString())}
+                        >
+                          {isDeletingImages ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-red-600" />}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedImageIds([])}
+                          title={t('common.clear')}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDownload([], [group.id])}
+                        disabled={isDownloading || group.images.length === 0}
+                        title={t('moodboard.downloadAll')}
+                      >
+                        {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                      </Button>
+                    )}
+                  </>
+                )}
+                
                 {isLinked && (
                   <>
                     <Button
@@ -284,19 +401,64 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
           <div className="space-y-6">
             {galleryLayout === "grid" ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {group.images.map((image, i) => (
-                  <div
-                    key={image.id}
-                    className="relative aspect-square bg-gray-100 rounded-xl overflow-hidden border border-gray-200 cursor-zoom-in hover:opacity-90 transition-opacity group"
-                    onClick={() => setIndex(i)}
-                  >
-                    <img
-                      src={image.path}
-                      alt={image.filename}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ))}
+                {group.images.map((image, i) => {
+                  const isSelected = selectedImageIds.includes(image.id)
+                  return (
+                    <div
+                      key={image.id}
+                      className={`relative aspect-square bg-gray-100 rounded-xl overflow-hidden border transition-all group ${
+                        isSelected ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-200 hover:border-gray-300'
+                      } cursor-zoom-in`}
+                      onClick={() => setIndex(i)}
+                    >
+                      <img
+                        src={image.path}
+                        alt={image.filename}
+                        className="w-full h-full object-cover"
+                      />
+                      
+                      {isOwner && (
+                        <>
+                          <div 
+                            className={`absolute top-2 left-2 z-10 p-1 rounded-md transition-opacity ${
+                              isSelected ? 'opacity-100 bg-blue-500' : 'opacity-0 group-hover:opacity-100 bg-black/40 hover:bg-black/60'
+                            }`}
+                            onClick={(e) => toggleSelectImage(e, image.id)}
+                          >
+                            {isSelected ? (
+                              <CheckSquare className="h-4 w-4 text-white" />
+                            ) : (
+                              <Square className="h-4 w-4 text-white" />
+                            )}
+                          </div>
+
+                          <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              className="p-1.5 bg-black/40 hover:bg-black/60 rounded-md text-white transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDownload([image.id])
+                              }}
+                              title={t('moodboard.downloadImage')}
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              className="p-1.5 bg-black/40 hover:bg-red-600/80 rounded-md text-white transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDeleteImages([image.id])
+                              }}
+                              title={t('common.delete')}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             ) : galleryLayout === "justified" ? (
               <div className="flex flex-wrap gap-4">
@@ -304,10 +466,14 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
                   const width = (image as any).width || 400
                   const height = (image as any).height || 300
                   const aspect = width / height
+                  const isSelected = selectedImageIds.includes(image.id)
+                  
                   return (
                     <div
                       key={image.id}
-                      className="relative bg-gray-100 rounded-xl overflow-hidden border border-gray-200 cursor-zoom-in hover:opacity-90 transition-all group h-[200px]"
+                      className={`relative bg-gray-100 rounded-xl overflow-hidden border transition-all group h-[200px] ${
+                        isSelected ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-200 hover:border-gray-300'
+                      } cursor-zoom-in`}
                       style={{
                         flexGrow: aspect * 100,
                         flexBasis: `${aspect * 150}px`,
@@ -319,6 +485,46 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
                         alt={image.filename}
                         className="w-full h-full object-cover"
                       />
+
+                      {isOwner && (
+                        <>
+                          <div 
+                            className={`absolute top-2 left-2 z-10 p-1 rounded-md transition-opacity ${
+                              isSelected ? 'opacity-100 bg-blue-500' : 'opacity-0 group-hover:opacity-100 bg-black/40 hover:bg-black/60'
+                            }`}
+                            onClick={(e) => toggleSelectImage(e, image.id)}
+                          >
+                            {isSelected ? (
+                              <CheckSquare className="h-4 w-4 text-white" />
+                            ) : (
+                              <Square className="h-4 w-4 text-white" />
+                            )}
+                          </div>
+
+                          <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              className="p-1.5 bg-black/40 hover:bg-black/60 rounded-md text-white transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDownload([image.id])
+                              }}
+                              title={t('moodboard.downloadImage')}
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              className="p-1.5 bg-black/40 hover:bg-red-600/80 rounded-md text-white transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDeleteImages([image.id])
+                              }}
+                              title={t('common.delete')}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   )
                 })}
@@ -333,10 +539,13 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
                     <div key={colIdx} className="flex-1 flex flex-col gap-4">
                       {columnImages.map((image) => {
                         const globalIndex = group.images.findIndex(img => img.id === image.id)
+                        const isSelected = selectedImageIds.includes(image.id)
                         return (
                           <div
                             key={image.id}
-                            className="relative bg-gray-100 rounded-xl overflow-hidden border border-gray-200 cursor-zoom-in hover:opacity-90 transition-all group"
+                            className={`relative bg-gray-100 rounded-xl overflow-hidden border transition-all group ${
+                              isSelected ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-200 hover:border-gray-300'
+                            } cursor-zoom-in`}
                             onClick={() => setIndex(globalIndex)}
                           >
                             <img
@@ -344,6 +553,46 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
                               alt={image.filename}
                               className="w-full h-auto block"
                             />
+
+                            {isOwner && (
+                              <>
+                                <div 
+                                  className={`absolute top-2 left-2 z-10 p-1 rounded-md transition-opacity ${
+                                    isSelected ? 'opacity-100 bg-blue-500' : 'opacity-0 group-hover:opacity-100 bg-black/40 hover:bg-black/60'
+                                  }`}
+                                  onClick={(e) => toggleSelectImage(e, image.id)}
+                                >
+                                  {isSelected ? (
+                                    <CheckSquare className="h-4 w-4 text-white" />
+                                  ) : (
+                                    <Square className="h-4 w-4 text-white" />
+                                  )}
+                                </div>
+
+                                <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <button
+                                    className="p-1.5 bg-black/40 hover:bg-black/60 rounded-md text-white transition-colors"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleDownload([image.id])
+                                    }}
+                                    title={t('moodboard.downloadImage')}
+                                  >
+                                    <Download className="h-3.5 w-3.5" />
+                                  </button>
+                                  <button
+                                    className="p-1.5 bg-black/40 hover:bg-red-600/80 rounded-md text-white transition-colors"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleDeleteImages([image.id])
+                                    }}
+                                    title={t('common.delete')}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                              </>
+                            )}
                           </div>
                         )
                       })}

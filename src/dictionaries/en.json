@@ -131,7 +131,13 @@
     "noMoodboardsFound": "No moodboards found.",
     "noImage": "No image",
     "linking": "Linking...",
-    "addSelection": "Add selection ({count})"
+    "addSelection": "Add selection ({count})",
+    "downloadAll": "Download All",
+    "downloadSelected": "Download Selected ({count})",
+    "deleteSelected": "Delete Selected ({count})",
+    "deleteImageConfirm": "Are you sure you want to delete this image?",
+    "deleteImagesConfirm": "Are you sure you want to delete {count} images?",
+    "downloadImage": "Download image"
   },
   "participants": {
     "title": "Participants",

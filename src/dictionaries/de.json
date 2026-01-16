@@ -132,7 +132,13 @@
     "noMoodboardsFound": "Keine Moodboards gefunden.",
     "noImage": "Kein Bild",
     "linking": "Verknüpfe...",
-    "addSelection": "Auswahl hinzufügen ({count})"
+    "addSelection": "Auswahl hinzufügen ({count})",
+    "downloadAll": "Alle herunterladen",
+    "downloadSelected": "Auswahl herunterladen ({count})",
+    "deleteSelected": "Auswahl löschen ({count})",
+    "deleteImageConfirm": "Bist du sicher, dass du dieses Bild löschen möchtest?",
+    "deleteImagesConfirm": "Bist du sicher, dass du {count} Bilder löschen möchtest?",
+    "downloadImage": "Bild herunterladen"
   },
   "participants": {
     "title": "Beteiligte",
