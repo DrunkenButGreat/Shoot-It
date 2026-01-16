@@ -43,22 +43,60 @@ export function ApplicationForm({ projectId, projectName, initialData }: Applica
   })
 
   const [files, setFiles] = useState<File[]>([])
+  const [previews, setPreviews] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Clean up object URLs to avoid memory leaks
+  useEffect(() => {
+    return () => {
+      previews.forEach(url => URL.revokeObjectURL(url))
+    }
+  }, [previews])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files)
+      
       // Check max limit
       if (files.length + newFiles.length > MAX_IMAGES) {
         alert(t('applications.maxImagesError').replace('{count}', MAX_IMAGES.toString()))
         return
       }
-      setFiles([...files, ...newFiles])
+
+      // Check file sizes (10MB)
+      const MAX_SIZE = 10 * 1024 * 1024
+      const oversized = newFiles.find(f => f.size > MAX_SIZE)
+      if (oversized) {
+        alert(`${t('common.error')}: ${oversized.name} is too large (> 10MB)`)
+        return
+      }
+
+      // Check file types
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+      const invalidType = newFiles.find(f => !allowedTypes.includes(f.type))
+      if (invalidType) {
+        alert(`${t('common.error')}: ${invalidType.name} - Unsupported file type`)
+        return
+      }
+      
+      const combinedFiles = [...files, ...newFiles]
+      setFiles(combinedFiles)
+      
+      // Generate previews
+      const newPreviews = newFiles.map(file => URL.createObjectURL(file))
+      setPreviews([...previews, ...newPreviews])
     }
   }
 
   const removeFile = (index: number) => {
-    setFiles(files.filter((_, i) => i !== index))
+    const newFiles = [...files]
+    newFiles.splice(index, 1)
+    setFiles(newFiles)
+
+    const newPreviews = [...previews]
+    URL.revokeObjectURL(newPreviews[index])
+    newPreviews.splice(index, 1)
+    setPreviews(newPreviews)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,8 +108,17 @@ export function ApplicationForm({ projectId, projectName, initialData }: Applica
       // Get ReCAPTCHA token
       let token = ""
       if (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY) {
-        // @ts-ignore
-        token = await window.grecaptcha.execute(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY, { action: 'application' })
+        try {
+          // @ts-ignore
+          if (window.grecaptcha && window.grecaptcha.execute) {
+            // @ts-ignore
+            token = await window.grecaptcha.execute(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY, { action: 'application' })
+          } else {
+            console.warn("ReCAPTCHA not loaded yet")
+          }
+        } catch (recapErr) {
+          console.error("ReCAPTCHA error:", recapErr)
+        }
       }
 
       const submitData = new FormData()
@@ -200,7 +247,6 @@ export function ApplicationForm({ projectId, projectName, initialData }: Applica
                 <Label htmlFor="message">{t('applications.message')}</Label>
                 <Textarea
                   id="message"
-                  required
                   rows={4}
                   placeholder={t('applications.messagePlaceholder')}
                   value={formData.message}
@@ -248,12 +294,12 @@ export function ApplicationForm({ projectId, projectName, initialData }: Applica
                   />
                 </div>
 
-                {files.length > 0 && (
+                {previews.length > 0 && (
                   <div className="grid grid-cols-5 gap-2 mt-4">
-                    {files.map((file, index) => (
+                    {previews.map((previewUrl, index) => (
                       <div key={index} className="relative aspect-square rounded-lg overflow-hidden group">
                         <img
-                          src={URL.createObjectURL(file)}
+                          src={previewUrl}
                           alt="preview"
                           className="w-full h-full object-cover"
                         />

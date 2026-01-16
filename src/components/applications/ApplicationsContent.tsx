@@ -249,8 +249,8 @@ export function ApplicationsContent({ projectId, applications: initialApplicatio
                     {app.images?.length > 0 ? (
                       <div className="grid grid-cols-2 gap-2">
                         {app.images.map((img: any) => (
-                          <a key={img.id} href={img.url} target="_blank" rel="noopener noreferrer" className="relative aspect-square rounded-lg overflow-hidden group border border-gray-100 hover:border-blue-300 transition-all">
-                            <img src={img.url} alt="" className="w-full h-full object-cover" />
+                          <a key={img.id} href={img.path} target="_blank" rel="noopener noreferrer" className="relative aspect-square rounded-lg overflow-hidden group border border-gray-100 hover:border-blue-300 transition-all">
+                            <img src={img.path} alt="" className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                               <ExternalLink className="h-4 w-4 text-white" />
                             </div>
