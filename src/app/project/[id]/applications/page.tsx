@@ -40,6 +40,7 @@ export default async function ApplicationsPage({
         select: {
           id: true,
           name: true,
+          email: true,
           image: true,
         }
       }

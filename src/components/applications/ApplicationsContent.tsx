@@ -116,32 +116,37 @@ export function ApplicationsContent({ projectId, applications: initialApplicatio
           </Card>
         ) : (
           <div className="space-y-6">
-            {applications.map((app) => (
-              <Card key={app.id} className={`overflow-hidden transition-all ${app.status === 'REJECTED' ? 'opacity-60 hover:opacity-100' : ''}`}>
-                <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-gray-100">
-                  {/* Left: Applicant Info */}
-                  <div className="p-6 md:w-1/3 lg:w-1/4">
-                    <div className="flex items-center gap-3 mb-4">
-                      {app.user?.image ? (
-                        <img src={app.user.image} alt="" className="w-10 h-10 rounded-full" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
-                          {app.name[0]}
-                        </div>
-                      )}
-                      <div>
-                        <h3 className="font-bold text-gray-900 leading-none">{app.name}</h3>
-                        <p className="text-xs text-blue-600 font-medium mt-1">{app.role}</p>
-                      </div>
-                    </div>
+            {applications.map((app) => {
+              const displayName = app.user?.name || app.name || "Anonymous";
+              const displayEmail = app.user?.email || app.email || "";
+              const initials = displayName.split(' ').filter(Boolean).map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
 
-                    <div className="space-y-2 mt-4">
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2 text-gray-500">
-                          <Mail className="h-3.5 w-3.5" />
-                          <span>{app.email}</span>
+              return (
+                <Card key={app.id} className={`overflow-hidden transition-all ${app.status === 'REJECTED' ? 'opacity-60 hover:opacity-100' : ''}`}>
+                  <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-gray-100">
+                    {/* Left: Applicant Info */}
+                    <div className="p-6 md:w-1/3 lg:w-1/4">
+                      <div className="flex items-center gap-3 mb-4">
+                        {app.user?.image ? (
+                          <img src={app.user.image} alt="" className="w-10 h-10 rounded-full" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
+                            {initials || "?"}
+                          </div>
+                        )}
+                        <div>
+                          <h3 className="font-bold text-gray-900 leading-none">{displayName}</h3>
+                          <p className="text-xs text-blue-600 font-medium mt-1">{app.role}</p>
                         </div>
                       </div>
+
+                      <div className="space-y-2 mt-4">
+                        <div className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-2 text-gray-500">
+                            <Mail className="h-3.5 w-3.5" />
+                            <span>{displayEmail}</span>
+                          </div>
+                        </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2 text-gray-500">
                           <Calendar className="h-3.5 w-3.5" />
@@ -266,7 +271,8 @@ export function ApplicationsContent({ projectId, applications: initialApplicatio
                   </div>
                 </div>
               </Card>
-            ))}
+            );
+          })}
           </div>
         )}
       </main>

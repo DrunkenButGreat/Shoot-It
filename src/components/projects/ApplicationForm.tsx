@@ -153,6 +153,7 @@ export function ApplicationForm({ projectId, projectName, initialData }: Applica
             instagramUrl: "",
           })
           setFiles([])
+          setPreviews([])
         }, 3000)
       } else {
         const data = await response.json()
