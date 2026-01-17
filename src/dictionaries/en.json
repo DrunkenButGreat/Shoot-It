@@ -36,7 +36,9 @@
     "deleteConfirm": "Are you sure? This action cannot be undone.",
     "error": "Error",
     "noResults": "No results found",
-    "areYouSure": "Are you sure?"
+    "areYouSure": "Are you sure?",
+    "madeWith": "Made with",
+    "forPhotographers": "for photographers and creative teams"
   },
   "dashboard": {
     "title": "Dashboard",

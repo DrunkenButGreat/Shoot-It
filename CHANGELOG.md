@@ -1,0 +1,37 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.1.1] - 2026-01-17
+
+### Changed
+
+- Footer versioning is now dynamic, reading directly from `package.json`.
+- Updated `AGENTS.md` to ensure versioning and changelog are always maintained.
+
+## [1.1.0] - 2026-01-17
+
+### Added
+
+- **Moodboard Image Management**:
+  - Download multiple images as ZIP (server-side streaming).
+  - Delete multiple images (DB and filesystem).
+  - Selection mode for images in MoodboardGroups.
+  - Hover actions for single image download/delete.
+- **Global Footer**:
+  - Added a global footer to the application layout.
+  - Displays "Made with ❤️ for photographers and creative teams".
+  - Displays current application version.
+
+### Changed
+
+- Application layout changed from `min-h-screen` to a flex-based layout to support fixed/sticky footer positioning.
+
+## [1.0.4] - 2026-01-04 (and prior)
+
+### Fixed
+
+- Various stability improvements and module completion.

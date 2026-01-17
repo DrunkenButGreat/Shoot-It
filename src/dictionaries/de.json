@@ -36,7 +36,9 @@
     "deleteConfirm": "Bist du sicher? Dieser Vorgang kann nicht rückgängig gemacht werden.",
     "error": "Fehler",
     "noResults": "Keine Ergebnisse gefunden",
-    "areYouSure": "Bist du sicher?"
+    "areYouSure": "Bist du sicher?",
+    "madeWith": "Erstellt mit",
+    "forPhotographers": "für Fotografen und kreative Teams"
   },
   "dashboard": {
     "title": "Dashboard",

@@ -109,7 +109,7 @@ export default async function PublicProjectPage({
 
         if (!hasAccess) {
             return (
-                <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+                <div className="flex-1 flex items-center justify-center bg-gray-50 px-4">
                     <Card className="max-w-md w-full text-center p-8">
                         <h1 className="text-2xl font-bold text-gray-900 mb-2">Private Project</h1>
                         <p className="text-gray-600 mb-6">You do not have permission to view this project. Please contact the owner for access.</p>
@@ -125,7 +125,7 @@ export default async function PublicProjectPage({
     const projectDate = project.date ? new Date(project.date) : null
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-12">
+        <div className="flex-1 bg-gray-50 pb-12">
             {/* Premium Public Header */}
             <div className="relative h-64 bg-slate-900 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-indigo-900/40 z-10" />

@@ -7,7 +7,7 @@ export default async function HomePage() {
   const t = await getDictionary(locale);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-violet-50">
+    <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-blue-50 to-violet-50">
       <div className="text-center space-y-6 p-8">
         <h1 className="text-5xl font-bold text-gray-900">
           {t.home.title}
