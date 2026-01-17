@@ -79,6 +79,8 @@
     "shortCode": "Short Code",
     "appointments": "Scheduling",
     "appointmentsDescription": "Collaboratively find the best date for the project.",
+    "appointmentsDescriptionOverview": "Scheduling & Availabilities",
+    "appointmentSuggestions": "Appointment Suggestions",
     "appointmentsLabel": "Dates",
     "noAppointmentsSet": "No appointment suggestions set yet.",
     "availableTime": "Available Timeframe",

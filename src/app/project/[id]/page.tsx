@@ -249,7 +249,7 @@ export default async function ProjectPage({
                 <CardTitle className="text-lg">{dict.project.appointments || 'Terminfindung'}</CardTitle>
                 <CardDescription>
                   {project._count.appointmentSlots > 0 
-                    ? `${project._count.appointmentSlots} Terminvorschläge` 
+                    ? `${project._count.appointmentSlots} ${dict.project.appointmentSuggestions || 'Terminvorschläge'}` 
                     : (dict.project.appointmentsDescription || 'Findet gemeinsam einen Termin')}
                 </CardDescription>
               </CardHeader>

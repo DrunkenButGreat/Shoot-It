@@ -79,6 +79,8 @@
     "shortCode": "Kurz-Code",
     "appointments": "Terminfindung",
     "appointmentsDescription": "Findet gemeinsam den passenden Termin für das Projekt.",
+    "appointmentsDescriptionOverview": "Terminfindung & Verfügbarkeiten",
+    "appointmentSuggestions": "Terminvorschläge",
     "appointmentsLabel": "Termine",
     "noAppointmentsSet": "Noch keine Terminvorschläge vorhanden.",
     "availableTime": "Verfügbarer Zeitraum",

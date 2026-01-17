@@ -477,7 +477,7 @@ model AppointmentSlot {
   id        String   @id @default(cuid())
   startTime DateTime
   endTime   DateTime
-  color     String? // Hex oder HSL
+  color     String? // Hex or HSL
   projectId String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

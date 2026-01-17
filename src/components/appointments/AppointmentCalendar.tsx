@@ -7,13 +7,14 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list'
 import deLocale from '@fullcalendar/core/locales/de'
+import enLocale from '@fullcalendar/core/locales/en-gb'
 import { useI18n } from '@/components/I18nProvider'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { Check, X, Clock, User, Trash2, Calendar as CalendarIcon, List } from 'lucide-react'
-import { AppointmentStatus } from '@prisma/client'
+import { Check, X, Clock, Trash2 } from 'lucide-react'
+import { AppointmentStatus } from '@prisma/generated/client'
 
 interface Slot {
     id: string
@@ -42,15 +43,13 @@ interface AppointmentCalendarProps {
 }
 
 export function AppointmentCalendar({ projectId, isOwner, currentUserId }: AppointmentCalendarProps) {
-    const { dictionary: dict } = useI18n()
+    const { dictionary: dict, locale } = useI18n()
     const [slots, setSlots] = useState<Slot[]>([])
-    const [isLoading, setIsLoading] = useState(true)
     const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null)
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const calendarRef = useRef<FullCalendar>(null)
 
     const fetchSlots = useCallback(async () => {
-        setIsLoading(true)
         try {
             const response = await fetch(`/api/projects/${projectId}/appointments`)
             if (response.ok) {
@@ -59,8 +58,6 @@ export function AppointmentCalendar({ projectId, isOwner, currentUserId }: Appoi
             }
         } catch (error) {
             console.error('Failed to fetch slots:', error)
-        } finally {
-            setIsLoading(false)
         }
     }, [projectId])
 
@@ -108,7 +105,7 @@ export function AppointmentCalendar({ projectId, isOwner, currentUserId }: Appoi
         }
 
         try {
-            await fetch(`/api/projects/${projectId}/appointments/${changeInfo.event.id}`, {
+            const response = await fetch(`/api/projects/${projectId}/appointments/${changeInfo.event.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -116,7 +113,12 @@ export function AppointmentCalendar({ projectId, isOwner, currentUserId }: Appoi
                     endTime: changeInfo.event.endStr,
                 }),
             })
-            fetchSlots()
+
+            if (response.ok) {
+                fetchSlots()
+            } else {
+                changeInfo.revert()
+            }
         } catch (error) {
             console.error('Failed to update slot:', error)
             changeInfo.revert()
@@ -162,7 +164,6 @@ export function AppointmentCalendar({ projectId, isOwner, currentUserId }: Appoi
                 
                 if (!id && selectedSlot) {
                     // Update current selected slot state for UI responsiveness
-                    const updatedResponse = await response.json()
                     setSelectedSlot(prev => {
                         if (!prev) return null
                         const existingIdx = prev.responses.findIndex(r => r.userId === currentUserId)
@@ -287,8 +288,8 @@ export function AppointmentCalendar({ projectId, isOwner, currentUserId }: Appoi
                                 center: 'title',
                                 right: 'dayGridMonth,timeGridWeek,listWeek'
                             }}
-                            locales={[deLocale]}
-                            locale="de"
+                            locales={[deLocale, enLocale]}
+                            locale={locale || 'de'}
                             events={events}
                             eventContent={renderEventContent}
                             selectable={isOwner}
@@ -324,14 +325,14 @@ export function AppointmentCalendar({ projectId, isOwner, currentUserId }: Appoi
                                 <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
                                     <Clock className="h-4 w-4" />
                                     <span>
-                                        {new Date(selectedSlot.startTime).toLocaleString('de-DE', {
+                                        {new Date(selectedSlot.startTime).toLocaleString(locale ?? 'de-DE', {
                                             weekday: 'long',
                                             day: '2-digit',
                                             month: '2-digit',
                                             year: 'numeric',
                                             hour: '2-digit',
                                             minute: '2-digit'
-                                        })} - {new Date(selectedSlot.endTime).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                                        })} - {new Date(selectedSlot.endTime).toLocaleTimeString(locale ?? 'de-DE', { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                 </div>
                             )}

@@ -5,6 +5,8 @@ import { canAccessProject, canEditProject } from "@/lib/permissions"
 import { AppointmentCalendar } from "@/components/appointments/AppointmentCalendar"
 import Link from "next/link"
 import { ChevronLeft } from "lucide-react"
+import { getLocale, getDictionary } from "@/lib/i18n"
+import { cookies } from "next/headers"
 
 export default async function AppointmentsPage({
     params,
@@ -17,6 +19,10 @@ export default async function AppointmentsPage({
     if (!session?.user?.id) {
         redirect(`/login?callbackUrl=/project/${id}/appointments`)
     }
+
+    const cookieStore = await cookies()
+    const locale = getLocale(cookieStore)
+    const dict = await getDictionary(locale)
 
     const hasAccess = await canAccessProject(session.user.id, id)
     if (!hasAccess) {
@@ -46,7 +52,7 @@ export default async function AppointmentsPage({
                     </Link>
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{project.name}</h1>
-                        <p className="text-gray-500">Terminfindung & Verfügbarkeiten</p>
+                        <p className="text-gray-500">{dict.project.appointmentsDescriptionOverview || 'Terminfindung & Verfügbarkeiten'}</p>
                     </div>
                 </div>
 
