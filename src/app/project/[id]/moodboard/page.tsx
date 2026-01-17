@@ -6,6 +6,8 @@ import prisma from "@/lib/prisma"
 import { canAccessProject } from "@/lib/permissions"
 import { Button } from "@/components/ui/button"
 import { MoodboardContent } from "@/components/moodboard/MoodboardContent"
+import { getLocale, getDictionary } from "@/lib/i18n"
+import { cookies } from "next/headers"
 
 export default async function MoodboardPage({
   params,
@@ -19,6 +21,9 @@ export default async function MoodboardPage({
   }
 
   const { id } = await params
+  const cookieStore = await cookies()
+  const locale = getLocale(cookieStore)
+  const dict = await getDictionary(locale)
 
   // Check access
   const hasAccess = await canAccessProject(session.user.id, id)
@@ -69,24 +74,27 @@ export default async function MoodboardPage({
   }
 
   // Map links to the format the component expects
-  const groups = links.map(link => ({
-    ...link.group,
-    status: link.status,
-    order: link.order,
-    comments: link.comments,
-  }))
+  const groups = links.map(link => {
+    const group = link.group as any
+    return {
+      ...group,
+      status: link.status,
+      order: link.order,
+      comments: link.comments,
+    }
+  })
 
   return (
     <div className="flex-1 bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
               <Link href={`/project/${id}`}>
                 <Button variant="ghost" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Zurück zum Projekt
+                  {dict.common.backToProject}
                 </Button>
               </Link>
               <div>

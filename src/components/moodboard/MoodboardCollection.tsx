@@ -22,9 +22,10 @@ interface Group {
 
 interface MoodboardCollectionProps {
   initialGroups: Group[]
+  showFavorites?: boolean
 }
 
-export function MoodboardCollection({ initialGroups }: MoodboardCollectionProps) {
+export function MoodboardCollection({ initialGroups, showFavorites = true }: MoodboardCollectionProps) {
   const router = useRouter()
   const { t } = useI18n()
   const [search, setSearch] = useState("")
@@ -92,6 +93,7 @@ export function MoodboardCollection({ initialGroups }: MoodboardCollectionProps)
               projectId="" // Empty project id means we are in collection view
               onUpdate={handleUpdated}
               onDelete={handleUpdated}
+              showFavorites={showFavorites}
             />
           ))}
         </div>

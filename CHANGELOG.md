@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-01-17
+
+### Added
+
+- **Favorites & Sorting**:
+  - Ability to mark moodboards as favorites (persisted in DB).
+  - Sorting options: Favorites first, Newest, Oldest, Alphabetical.
+  - Search bar now supports real-time filtering with current sort state.
+
+## [1.2.0] - 2026-01-17
+
+### Added
+
+- **Enhanced Moodboard UX**:
+  - Integrated Search Bar to filter groups by name or description.
+  - Collapsible MoodboardGroups to improve vertical scroll navigation.
+  - "Collapse All" / "Expand All" global toggle.
+  - Sticky headers for MoodboardGroups to maintain context while scrolling.
+  - Image counts displayed in group headers.
+
 ## [1.1.1] - 2026-01-17
 
 ### Changed

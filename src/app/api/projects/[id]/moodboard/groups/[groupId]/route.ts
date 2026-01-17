@@ -41,8 +41,8 @@ export async function PUT(
       })
     }
 
-    // 2. Check if we need to update the MoodboardGroup itself (name, description)
-    if (body.name !== undefined || body.description !== undefined) {
+    // 2. Check if we need to update the MoodboardGroup itself (name, description, favorite)
+    if (body.name !== undefined || body.description !== undefined || body.isFavorite !== undefined) {
       // Check if user is the owner of the group
       const existingGroup = await prisma.moodboardGroup.findUnique({
         where: { id: groupId },
@@ -61,6 +61,7 @@ export async function PUT(
           data: {
             ...(body.name !== undefined && { name: body.name }),
             ...(body.description !== undefined && { description: body.description }),
+            ...(body.isFavorite !== undefined && { isFavorite: body.isFavorite }),
           }
         })
       }

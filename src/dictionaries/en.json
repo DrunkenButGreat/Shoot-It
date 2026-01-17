@@ -38,7 +38,13 @@
     "noResults": "No results found",
     "areYouSure": "Are you sure?",
     "madeWith": "Made with",
-    "forPhotographers": "for photographers and creative teams"
+    "forPhotographers": "for photographers and creative teams",
+    "sortNewest": "Newest first",
+    "sortOldest": "Oldest first",
+    "sortAlphabetical": "Alphabetical",
+    "sortFavorites": "Favorites first",
+    "favorite": "Favorite",
+    "unfavorite": "Remove favorite"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -139,7 +145,19 @@
     "deleteSelected": "Delete Selected ({count})",
     "deleteImageConfirm": "Are you sure you want to delete this image?",
     "deleteImagesConfirm": "Are you sure you want to delete {count} images?",
-    "downloadImage": "Download image"
+    "downloadImage": "Download image",
+    "searchPlaceholder": "Search moodboards...",
+    "collapseAll": "Collapse all",
+    "expandAll": "Expand all",
+    "viewCompact": "Compact",
+    "viewComfortable": "Comfortable",
+    "sortBy": "Sort by",
+    "sortNewest": "Newest first",
+    "sortOldest": "Oldest first",
+    "sortAlphabetical": "Alphabetical",
+    "sortFavorites": "Favorites first",
+    "favorite": "Favorite",
+    "unfavorite": "Remove favorite"
   },
   "participants": {
     "title": "Participants",

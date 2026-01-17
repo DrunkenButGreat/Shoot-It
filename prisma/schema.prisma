@@ -145,6 +145,7 @@ model MoodboardGroup {
   description String?  @db.Text
   isArchived  Boolean  @default(false)
   isLibrary   Boolean  @default(false)
+  isFavorite  Boolean  @default(false)
   ownerId     String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

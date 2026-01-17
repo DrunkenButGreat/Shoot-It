@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Archive, ArchiveRestore, Check, Link as LinkIcon, MessageSquare, Trash2, X, Download, CheckSquare, Square, Loader2 } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Archive, ArchiveRestore, Check, Link as LinkIcon, MessageSquare, Trash2, X, Download, CheckSquare, Square, Loader2, ChevronDown, ChevronRight, Heart } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -39,6 +39,7 @@ interface Group {
   description: string | null
   ownerId: string
   isArchived: boolean
+  isFavorite: boolean
   isLibrary: boolean
   order: number
   status: string
@@ -53,9 +54,11 @@ interface MoodboardGroupProps {
   hasLocalMedia?: boolean
   onUpdate?: () => void
   onDelete?: () => void
+  isInitiallyCollapsed?: boolean
+  showFavorites?: boolean
 }
 
-export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia, onUpdate, onDelete }: MoodboardGroupProps) {
+export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia, onUpdate, onDelete, isInitiallyCollapsed, showFavorites = false }: MoodboardGroupProps) {
   const { data: session } = useSession()
   const { t, locale } = useI18n()
   const [isDeleting, setIsDeleting] = useState(false)
@@ -66,6 +69,14 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
   const [selectedImageIds, setSelectedImageIds] = useState<string[]>([])
   const [isDownloading, setIsDownloading] = useState(false)
   const [isDeletingImages, setIsDeletingImages] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(isInitiallyCollapsed ?? false)
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false)
+
+  useEffect(() => {
+    if (isInitiallyCollapsed !== undefined) {
+      setIsCollapsed(isInitiallyCollapsed)
+    }
+  }, [isInitiallyCollapsed])
 
   const isOwner = session?.user?.id === group.ownerId
   const isLinked = projectId !== ""
@@ -97,6 +108,29 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
       alert(t('common.error'))
     } finally {
       setIsDeleting(false)
+    }
+  }
+
+  const handleToggleFavorite = async () => {
+    setIsTogglingFavorite(true)
+    try {
+      const url = isLinked 
+        ? `/api/projects/${projectId}/moodboard/groups/${group.id}` 
+        : `/api/user/moodboards/${group.id}`
+
+      const response = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isFavorite: !group.isFavorite }),
+      })
+
+      if (response.ok) {
+        onUpdate?.()
+      }
+    } catch (error) {
+      console.error("Favorite toggle error:", error)
+    } finally {
+      setIsTogglingFavorite(false)
     }
   }
 
@@ -274,29 +308,63 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
         disabled={isLibrary && !isOwner}
       >
         <Card className={isLibrary && !isOwner ? "rounded-t-none" : ""}>
-          <CardHeader>
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="flex items-center gap-2">
-                    <CardTitle>{group.name}</CardTitle>
-                    {isLinked && group.isLibrary && (
-                      <span title={t('moodboard.linked')}>
-                        <LinkIcon className="h-4 w-4 text-blue-500" />
+          <CardHeader className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b rounded-t-xl transition-all">
+            <div className="flex justify-between items-center gap-4">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="p-1 h-8 w-8 text-gray-400 hover:text-gray-900"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsCollapsed(!isCollapsed);
+                  }}
+                >
+                  {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                </Button>
+                <div className="flex-1 min-w-0" onClick={() => setIsCollapsed(!isCollapsed)} style={{ cursor: 'pointer' }}>
+                  <div className="flex items-center gap-3 mb-1">
+                    <div className="flex items-center gap-2 truncate">
+                      <CardTitle className="truncate">{group.name}</CardTitle>
+                      {isLinked && group.isLibrary && (
+                        <span title={t('moodboard.linked')}>
+                          <LinkIcon className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                        </span>
+                      )}
+                    </div>
+                    {isLinked && (
+                      <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${getStatusColor(group.status)} flex-shrink-0`}>
+                        {getStatusLabel(group.status)}
                       </span>
                     )}
-                  </div>
-                  {isLinked && (
-                    <span className={`text-xs px-2 py-1 rounded border ${getStatusColor(group.status)}`}>
-                      {getStatusLabel(group.status)}
+                    <span className="text-xs text-gray-400 font-normal">
+                      ({t('project.imagesCount').replace('{count}', group.images.length.toString())})
                     </span>
+                  </div>
+                  {group.description && !isCollapsed && (
+                    <CardDescription className="line-clamp-1">{group.description}</CardDescription>
                   )}
                 </div>
-                {group.description && (
-                  <CardDescription>{group.description}</CardDescription>
-                )}
               </div>
+
               <div className="flex gap-2">
+                {isOwner && showFavorites && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleToggleFavorite();
+                    }}
+                    disabled={isTogglingFavorite}
+                    title={group.isFavorite ? t('common.unfavorite') : t('common.favorite')}
+                  >
+                    <Heart className={`h-4 w-4 ${group.isFavorite ? "fill-red-500 text-red-500" : "text-gray-400"}`} />
+                  </Button>
+                )}
+
                 {isOwner && (
                   <>
                     {selectedImageIds.length > 0 ? (
@@ -397,8 +465,9 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
               </div>
             </div>
           </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
+        {!isCollapsed && (
+          <CardContent>
+            <div className="space-y-6 pt-6">
             {galleryLayout === "grid" ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {group.images.map((image, i) => {
@@ -671,6 +740,7 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
             </div>
           )}
         </CardContent>
+        )}
       </Card>
     </ImageUpload>
     </div>

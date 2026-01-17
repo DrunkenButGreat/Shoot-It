@@ -62,6 +62,7 @@ export const callsheetSchema = z.object({
 export const moodboardGroupSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(5000).optional(),
+  isFavorite: z.boolean().optional(),
 })
 
 export const commentSchema = z.object({

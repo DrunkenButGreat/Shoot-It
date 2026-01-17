@@ -33,6 +33,7 @@ export async function PUT(
         ...(body.name !== undefined && { name: body.name }),
         ...(body.description !== undefined && { description: body.description }),
         ...(body.isArchived !== undefined && { isArchived: body.isArchived }),
+        ...(body.isFavorite !== undefined && { isFavorite: body.isFavorite }),
       },
     })
 

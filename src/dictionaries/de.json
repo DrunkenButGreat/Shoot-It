@@ -38,7 +38,13 @@
     "noResults": "Keine Ergebnisse gefunden",
     "areYouSure": "Bist du sicher?",
     "madeWith": "Erstellt mit",
-    "forPhotographers": "für Fotografen und kreative Teams"
+    "forPhotographers": "für Fotografen und kreative Teams",
+    "sortNewest": "Neueste zuerst",
+    "sortOldest": "Älteste zuerst",
+    "sortAlphabetical": "Alphabetisch",
+    "sortFavorites": "Favoriten zuerst",
+    "favorite": "Favorit",
+    "unfavorite": "Favorit entfernen"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -140,7 +146,19 @@
     "deleteSelected": "Auswahl löschen ({count})",
     "deleteImageConfirm": "Bist du sicher, dass du dieses Bild löschen möchtest?",
     "deleteImagesConfirm": "Bist du sicher, dass du {count} Bilder löschen möchtest?",
-    "downloadImage": "Bild herunterladen"
+    "downloadImage": "Bild herunterladen",
+    "searchPlaceholder": "Moodboards durchsuchen...",
+    "collapseAll": "Alle einklappen",
+    "expandAll": "Alle ausklappen",
+    "viewCompact": "Kompakt",
+    "viewComfortable": "Komfortabel",
+    "sortBy": "Sortieren nach",
+    "sortNewest": "Neueste zuerst",
+    "sortOldest": "Älteste zuerst",
+    "sortAlphabetical": "Alphabetisch",
+    "sortFavorites": "Favoriten zuerst",
+    "favorite": "Favorit",
+    "unfavorite": "Favorit entfernen"
   },
   "participants": {
     "title": "Beteiligte",
