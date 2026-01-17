@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-01-18
+
+### Added
+
+- **Recursive Folder Upload**:
+  - Full support for uploading entire directory structures while maintaining the hierarchy in the database.
+  - Implemented directory scanning with support for large folders (bypassing browser 100-file limits).
+  - New UI toggle to switch between file and folder upload modes.
+- **Lightbox Gallery**: Integrated `yet-another-react-lightbox` into the results grid for full-screen image previews and navigation.
+- **Enhanced Results API**:
+  - Implemented in-memory locking mechanism to prevent race conditions and duplicate folder creation during parallel uploads.
+  - Automatic recursive creation of missing subfolder structures.
+
+### Changed
+
+- **Upload Limits**: Increased max upload size for results to 100MB (10x higher than standard moodboard images).
+- **Validation**: Updated `validateUpload` utility to support context-specific file size limits.
+
+### Fixed
+
+- **Result Deletion**: Fixed an issue where deleting a folder left abandoned file records in the database and physical files on disk.
+  - Changed `ResultFile` and `ResultFolder` relationship to `onDelete: Cascade`.
+  - Updated folder deletion API to recursively clean up physical directories for all subfolders and their contents.
+
 ## [1.4.1] - 2026-01-17
 
 ### Changed

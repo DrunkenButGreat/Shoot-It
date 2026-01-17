@@ -264,7 +264,11 @@
     "deselectAll": "Auswahl aufheben",
     "selectFolder": "Ordner auswählen",
     "selectImage": "Bild auswählen",
-    "downloadImage": "Bild herunterladen"
+    "downloadImage": "Bild herunterladen",
+    "viewImage": "Bild ansehen",
+    "uploadFiles": "Dateien hochladen",
+    "uploadFolder": "Ordner hochladen",
+    "dropToUpload": "Dateien oder Ordner zum Hochladen ablegen"
   },
   "auth": {
     "login": "Anmelden",

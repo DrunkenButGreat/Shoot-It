@@ -263,7 +263,11 @@
     "deselectAll": "Deselect All",
     "selectFolder": "Select Folder",
     "selectImage": "Select Image",
-    "downloadImage": "Download Image"
+    "downloadImage": "Download Image",
+    "viewImage": "View image",
+    "uploadFiles": "Upload files",
+    "uploadFolder": "Upload folder",
+    "dropToUpload": "Drop files or folders to upload"
   },
   "auth": {
     "login": "Login",

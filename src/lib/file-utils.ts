@@ -2,12 +2,13 @@ import { appConfig } from '@/config/app.config'
 import path from 'path'
 import crypto from 'crypto'
 
-export function validateUpload(file: File): { valid: boolean; error?: string } {
+export function validateUpload(file: File, maxSize?: number): { valid: boolean; error?: string } {
+  const limit = maxSize || appConfig.limits.maxUploadSize;
   // Größenprüfung
-  if (file.size > appConfig.limits.maxUploadSize) {
+  if (file.size > limit) {
     return {
       valid: false,
-      error: `File too large (max. ${appConfig.limits.maxUploadSize / 1024 / 1024}MB)`
+      error: `File too large (max. ${limit / 1024 / 1024}MB)`
     }
   }
 

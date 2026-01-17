@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useRef, useCallback, ReactNode } from "react"
+import { useState, useRef, useCallback, ReactNode, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Upload, Loader2, FileImage } from "lucide-react"
+import { Upload, Loader2, FileImage, FolderOpen, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useI18n } from "@/components/I18nProvider"
 
@@ -14,6 +14,8 @@ interface ImageUploadProps {
     compact?: boolean
     children?: ReactNode
     disabled?: boolean
+    maxSize?: number
+    enableFolderUpload?: boolean
 }
 
 export default function ImageUpload({
@@ -23,16 +25,33 @@ export default function ImageUpload({
     className,
     compact,
     children,
-    disabled
+    disabled,
+    maxSize,
+    enableFolderUpload
 }: ImageUploadProps) {
     const { t } = useI18n()
     const defaultLabel = label || t('selection.dragAndDrop')
     const [uploadingCount, setUploadingCount] = useState(0)
     const [isDragging, setIsDragging] = useState(false)
+    const [uploadMode, setUploadMode] = useState<'file' | 'folder'>('file')
+    const [showModeDropdown, setShowModeDropdown] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
-    const uploadFiles = useCallback(async (files: FileList | File[]) => {
-        const fileArray = Array.from(files).filter(file => file.type.startsWith("image/"))
+    // Set webkitdirectory attribute based on uploadMode
+    useEffect(() => {
+        if (fileInputRef.current) {
+            if (uploadMode === 'folder') {
+                fileInputRef.current.setAttribute('webkitdirectory', '')
+                fileInputRef.current.setAttribute('directory', '')
+            } else {
+                fileInputRef.current.removeAttribute('webkitdirectory')
+                fileInputRef.current.removeAttribute('directory')
+            }
+        }
+    }, [uploadMode])
+
+    const uploadFiles = useCallback(async (files: (File & { relativePath?: string })[]) => {
+        const fileArray = files.filter(file => file.type.startsWith("image/"))
 
         if (fileArray.length === 0) {
             alert(t('selection.pleaseUploadImages'))
@@ -44,6 +63,9 @@ export default function ImageUpload({
         const uploadPromises = fileArray.map(async (file) => {
             const formData = new FormData()
             formData.append("file", file)
+            if (file.relativePath) {
+                formData.append("relativePath", file.relativePath)
+            }
 
             try {
                 const response = await fetch(uploadUrl, {
@@ -65,12 +87,19 @@ export default function ImageUpload({
         await Promise.all(uploadPromises)
         onSuccess()
         if (fileInputRef.current) fileInputRef.current.value = ""
-    }, [uploadUrl, onSuccess])
+    }, [uploadUrl, onSuccess, t])
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files
         if (files && files.length > 0) {
-            uploadFiles(files)
+            const fileArray = Array.from(files) as (File & { relativePath?: string })[]
+            // For folder upload via input, webkitRelativePath is available
+            fileArray.forEach(f => {
+                if ((f as any).webkitRelativePath) {
+                    f.relativePath = (f as any).webkitRelativePath
+                }
+            })
+            uploadFiles(fileArray)
         }
     }
 
@@ -88,15 +117,63 @@ export default function ImageUpload({
         setIsDragging(false)
     }, [disabled])
 
-    const onDrop = useCallback((e: React.DragEvent) => {
+    const scanFiles = async (item: FileSystemEntry, path = ""): Promise<(File & { relativePath?: string })[]> => {
+        if (item.isFile) {
+            return new Promise((resolve) => {
+                (item as FileSystemFileEntry).file((file) => {
+                    const extendedFile = file as File & { relativePath?: string }
+                    extendedFile.relativePath = path + file.name
+                    resolve([extendedFile])
+                })
+            })
+        } else if (item.isDirectory) {
+            const reader = (item as FileSystemDirectoryEntry).createReader()
+            
+            const readAllEntries = async (): Promise<FileSystemEntry[]> => {
+                let all: FileSystemEntry[] = []
+                let result: FileSystemEntry[] = []
+                do {
+                    result = await new Promise<FileSystemEntry[]>((resolve) => {
+                        reader.readEntries((results) => resolve(results))
+                    })
+                    all.push(...result)
+                } while (result.length > 0)
+                return all
+            }
+
+            const entries = await readAllEntries()
+            const files = await Promise.all(entries.map(entry => scanFiles(entry, path + item.name + "/")))
+            return files.flat()
+        }
+        return []
+    }
+
+    const onDrop = useCallback(async (e: React.DragEvent) => {
         if (disabled) return
         e.preventDefault()
         e.stopPropagation()
         setIsDragging(false)
 
-        const files = e.dataTransfer.files
-        if (files && files.length > 0) {
-            uploadFiles(files)
+        const items = e.dataTransfer.items
+        if (items && items.length > 0) {
+            const files: (File & { relativePath?: string })[] = []
+            
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i].webkitGetAsEntry()
+                if (item) {
+                    const scanned = await scanFiles(item)
+                    files.push(...scanned)
+                }
+            }
+
+            if (files.length > 0) {
+                uploadFiles(files)
+            }
+        } else {
+            const files = e.dataTransfer.files
+            if (files && files.length > 0) {
+                uploadFiles(Array.from(files))
+            }
         }
     }, [uploadFiles, disabled])
 
@@ -177,12 +254,12 @@ export default function ImageUpload({
                     {isUploading ? (
                         <Loader2 className={cn("animate-spin text-blue-500", compact ? "h-4 w-4" : "h-6 w-6")} />
                     ) : (
-                        <Upload className={cn(compact ? "h-4 w-4" : "h-6 w-6")} />
+                        uploadMode === 'folder' ? <FolderOpen className={cn(compact ? "h-4 w-4" : "h-6 w-6")} /> : <Upload className={cn(compact ? "h-4 w-4" : "h-6 w-6")} />
                     )}
                 </div>
 
                 <p className={cn("font-medium text-gray-700", compact ? "text-xs" : "text-sm")}>
-                    {isUploading ? t('selection.uploading').replace('{count}', uploadingCount.toString()) : isDragging ? t('selection.drop') : defaultLabel}
+                    {isUploading ? t('selection.uploading').replace('{count}', uploadingCount.toString()) : isDragging ? t('results.dropToUpload') : (uploadMode === 'folder' ? t('results.uploadFolder') : defaultLabel)}
                 </p>
 
                 {!compact && !isUploading && (
@@ -193,15 +270,70 @@ export default function ImageUpload({
             </div>
 
             {!compact && !isUploading && (
-                <Button
-                    variant="secondary"
-                    size="sm"
-                    disabled={isUploading || disabled}
-                    onClick={() => fileInputRef.current?.click()}
-                    className="mt-2"
-                >
-                    {t('selection.selectFiles')}
-                </Button>
+                <div className="flex flex-col items-center gap-2 mt-2">
+                    {enableFolderUpload ? (
+                        <div className="flex items-center gap-1">
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                disabled={isUploading || disabled}
+                                onClick={() => fileInputRef.current?.click()}
+                                className="rounded-r-none border-r-0"
+                            >
+                                {uploadMode === 'folder' ? t('results.uploadFolder') : t('results.uploadFiles')}
+                            </Button>
+                            <div className="relative">
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    className="px-2 rounded-l-none border-l border-gray-200"
+                                    onClick={() => setShowModeDropdown(!showModeDropdown)}
+                                >
+                                    <ChevronDown className="h-4 w-4" />
+                                </Button>
+                                {showModeDropdown && (
+                                    <div className="absolute right-0 top-full mt-1 bg-white border rounded-lg shadow-xl z-[60] min-w-[150px] overflow-hidden py-1 animate-in fade-in zoom-in-95 duration-100">
+                                        <button
+                                            className={cn(
+                                                "w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2",
+                                                uploadMode === 'file' && "bg-blue-50 text-blue-600 font-medium"
+                                            )}
+                                            onClick={() => {
+                                                setUploadMode('file');
+                                                setShowModeDropdown(false);
+                                            }}
+                                        >
+                                            <Upload className="h-4 w-4" />
+                                            {t('results.uploadFiles')}
+                                        </button>
+                                        <button
+                                            className={cn(
+                                                "w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2",
+                                                uploadMode === 'folder' && "bg-blue-50 text-blue-600 font-medium"
+                                            )}
+                                            onClick={() => {
+                                                setUploadMode('folder');
+                                                setShowModeDropdown(false);
+                                            }}
+                                        >
+                                            <FolderOpen className="h-4 w-4" />
+                                            {t('results.uploadFolder')}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            disabled={isUploading || disabled}
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            {t('selection.selectFiles')}
+                        </Button>
+                    )}
+                </div>
             )}
 
             {compact && !isUploading && !disabled && (
