@@ -5,10 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-01-17
+
+### Added
+- **Private Collection UX**: Parity with project view (Search, Sort by Favorites/Date/Name, Expand/Collapse).
+- **Sticky Navigation**: Global header and dashboard headers are now sticky for better navigation.
+
+### Fixed
+- **UI Overlay**: Fixed z-index of UserMenu to prevent overlap from moodboard headers.
+- **Header Clarity**: Fixed image count localization string in all views.
+- **Favorites Logic**: Hearts for favoriting are now restricted to the owner's private collection view.
+
 ## [1.3.0] - 2026-01-17
 
 ### Added
-
 - **Favorites & Sorting**:
   - Ability to mark moodboards as favorites (persisted in DB).
   - Sorting options: Favorites first, Newest, Oldest, Alphabetical.
@@ -17,7 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.2.0] - 2026-01-17
 
 ### Added
-
 - **Enhanced Moodboard UX**:
   - Integrated Search Bar to filter groups by name or description.
   - Collapsible MoodboardGroups to improve vertical scroll navigation.

@@ -1,6 +1,6 @@
 {
   "name": "photoshoot-organizer",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "private": true,
   "scripts": {
     "devdb": "docker compose up -d db && next dev --turbopack",
