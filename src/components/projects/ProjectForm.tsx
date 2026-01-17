@@ -33,7 +33,9 @@ interface ProjectFormProps {
     showSelectionPublicly: boolean
     showCallsheetPublicly: boolean
     showResultsPublicly: boolean
+    showAppointmentsPublicly: boolean
     allowApplications: boolean
+    allowAppointments: boolean
     galleryLayout: string
   }
 }
@@ -55,7 +57,9 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
     showSelectionPublicly: initialData?.showSelectionPublicly ?? false,
     showCallsheetPublicly: initialData?.showCallsheetPublicly ?? false,
     showResultsPublicly: initialData?.showResultsPublicly ?? false,
+    showAppointmentsPublicly: initialData?.showAppointmentsPublicly ?? false,
     allowApplications: initialData?.allowApplications ?? false,
+    allowAppointments: initialData?.allowAppointments ?? false,
     galleryLayout: initialData?.galleryLayout || "masonry",
   })
 
@@ -100,7 +104,9 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
             showSelectionPublicly: false,
             showCallsheetPublicly: false,
             showResultsPublicly: false,
+            showAppointmentsPublicly: false,
             allowApplications: false,
+            allowAppointments: false,
             galleryLayout: "masonry",
           })
         }
@@ -227,6 +233,20 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
                   />
                 </div>
 
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="allowAppointments">{t('projectForm.allowAppointments')}</Label>
+                    <p className="text-[10px] text-gray-500">{t('projectForm.allowAppointmentsDescription')}</p>
+                  </div>
+                  <Switch
+                    id="allowAppointments"
+                    checked={formData.allowAppointments}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, allowAppointments: checked })
+                    }
+                  />
+                </div>
+
                 <div className="space-y-3">
                   <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('projectForm.moduleVisibility')}</Label>
                   <div className="grid grid-cols-2 gap-3">
@@ -260,11 +280,11 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
                     value={formData.showResultsPublicly}
                     onChange={(checked) => setFormData({ ...formData, showResultsPublicly: checked })}
                   />
-                </div>
-              </div>
-
-              <div className="space-y-3 pt-2 border-t border-gray-100">
-                <div className="flex items-center justify-between">
+                  <ModuleToggle
+                    label={t('projectForm.showAppointments')}
+                    value={formData.showAppointmentsPublicly}
+                    onChange={(checked) => setFormData({ ...formData, showAppointmentsPublicly: checked })}
+                  />
                   <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('projectForm.galleryStyle')}</Label>
                   <div className="flex flex-wrap gap-1 bg-gray-100 p-1 rounded-lg">
                     <button

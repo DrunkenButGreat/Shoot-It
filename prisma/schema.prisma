@@ -34,6 +34,7 @@ model User {
   signatures       ContractSignature[]
   imageRatings     ImageRating[]
   applications     ProjectApplication[]
+  appointmentResponses AppointmentResponse[]
 
   // Profile fields for auto-filling participant data
   phone String?
@@ -93,7 +94,9 @@ model Project {
   showSelectionPublicly    Boolean   @default(false)
   showCallsheetPublicly    Boolean   @default(false)
   showResultsPublicly      Boolean   @default(false)
+  showAppointmentsPublicly Boolean   @default(false)
   allowApplications        Boolean   @default(false)
+  allowAppointments        Boolean   @default(false)
   galleryLayout            String    @default("masonry") // "grid" or "masonry"
   isArchived               Boolean   @default(false)
   createdAt                DateTime  @default(now())
@@ -113,6 +116,7 @@ model Project {
   resultFolders   ResultFolder[]
   resultImages    ResultFile[]
   applications    ProjectApplication[]
+  appointmentSlots AppointmentSlot[]
 
   @@index([shortCode])
   @@index([ownerId])
@@ -465,4 +469,43 @@ enum ApplicationStatus {
   ACCEPTED
   REJECTED
   WITHDRAWN
+}
+
+// ==================== APPOINTMENTS ====================
+
+model AppointmentSlot {
+  id        String   @id @default(cuid())
+  startTime DateTime
+  endTime   DateTime
+  color     String? // Hex oder HSL
+  projectId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project   Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  responses AppointmentResponse[]
+
+  @@index([projectId])
+}
+
+model AppointmentResponse {
+  id        String            @id @default(cuid())
+  slotId    String
+  userId    String
+  status    AppointmentStatus @default(PENDING)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  slot AppointmentSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  user User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([slotId, userId])
+  @@index([slotId])
+  @@index([userId])
+}
+
+enum AppointmentStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
 }
