@@ -9,12 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Private Collection UX**: Parity with project view (Search, Sort by Favorites/Date/Name, Expand/Collapse).
-- **Sticky Navigation**: Global header and dashboard headers are now sticky for better navigation.
 
-### Fixed
-- **UI Overlay**: Fixed z-index of UserMenu to prevent overlap from moodboard headers.
-- **Header Clarity**: Fixed image count localization string in all views.
-- **Favorites Logic**: Hearts for favoriting are now restricted to the owner's private collection view.
 
 ## [1.3.0] - 2026-01-17
 
@@ -23,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Ability to mark moodboards as favorites (persisted in DB).
   - Sorting options: Favorites first, Newest, Oldest, Alphabetical.
   - Search bar now supports real-time filtering with current sort state.
+  - **Sticky Navigation**: Global header and dashboard headers are now sticky for better navigation.
+
+### Fixed
+  - **UI Overlay**: Fixed z-index of UserMenu to prevent overlap from moodboard headers.
+  - **Header Clarity**: Fixed image count localization string in all views.
+  - **Favorites Logic**: Hearts for favoriting are now restricted to the owner's private collection view.
 
 ## [1.2.0] - 2026-01-17
 
