@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Check, X, Clock, Trash2 } from 'lucide-react'
-import { AppointmentStatus } from '@prisma/generated/client'
+import { AppointmentStatus } from '@prisma/client'
 
 interface Slot {
     id: string

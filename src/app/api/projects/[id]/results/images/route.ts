@@ -30,7 +30,7 @@ async function ensureFolderStructure(projectId: string, relativePath: string) {
             currentPath = `${currentPath}/${part}`
             
             // Try to find existing folder first
-            let folder = await prisma.resultFolder.findFirst({
+            let folder: any = await prisma.resultFolder.findFirst({
                 where: {
                     name: part,
                     projectId,
