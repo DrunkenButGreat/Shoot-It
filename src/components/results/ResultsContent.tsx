@@ -9,6 +9,7 @@ import { FolderPlus, FolderOpen, Download, CheckSquare, Square } from 'lucide-re
 import { useI18n } from '@/components/I18nProvider';
 import { ResultImageGrid } from './ResultImageGrid';
 import ImageUpload from '../moodboard/ImageUpload';
+import { appConfig } from '@/config/app.config';
 
 type ResultFile = {
   id: string;
@@ -201,6 +202,8 @@ export function ResultsContent({
           <ImageUpload
             uploadUrl={`/api/projects/${projectId}/results/images`}
             onSuccess={() => refreshFolders()}
+            maxSize={appConfig.limits.maxResultsUploadSize}
+            enableFolderUpload
             className="w-full min-h-[160px] border-dashed bg-gray-50/50 hover:bg-gray-100/30 transition-all rounded-2xl flex flex-col items-center justify-center border-gray-200"
           />
         </div>

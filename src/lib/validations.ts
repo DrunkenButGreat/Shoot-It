@@ -14,7 +14,9 @@ export const projectSchema = z.object({
   showSelectionPublicly: z.boolean().optional(),
   showCallsheetPublicly: z.boolean().optional(),
   showResultsPublicly: z.boolean().optional(),
+  showAppointmentsPublicly: z.boolean().optional(),
   allowApplications: z.boolean().optional(),
+  allowAppointments: z.boolean().optional(),
   galleryLayout: z.string().optional(),
 })
 

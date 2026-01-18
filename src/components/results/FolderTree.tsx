@@ -14,6 +14,7 @@ import ImageUpload from '../moodboard/ImageUpload';
 import { useI18n } from '@/components/I18nProvider';
 import { ResultImageGrid } from './ResultImageGrid';
 import { CheckSquare, Square, ChevronDown, ChevronRight, Folder as FolderIcon, FolderOpen, Trash2 } from 'lucide-react';
+import { appConfig } from '@/config/app.config';
 
 type ResultFile = {
   id: string;
@@ -223,6 +224,8 @@ export function FolderTree({
                   <ImageUpload
                     uploadUrl={`/api/projects/${projectId}/results/folders/${folder.id}/images`}
                     onSuccess={() => onDelete()}
+                    maxSize={appConfig.limits.maxResultsUploadSize}
+                    enableFolderUpload
                     className="w-full min-h-[160px] border-dashed bg-gray-50/50 hover:bg-gray-100/30 transition-all rounded-2xl flex flex-col items-center justify-center border-gray-200"
                   />
                 )}

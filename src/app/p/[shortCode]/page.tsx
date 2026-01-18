@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { PublicGallery } from "@/components/public/PublicGallery"
 import { PublicResults } from "@/components/public/PublicResults"
 import { ApplicationForm } from "@/components/projects/ApplicationForm"
+import { AppointmentPublicList } from "@/components/appointments/AppointmentPublicList"
 import { getLocale, getDictionary } from "@/lib/i18n"
 import { cookies } from "next/headers"
 
@@ -61,6 +62,12 @@ export default async function PublicProjectPage({
                 orderBy: { importedAt: 'desc' }
             },
             resultFolders: true,
+            appointmentSlots: {
+                include: {
+                    responses: true
+                },
+                orderBy: { startTime: 'asc' }
+            },
             callsheet: {
                 include: {
                     scheduleItems: {
@@ -74,6 +81,7 @@ export default async function PublicProjectPage({
                     participants: true,
                     contracts: true,
                     selectionImages: true,
+                    appointmentSlots: true,
                 },
             },
         },
@@ -231,6 +239,15 @@ export default async function PublicProjectPage({
                                         label={dict.project.foldersCount.replace('{count}', '').trim()}
                                         href={session ? `/project/${project.id}/results` : (project.showResultsPublicly ? '#results' : '#')}
                                         disabled={!session && !project.showResultsPublicly}
+                                        dict={dict}
+                                    />
+                                    <ModuleBox
+                                        title={dict.project.appointments || 'Termine'}
+                                        icon={<Calendar className="h-6 w-6" />}
+                                        count={project._count.appointmentSlots}
+                                        label={dict.project.appointmentsLabel || 'Optionen'}
+                                        href={session ? `/project/${project.id}/appointments` : (project.showAppointmentsPublicly ? '#appointments' : '#')}
+                                        disabled={!session && !project.showAppointmentsPublicly}
                                         dict={dict}
                                     />
                                 </div>
@@ -401,6 +418,21 @@ export default async function PublicProjectPage({
                                         )}
                                     </CardContent>
                                 </Card>
+                            </section>
+                        )}
+
+                        {project.showAppointmentsPublicly && project.appointmentSlots?.length > 0 && (
+                            <section id="appointments" className="space-y-6 scroll-mt-20">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20">
+                                        <Calendar className="h-5 w-5" />
+                                    </div>
+                                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.project.appointments || 'Terminfindung'}</h2>
+                                </div>
+                                <AppointmentPublicList 
+                                    slots={project.appointmentSlots} 
+                                    locale={locale} 
+                                />
                             </section>
                         )}
                     </div>

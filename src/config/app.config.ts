@@ -4,6 +4,7 @@ export const appConfig = {
   
   limits: {
     maxUploadSize: 10 * 1024 * 1024, // 10MB
+    maxResultsUploadSize: 100 * 1024 * 1024, // 100MB
     maxUploadsPerRequest: 20,
   },
   

@@ -51,12 +51,13 @@ export default async function ProjectPage({
           selectionImages: true,
           resultFolders: true,
           applications: true,
+          appointmentSlots: true,
         },
       },
       participants: {
         where: { email: session.user.email || undefined },
         select: { id: true, role: true }
-      }
+      },
     },
   })
 
@@ -241,6 +242,26 @@ export default async function ProjectPage({
               </Link>
             </CardContent>
           </Card>
+
+          {project.allowAppointments && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">{dict.project.appointments || 'Terminfindung'}</CardTitle>
+                <CardDescription>
+                  {project._count.appointmentSlots > 0 
+                    ? `${project._count.appointmentSlots} ${dict.project.appointmentSuggestions || 'Terminvorschläge'}` 
+                    : (dict.project.appointmentsDescription || 'Findet gemeinsam einen Termin')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link href={`/project/${id}/appointments`}>
+                  <Button variant="outline" className="w-full">
+                    {dict.project.manage} {dict.project.appointments || 'Termine'}
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
 
           {isOwner && (project.allowApplications || project._count.applications > 0) && (
             <Card className={project._count.applications > 0 ? "border-blue-200 bg-blue-50/20" : ""}>

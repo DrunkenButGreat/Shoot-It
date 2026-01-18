@@ -1,8 +1,10 @@
 'use client';
 
 import { useI18n } from '@/components/I18nProvider';
-import { Download, Trash2, CheckCircle2, Circle } from 'lucide-react';
+import { Download, Trash2, CheckCircle2, Circle, Eye } from 'lucide-react';
 import { useState } from 'react';
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
 
 type ResultFile = {
   id: string;
@@ -24,18 +26,30 @@ export function ResultImageGrid({
   onDelete: (id: string) => void;
   showDelete?: boolean;
 }) {
+  const [index, setIndex] = useState(-1);
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 py-4">
-      {images.map((image) => (
-        <ResultFileCard
-          key={image.id}
-          image={image}
-          isSelected={selectedIds.has(image.id)}
-          onToggleSelect={() => onToggleSelect(image.id)}
-          onDelete={() => onDelete(image.id)}
-          showDelete={showDelete}
-        />
-      ))}
+    <div className="py-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+        {images.map((image, i) => (
+          <ResultFileCard
+            key={image.id}
+            image={image}
+            isSelected={selectedIds.has(image.id)}
+            onToggleSelect={() => onToggleSelect(image.id)}
+            onDelete={() => onDelete(image.id)}
+            onView={() => setIndex(i)}
+            showDelete={showDelete}
+          />
+        ))}
+      </div>
+
+      <Lightbox
+        index={index}
+        open={index >= 0}
+        close={() => setIndex(-1)}
+        slides={images.map(img => ({ src: img.path, title: img.filename }))}
+      />
     </div>
   );
 }
@@ -45,12 +59,14 @@ function ResultFileCard({
   isSelected,
   onToggleSelect,
   onDelete,
+  onView,
   showDelete,
 }: {
   image: ResultFile;
   isSelected: boolean;
   onToggleSelect: () => void;
   onDelete: () => void;
+  onView: () => void;
   showDelete: boolean;
 }) {
   const { t } = useI18n();
@@ -93,6 +109,16 @@ function ResultFileCard({
 
         {/* Action Buttons overlay visible on hover */}
         <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 z-0">
+          <button
+            className="p-2.5 bg-white text-gray-700 rounded-xl hover:text-primary hover:scale-105 transition-all shadow-xl"
+            title={t('results.viewImage')}
+            onClick={(e) => {
+              e.stopPropagation();
+              onView();
+            }}
+          >
+            <Eye className="w-5 h-5" />
+          </button>
           <a
             href={image.path}
             download={image.filename}
