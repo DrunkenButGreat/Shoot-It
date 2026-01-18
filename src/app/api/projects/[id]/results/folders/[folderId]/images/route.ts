@@ -7,9 +7,6 @@ import path from "path"
 import { generateSecureFilename, validateUpload } from "@/lib/file-utils"
 import { appConfig } from "@/config/app.config"
 
-import { generateSecureFilename, validateUpload } from "@/lib/file-utils"
-import { appConfig } from "@/config/app.config"
-
 // In-memory lock for folder creation
 const folderCreationLocks = new Map<string, Promise<string>>();
 

@@ -285,6 +285,10 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
                     value={formData.showAppointmentsPublicly}
                     onChange={(checked) => setFormData({ ...formData, showAppointmentsPublicly: checked })}
                   />
+                  </div>
+                </div>
+
+                <div className="space-y-3">
                   <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('projectForm.galleryStyle')}</Label>
                   <div className="flex flex-wrap gap-1 bg-gray-100 p-1 rounded-lg">
                     <button
@@ -321,17 +325,16 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
                       {t('projectForm.grid')}
                     </button>
                   </div>
+                  <p className="text-[10px] text-muted-foreground italic leading-tight">
+                    {formData.galleryLayout === "justified"
+                      ? t('projectForm.justifiedDescription')
+                      : formData.galleryLayout === "masonry"
+                        ? t('projectForm.masonryDescription')
+                        : t('projectForm.gridDescription')}
+                  </p>
                 </div>
-                <p className="text-[10px] text-muted-foreground italic leading-tight">
-                  {formData.galleryLayout === "justified"
-                    ? t('projectForm.justifiedDescription')
-                    : formData.galleryLayout === "masonry"
-                      ? t('projectForm.masonryDescription')
-                      : t('projectForm.gridDescription')}
-                </p>
               </div>
-            </div>
-          )}
+            )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>

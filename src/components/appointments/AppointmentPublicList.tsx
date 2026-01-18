@@ -9,6 +9,7 @@ interface Slot {
     id: string
     startTime: string
     endTime: string
+    responses?: { status: string }[]
 }
 
 interface AppointmentPublicListProps {
@@ -29,7 +30,7 @@ export function AppointmentPublicList({ slots, locale }: AppointmentPublicListPr
     }
 
     // Group slots by day
-    const groupedSlots = slots.reduce((acc: any, slot) => {
+    const groupedSlots = slots.reduce((acc: Record<string, Slot[]>, slot) => {
         const date = new Date(slot.startTime).toDateString()
         if (!acc[date]) acc[date] = []
         acc[date].push(slot)

@@ -118,32 +118,48 @@ export default function ImageUpload({
     }, [disabled])
 
     const scanFiles = async (item: FileSystemEntry, path = ""): Promise<(File & { relativePath?: string })[]> => {
-        if (item.isFile) {
-            return new Promise((resolve) => {
-                (item as FileSystemFileEntry).file((file) => {
-                    const extendedFile = file as File & { relativePath?: string }
-                    extendedFile.relativePath = path + file.name
-                    resolve([extendedFile])
+        try {
+            if (item.isFile) {
+                return new Promise((resolve, reject) => {
+                    (item as FileSystemFileEntry).file(
+                        (file) => {
+                            const extendedFile = file as File & { relativePath?: string }
+                            extendedFile.relativePath = path + file.name
+                            resolve([extendedFile])
+                        },
+                        (error) => {
+                            console.error("Error reading file:", error)
+                            resolve([]) // Skip files that can't be read
+                        }
+                    )
                 })
-            })
-        } else if (item.isDirectory) {
-            const reader = (item as FileSystemDirectoryEntry).createReader()
-            
-            const readAllEntries = async (): Promise<FileSystemEntry[]> => {
-                let all: FileSystemEntry[] = []
-                let result: FileSystemEntry[] = []
-                do {
-                    result = await new Promise<FileSystemEntry[]>((resolve) => {
-                        reader.readEntries((results) => resolve(results))
-                    })
-                    all.push(...result)
-                } while (result.length > 0)
-                return all
-            }
+            } else if (item.isDirectory) {
+                const reader = (item as FileSystemDirectoryEntry).createReader()
+                
+                const readAllEntries = async (): Promise<FileSystemEntry[]> => {
+                    let all: FileSystemEntry[] = []
+                    let result: FileSystemEntry[] = []
+                    do {
+                        result = await new Promise<FileSystemEntry[]>((resolve) => {
+                            reader.readEntries(
+                                (results) => resolve(results),
+                                (error) => {
+                                    console.error("Error reading directory:", error)
+                                    resolve([])
+                                }
+                            )
+                        })
+                        all.push(...result)
+                    } while (result.length > 0)
+                    return all
+                }
 
-            const entries = await readAllEntries()
-            const files = await Promise.all(entries.map(entry => scanFiles(entry, path + item.name + "/")))
-            return files.flat()
+                const entries = await readAllEntries()
+                const files = await Promise.all(entries.map(entry => scanFiles(entry, path + item.name + "/")))
+                return files.flat()
+            }
+        } catch (error) {
+            console.error("Error scanning entries:", error)
         }
         return []
     }
