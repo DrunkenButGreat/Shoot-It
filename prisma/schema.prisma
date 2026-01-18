@@ -245,6 +245,9 @@ model ParticipantImage {
   filename      String
   path          String
   thumbnail     String?
+  width         Int?
+  height        Int?
+  size          Int?
   participantId String
   createdAt     DateTime @default(now())
 
@@ -456,6 +459,9 @@ model ApplicationImage {
   filename      String
   path          String
   thumbnail     String?
+  width         Int?
+  height        Int?
+  size          Int?
   applicationId String
   createdAt     DateTime @default(now())
 

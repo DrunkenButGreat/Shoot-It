@@ -95,7 +95,8 @@ export async function POST(
                 groupId,
                 thumbnail: thumbnailPath,
                 width: metadata.width,
-                height: metadata.height
+                height: metadata.height,
+                size: file.size
             }
         })
 

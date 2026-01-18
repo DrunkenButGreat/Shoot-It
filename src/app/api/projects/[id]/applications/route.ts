@@ -164,7 +164,8 @@ export async function POST(
                 path: relativePath,
                 thumbnail: thumbnailPath,
                 width: metadata.width,
-                height: metadata.height
+                height: metadata.height,
+                size: file.size
             }
         })
         uploadedImages.push(img)

@@ -73,7 +73,8 @@ export async function POST(
                 projectId: id,
                 thumbnail: thumbnailPath,
                 width: metadata.width,
-                height: metadata.height
+                height: metadata.height,
+                size: file.size
             }
         })
 
