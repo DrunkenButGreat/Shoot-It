@@ -125,7 +125,7 @@ PhotoShoot Organizer is a production-ready platform designed specifically for ph
 │   │   ├── dashboard/       # Dashboard
 │   │   └── project/[id]/    # Project pages
 │   ├── auth.ts              # Auth.js configuration
-│   ├── middleware.ts        # Route protection
+│   ├── proxy.ts             # Route protection
 │   ├── components/          # React components
 │   │   ├── auth/            # Authentication components
 │   │   ├── projects/        # Project components

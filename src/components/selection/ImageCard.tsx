@@ -90,9 +90,9 @@ export function ImageCard({ image, projectId, onRatingUpdated, onImageClick, mas
         className={`${justified ? "h-[240px]" : masonry ? "" : "aspect-square"} bg-gray-100 relative overflow-hidden cursor-zoom-in group flex-shrink-0`}
         onClick={onImageClick}
       >
-        {image.path ? (
+        {(image.thumbnail || image.path) ? (
           <img
-            src={image.path}
+            src={image.thumbnail || image.path}
             alt={image.filename}
             className={`w-full ${justified || !masonry ? "h-full object-cover" : "h-auto"} group-hover:scale-105 transition-transform duration-300`}
           />

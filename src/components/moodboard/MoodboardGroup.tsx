@@ -481,7 +481,7 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
                       onClick={() => setIndex(i)}
                     >
                       <img
-                        src={image.path}
+                        src={image.thumbnail || image.path}
                         alt={image.filename}
                         className="w-full h-full object-cover"
                       />
@@ -550,7 +550,7 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
                       onClick={() => setIndex(i)}
                     >
                       <img
-                        src={image.path}
+                        src={image.thumbnail || image.path}
                         alt={image.filename}
                         className="w-full h-full object-cover"
                       />
@@ -704,7 +704,10 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
             index={index}
             open={index >= 0}
             close={() => setIndex(-1)}
-            slides={group.images.map((img) => ({ src: img.path }))}
+            slides={group.images.map((img) => ({ 
+              src: img.thumbnail || img.path,
+              downloadUrl: img.path
+            }))}
           />
 
           {/* Comments section */}

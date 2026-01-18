@@ -13,6 +13,9 @@ export const appConfig = {
     thumbnailWidth: 300,
     thumbnailHeight: 300,
     thumbnailQuality: 80,
+    resultsPreviewMaxWidth: 2560,
+    resultsPreviewMaxHeight: 2560,
+    resultsPreviewQuality: 85,
   },
   
   shortcode: {

@@ -353,7 +353,7 @@ docker compose exec app npx prisma migrate deploy
 │   │   ├── dashboard/   # Dashboard
 │   │   └── project/[id]/ # Project pages
 │   ├── auth.ts          # Auth.js config
-│   ├── middleware.ts    # Route protection
+│   ├── proxy.ts         # Route protection
 │   ├── components/      # React components
 │   │   ├── auth/        # Auth components
 │   │   ├── projects/    # Project components

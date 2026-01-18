@@ -47,8 +47,15 @@ export async function DELETE(
             const relativePath = image.path.replace("/api/uploads/", "")
             const fullPath = path.join(process.cwd(), "uploads", relativePath)
             await unlink(fullPath)
+
+            // Delete thumbnail/preview if it exists and is different from the original
+            if (image.thumbnail && image.thumbnail !== image.path) {
+                const thumbRelativePath = image.thumbnail.replace("/api/uploads/", "")
+                const thumbFullPath = path.join(process.cwd(), "uploads", thumbRelativePath)
+                await unlink(thumbFullPath).catch(() => {}) // Ignore if preview doesn't exist
+            }
         } catch (fileError) {
-            console.error("Failed to delete physical file:", fileError)
+            console.error("Failed to delete physical files:", fileError)
         }
 
         return NextResponse.json({ success: true })

@@ -48,7 +48,11 @@ export function ResultImageGrid({
         index={index}
         open={index >= 0}
         close={() => setIndex(-1)}
-        slides={images.map(img => ({ src: img.path, title: img.filename }))}
+        slides={images.map(img => ({ 
+          src: img.thumbnail || img.path, 
+          downloadUrl: img.path,
+          title: img.filename 
+        }))}
       />
     </div>
   );
@@ -90,7 +94,7 @@ function ResultFileCard({
     >
       <div className="aspect-square relative flex items-center justify-center bg-gray-100/50">
         <img
-          src={image.path}
+          src={image.thumbnail || image.path}
           alt={image.filename}
           className="w-full h-full object-cover select-none"
           loading="lazy"

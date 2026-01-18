@@ -6,6 +6,7 @@ import { sendMail } from '@/lib/mail'
 import { mkdir, writeFile } from 'fs/promises'
 import path from 'path'
 import { generateSecureFilename, validateUpload } from '@/lib/file-utils'
+import { getImageMetadata, generateResultPreview } from "@/lib/image-processing"
 
 // GET /api/projects/[id]/applications - List applications for the project owner
 export async function GET(
@@ -140,14 +141,30 @@ export async function POST(
         const filePath = path.join(uploadDir, secureFilename)
         const relativePath = `/api/uploads/applications/${projectId}/${application.id}/${secureFilename}`
         
+        const previewFilename = `preview_${secureFilename}.webp`
+        const previewPath = path.join(uploadDir, previewFilename)
+        const thumbnailPath = `/api/uploads/applications/${projectId}/${application.id}/${previewFilename}`
+        
         const buffer = Buffer.from(await file.arrayBuffer())
         await writeFile(filePath, buffer)
+
+        // Get image metadata and generate preview
+        let metadata = { width: 0, height: 0 }
+        try {
+            metadata = await getImageMetadata(filePath)
+            await generateResultPreview(filePath, previewPath)
+        } catch (err) {
+            console.error("Error processing application image:", err)
+        }
 
         const img = await prisma.applicationImage.create({
             data: {
                 applicationId: application.id,
                 filename: file.name,
                 path: relativePath,
+                thumbnail: thumbnailPath,
+                width: metadata.width,
+                height: metadata.height
             }
         })
         uploadedImages.push(img)

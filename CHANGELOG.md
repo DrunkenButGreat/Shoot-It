@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-01-18
+
+### Added
+
+- **Performance Optimization (Thumbnails)**:
+  - Implemented a comprehensive thumbnail/preview system using Sharp.
+  - Automatic WebP preview generation (max 2560px) for all uploaded images (Results, Selection, Moodboards, Applications).
+  - On-the-fly preview generation for existing images to ensure immediate performance benefits without migration.
+  - Pre-generation of image metadata (width/height) stored in the database for optimized UI layouts.
+- **Enhanced Gallery Experience**:
+  - UI now prioritizes WebP previews for faster loading and reduced bandwidth.
+  - Lightbox and grid views globally updated to use thumbnails.
+
 ## [1.5.0] - 2026-01-18
 
 ### Added

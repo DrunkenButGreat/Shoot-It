@@ -58,7 +58,7 @@ This document tracks the implementation progress of the PhotoShoot Organizer app
 - ✅ Custom callbacks for session/token
 
 **Middleware:**
-- ✅ `src/middleware.ts` - Route protection
+- ✅ `src/proxy.ts` - Route protection
 - ✅ Public routes whitelist
 - ✅ Public short URL support (/p/[shortCode])
 - ✅ Redirect to login with callback URL
@@ -318,7 +318,7 @@ docker compose exec app npx prisma migrate deploy
 │   │   ├── dashboard/   # Dashboard page
 │   │   └── ...          # Other pages
 │   ├── auth.ts          # Auth.js configuration
-│   ├── middleware.ts    # Route protection
+│   ├── proxy.ts         # Route protection
 │   ├── components/      # React components
 │   │   ├── auth/
 │   │   ├── layout/

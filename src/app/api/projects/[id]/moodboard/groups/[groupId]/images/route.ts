@@ -5,6 +5,7 @@ import { canEditProject } from "@/lib/permissions"
 import { writeFile, mkdir } from "fs/promises"
 import path from "path"
 import { generateSecureFilename, validateUpload } from "@/lib/file-utils"
+import { getImageMetadata, generateResultPreview } from "@/lib/image-processing"
 
 export async function POST(
     request: NextRequest,
@@ -66,9 +67,17 @@ export async function POST(
         const imagePath = path.join(uploadDir, secureFilename)
         await writeFile(imagePath, buffer)
 
-        // Get image metadata
-        const sharp = (await import("sharp")).default
-        const metadata = await sharp(buffer).metadata()
+        // Get image metadata and generate preview
+        let metadata = { width: 0, height: 0 }
+        const previewFilename = `preview_${secureFilename}.webp`
+        const previewPath = path.join(uploadDir, previewFilename)
+
+        try {
+            metadata = await getImageMetadata(imagePath)
+            await generateResultPreview(imagePath, previewPath)
+        } catch (err) {
+            console.error("Error processing moodboard image:", err)
+        }
 
         // Database record
         const count = await prisma.moodboardImage.count({
@@ -76,6 +85,7 @@ export async function POST(
         })
 
         const dbPath = `/api/uploads/${relativeDir}/${secureFilename}`.replace(/\\/g, '/')
+        const thumbnailPath = `/api/uploads/${relativeDir}/${previewFilename}`.replace(/\\/g, '/')
 
         const image = await prisma.moodboardImage.create({
             data: {
@@ -83,7 +93,7 @@ export async function POST(
                 path: dbPath,
                 order: count,
                 groupId,
-                thumbnail: dbPath,
+                thumbnail: thumbnailPath,
                 width: metadata.width,
                 height: metadata.height
             }

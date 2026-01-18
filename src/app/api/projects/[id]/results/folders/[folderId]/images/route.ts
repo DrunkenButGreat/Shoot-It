@@ -6,6 +6,7 @@ import { writeFile, mkdir } from "fs/promises"
 import path from "path"
 import { generateSecureFilename, validateUpload } from "@/lib/file-utils"
 import { appConfig } from "@/config/app.config"
+import { getImageMetadata, generateResultPreview } from "@/lib/image-processing"
 
 // In-memory lock for folder creation
 const folderCreationLocks = new Map<string, Promise<string>>();
@@ -126,14 +127,32 @@ export async function POST(
 
         const filePath = path.join(uploadDir, secureFilename)
         await writeFile(filePath, buffer)
+        console.log(`[UploadAPI] Original saved to: ${filePath}`)
+
+        // Generate metadata and preview
+        let metadata = { width: 0, height: 0 }
+        const previewFilename = `preview_${secureFilename}.webp`
+        const previewPath = path.join(uploadDir, previewFilename)
+        console.log(`[UploadAPI] Target preview path: ${previewPath}`)
+        
+        try {
+            metadata = await getImageMetadata(filePath)
+            await generateResultPreview(filePath, previewPath)
+            console.log(`[UploadAPI] Metadata & Preview generated successfully`)
+        } catch (err) {
+            console.error("[UploadAPI] Error processing image after upload:", err)
+        }
 
         const dbPath = `/api/uploads/${relativeDir}/${secureFilename}`.replace(/\\/g, '/')
+        const thumbnailPath = `/api/uploads/${relativeDir}/${previewFilename}`.replace(/\\/g, '/')
 
         const image = await prisma.resultFile.create({
             data: {
                 filename: file.name,
                 path: dbPath,
-                thumbnail: dbPath,
+                thumbnail: thumbnailPath,
+                width: metadata.width,
+                height: metadata.height,
                 size: file.size,
                 project: { connect: { id } },
                 folder: { connect: { id: targetFolderId } }
@@ -149,3 +168,4 @@ export async function POST(
         )
     }
 }
+

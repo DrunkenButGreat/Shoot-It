@@ -671,7 +671,7 @@ photoshoot-organizer/
 │   │   ├── selection.ts
 │   │   └── results.ts
 │   │
-│   └── middleware.ts                   # Auth Middleware
+│   └── proxy.ts                        # Auth Middleware
 │
 ├── uploads/                            # Hochgeladene Dateien (Volume)
 │   └── .gitkeep
