@@ -274,6 +274,7 @@
     "upload": "Upload Images",
     "downloadZip": "Download ZIP",
     "downloadSelected": "Download Selection",
+    "uploadToCurrent": "Upload to current folder",
     "itemsSelected": "{count} items selected",
     "selectAll": "Select All",
     "deselectAll": "Deselect All",

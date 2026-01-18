@@ -176,9 +176,10 @@ export default function ImageUpload({
         setIsDragging(false)
 
         const items = e.dataTransfer.items
+        const files: (File & { relativePath?: string })[] = []
+
+        // Try scanning items (files and folders)
         if (items && items.length > 0) {
-            const files: (File & { relativePath?: string })[] = []
-            
             for (let i = 0; i < items.length; i++) {
                 const item = items[i].webkitGetAsEntry()
                 if (item) {
@@ -186,15 +187,19 @@ export default function ImageUpload({
                     files.push(...scanned)
                 }
             }
+        }
 
-            if (files.length > 0) {
-                uploadFiles(files)
+        // Fallback to basic files if scanning returned nothing (or failed/not supported)
+        // This ensures that simple file drops work even if webkitGetAsEntry fails
+        if (files.length === 0) {
+            const droppedFiles = e.dataTransfer.files
+            if (droppedFiles && droppedFiles.length > 0) {
+                files.push(...Array.from(droppedFiles))
             }
-        } else {
-            const files = e.dataTransfer.files
-            if (files && files.length > 0) {
-                uploadFiles(Array.from(files))
-            }
+        }
+
+        if (files.length > 0) {
+            uploadFiles(files)
         }
     }, [uploadFiles, disabled])
 

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.3] - 2026-01-18
+
+### Changed
+- **Results View UI**: Completely overhauled the Results View to match the Selection Gallery consistency. It now features the same sidebar folder navigation, grid layout, and image cards.
+
+### Fixed
+- **Drag & Drop**: Improved robustness of the drag and drop area to reliably handle multiple files and folder uploads.
+- **Selection Markings**: Restored the colored border markings (ratings) and selection indicators in the gallery view.
+- **Filtering Error**: Fixed a server-side exception that occurred when applying star or color filters in the Selection View.
+- **Translations**: Added missing translation for `uploadToCurrent`.
+
 ## [1.8.2] - 2026-01-18
 
 ### Added

@@ -31,6 +31,7 @@ interface ImageCardProps {
   isGuest?: boolean
   selected?: boolean
   onSelect?: () => void
+  hideRatings?: boolean
 }
 
 export function ImageCard({ 
@@ -43,7 +44,8 @@ export function ImageCard({
   readOnly, 
   isGuest,
   selected,
-  onSelect
+  onSelect,
+  hideRatings
 }: ImageCardProps) {
   const currentRating = image.ratings
   const color = currentRating?.color || null
@@ -105,16 +107,18 @@ export function ImageCard({
       </div>
 
       {/* Rating controls */}
-      <div className="p-3">
-        <RatingControls
-          projectId={projectId}
-          imageId={image.id}
-          initialRating={currentRating || undefined}
-          onRatingUpdated={onRatingUpdated}
-          disabled={readOnly}
-          isGuest={isGuest}
-        />
-      </div>
+      {!hideRatings && (
+        <div className="p-3">
+          <RatingControls
+            projectId={projectId}
+            imageId={image.id}
+            initialRating={currentRating || undefined}
+            onRatingUpdated={onRatingUpdated}
+            disabled={readOnly}
+            isGuest={isGuest}
+          />
+        </div>
+      )}
     </Card>
   )
 }

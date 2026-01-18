@@ -48,7 +48,6 @@ export default async function SelectionPage({
   const where: any = { projectId: id }
   if (stars.length > 0 || colors.length > 0) {
     where.ratings = {
-      isNot: null,
       ...(stars.length > 0 ? { stars: { in: stars } } : {}),
       ...(colors.length > 0 ? { color: { in: colors } } : {}),
     }

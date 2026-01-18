@@ -275,6 +275,7 @@
     "upload": "Bilder hochladen",
     "downloadZip": "ZIP herunterladen",
     "downloadSelected": "Auswahl herunterladen",
+    "uploadToCurrent": "In aktuellen Ordner hochladen",
     "itemsSelected": "{count} Elemente ausgewählt",
     "selectAll": "Alle auswählen",
     "deselectAll": "Auswahl aufheben",

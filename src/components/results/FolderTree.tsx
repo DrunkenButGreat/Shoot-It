@@ -10,11 +10,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import ImageUpload from '../moodboard/ImageUpload';
 import { useI18n } from '@/components/I18nProvider';
-import { ResultImageGrid } from './ResultImageGrid';
-import { CheckSquare, Square, ChevronDown, ChevronRight, Folder as FolderIcon, FolderOpen, Trash2 } from 'lucide-react';
-import { appConfig } from '@/config/app.config';
+import { ChevronDown, ChevronRight, Folder as FolderIcon, FolderOpen, Trash2, MoreVertical } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 type ResultFile = {
   id: string;
@@ -38,40 +41,42 @@ export function FolderTree({
   folders,
   projectId,
   onDelete,
-  selectedImageIds,
-  setSelectedImageIds,
-  selectedFolderIds,
-  setSelectedFolderIds,
+  selectedFolderId,
+  onSelectFolder,
   isReadOnly = false,
 }: {
   folders: Folder[];
   projectId: string;
   onDelete: () => void;
-  selectedImageIds: Set<string>;
-  setSelectedImageIds: React.Dispatch<React.SetStateAction<Set<string>>>;
-  selectedFolderIds: Set<string>;
-  setSelectedFolderIds: React.Dispatch<React.SetStateAction<Set<string>>>;
+  selectedFolderId: string | null;
+  onSelectFolder: (id: string | null) => void;
   isReadOnly?: boolean;
 }) {
   const { t } = useI18n();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
+  const [folderToDelete, setFolderToDelete] = useState<Folder | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(folders.filter(f => !f.parentId).map(f => f.id)));
+  
+  // Initialize with root folders expanded or empty. 
+  // SelectionFolderTree uses empty by default, but let's keep some expanded if needed.
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
   const handleDelete = async () => {
-    if (!selectedFolder) return;
+    if (!folderToDelete) return;
 
     setIsDeleting(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/results/folders/${selectedFolder.id}`, {
+      const response = await fetch(`/api/projects/${projectId}/results/folders/${folderToDelete.id}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
         onDelete();
         setShowDeleteDialog(false);
-        setSelectedFolder(null);
+        setFolderToDelete(null);
+        if (selectedFolderId === folderToDelete.id) {
+          onSelectFolder(null);
+        }
       }
     } catch (error) {
       console.error('Failed to delete folder:', error);
@@ -80,59 +85,17 @@ export function FolderTree({
     }
   };
 
-  const handleImageDelete = async (imageId: string, folderId: string) => {
-    try {
-      const response = await fetch(`/api/projects/${projectId}/results/images/${imageId}`, {
-        method: 'DELETE',
-      });
-      if (response.ok) {
-        onDelete();
-      }
-    } catch (error) {
-      console.error('Failed to delete image:', error);
-    }
-  };
-
-  const toggleFolderExpansion = (id: string) => {
+  const toggleFolderExpansion = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     const next = new Set(expandedFolders);
     if (next.has(id)) next.delete(id);
     else next.add(id);
     setExpandedFolders(next);
   };
 
-  const toggleFolderSelection = (folder: Folder) => {
-    const nextFolders = new Set(selectedFolderIds);
-    const nextImages = new Set(selectedImageIds);
-
-    const isSelecting = !nextFolders.has(folder.id);
-
-    const setSelectionRecursive = (f: Folder, select: boolean) => {
-      if (select) {
-        nextFolders.add(f.id);
-        f.images.forEach(img => nextImages.add(img.id));
-      } else {
-        nextFolders.delete(f.id);
-        f.images.forEach(img => nextImages.delete(img.id));
-      }
-
-      const children = folders.filter(child => child.parentId === f.id);
-      children.forEach(child => setSelectionRecursive(child, select));
-    };
-
-    setSelectionRecursive(folder, isSelecting);
-    setSelectedFolderIds(nextFolders);
-    setSelectedImageIds(nextImages);
-  };
-
-  const toggleImageSelection = (imageId: string) => {
-    const next = new Set(selectedImageIds);
-    if (next.has(imageId)) next.delete(imageId);
-    else next.add(imageId);
-    setSelectedImageIds(next);
-  };
-
   const buildTree = () => {
     const rootFolders = folders.filter(f => !f.parentId);
+    // Sort logic could go here if needed
     const childMap = new Map<string, Folder[]>();
 
     folders.forEach(folder => {
@@ -146,96 +109,65 @@ export function FolderTree({
 
     const renderFolder = (folder: Folder, level: number = 0) => {
       const isExpanded = expandedFolders.has(folder.id);
-      const isSelected = selectedFolderIds.has(folder.id);
-      const hasChildren = childMap.has(folder.id);
-      const hasImages = folder.images && folder.images.length > 0;
+      const isSelected = selectedFolderId === folder.id;
+      const children = childMap.get(folder.id) || [];
+      const hasChildren = children.length > 0;
 
       return (
-        <div key={folder.id} className="py-1">
-          <div className="flex items-center group">
-             <div 
-                className="flex items-center flex-1 p-2 rounded-xl transition-all border border-transparent hover:border-gray-200 hover:bg-white hover:shadow-sm"
-                style={{ marginLeft: `${level * 24}px` }}
-             >
-                <div 
-                    className="mr-2 cursor-pointer text-gray-400 hover:text-gray-600"
-                    onClick={() => toggleFolderExpansion(folder.id)}
+        <div key={folder.id} className="space-y-0.5">
+          <div
+             className={`flex items-center justify-between group py-1.5 px-2 rounded-lg transition-all border-2 cursor-pointer ${
+                isSelected ? 'bg-blue-50 text-blue-700 font-medium border-transparent' : 'border-transparent text-gray-600 hover:bg-gray-50'
+             }`}
+             style={{ marginLeft: `${level * 12}px` }}
+             onClick={() => onSelectFolder(folder.id)}
+          >
+             <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                <button 
+                  onClick={(e) => toggleFolderExpansion(folder.id, e)}
+                  className={`p-0.5 hover:bg-white rounded transition-colors ${!hasChildren ? 'invisible' : ''}`}
                 >
-                    {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    {isExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                </button>
+                <div className="flex items-center gap-2 truncate">
+                    {isExpanded ? (
+                        <FolderOpen className={`h-4 w-4 shrink-0 ${isSelected ? 'text-blue-500' : 'text-gray-400'}`} />
+                    ) : (
+                        <FolderIcon className={`h-4 w-4 shrink-0 ${isSelected ? 'text-blue-500' : 'text-gray-400'}`} />
+                    )}
+                    <span className="text-sm truncate">{folder.name}</span>
                 </div>
-
-                <div 
-                    className={`mr-3 cursor-pointer transition-colors ${isSelected ? 'text-primary' : 'text-gray-300 group-hover:text-gray-400'}`}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFolderSelection(folder);
-                    }}
-                    title={t('results.selectFolder')}
-                >
-                    {isSelected ? <CheckSquare className="h-5 w-5" /> : <Square className="h-5 w-5" />}
-                </div>
-
-                <div className="flex items-center gap-3 flex-1 overflow-hidden" onClick={() => toggleFolderExpansion(folder.id)}>
-                    <div className="p-2 bg-gray-50 rounded-lg group-hover:bg-blue-50 transition-colors">
-                        {isExpanded ? <FolderOpen className="h-5 w-5 text-blue-500" /> : <FolderIcon className="h-5 w-5 text-gray-400" />}
-                    </div>
-                    <div className="flex flex-col overflow-hidden">
-                        <span className="font-semibold text-gray-900 truncate">{folder.name}</span>
-                        <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
-                            {(folder._count?.images || 0)} {t('selection.images')}
-                            {(folder.images?.length || 0) > 0 && ` • ${folder.images.length} geladen`}
-                        </span>
-                    </div>
-                </div>
-
-                {!isReadOnly && (
-                    <div className="flex gap-2 items-center opacity-0 group-hover:opacity-100 transition-opacity pr-2">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                            onClick={() => {
-                                setSelectedFolder(folder);
-                                setShowDeleteDialog(true);
-                            }}
-                        >
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                    </div>
-                )}
              </div>
+
+             {!isReadOnly && (
+                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+                            <Button variant="ghost" size="icon" className="h-6 w-6">
+                                <MoreVertical className="h-3 w-3" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem 
+                                className="text-red-600 focus:text-red-700 focus:bg-red-50"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setFolderToDelete(folder);
+                                    setShowDeleteDialog(true);
+                                }}
+                            >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                {t('common.delete')}
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+             )}
           </div>
           
-          {isExpanded && (
-            <div className="mt-2">
-              <div style={{ marginLeft: `${(level + 1) * 24}px` }} className="pr-4 space-y-4">
-                {hasImages && (
-                  <ResultImageGrid
-                    images={folder.images}
-                    selectedIds={selectedImageIds}
-                    onToggleSelect={toggleImageSelection}
-                    onDelete={(imgId) => handleImageDelete(imgId, folder.id)}
-                    showDelete={!isReadOnly}
-                  />
-                )}
-                
-                {/* Dedicated Upload Area for the folder */}
-                {!isReadOnly && (
-                  <ImageUpload
-                    uploadUrl={`/api/projects/${projectId}/results/folders/${folder.id}/images`}
-                    onSuccess={() => onDelete()}
-                    maxSize={appConfig.limits.maxResultsUploadSize}
-                    enableFolderUpload
-                    className="w-full min-h-[160px] border-dashed bg-gray-50/50 hover:bg-gray-100/30 transition-all rounded-2xl flex flex-col items-center justify-center border-gray-200"
-                  />
-                )}
-              </div>
-
-              {hasChildren && (
-                <div className="space-y-1 mt-1">
-                  {childMap.get(folder.id)!.map(child => renderFolder(child, level + 1))}
-                </div>
-              )}
+          {isExpanded && hasChildren && (
+            <div className="mt-0.5">
+               {children.map(child => renderFolder(child, level + 1))}
             </div>
           )}
         </div>
@@ -256,7 +188,7 @@ export function FolderTree({
           <DialogHeader>
             <DialogTitle>{t('results.deleteTitle')}</DialogTitle>
             <DialogDescription>
-              {t('results.deleteConfirm')} ("{selectedFolder?.name}")
+              {t('results.deleteConfirm')} ("{folderToDelete?.name}")
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
