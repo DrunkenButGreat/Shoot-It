@@ -21,6 +21,7 @@ interface ProjectActionsProps {
         showAppointmentsPublicly: boolean
         allowApplications: boolean
         allowAppointments: boolean
+        allowGuestSelection: boolean
         galleryLayout: string
     }
 }

@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.2] - 2026-01-18
+
+### Changed
+
+- **Lightbox UI Refinement**:
+  - Moved rating controls in the lightbox to be positioned directly underneath the image for better usability.
+  - Implemented custom slide rendering for `yet-another-react-lightbox` to achieve consistent layout.
+
+## [1.7.1] - 2026-01-18
+
+### Added
+
+- **Guest Selection Support**:
+  - Implemented `allowGuestSelection` project setting.
+  - Enabled non-logged in users (guests) to rate and mark images in the selection gallery.
+  - Persistent guest identification via secure cookies.
+  - Public selection view now pre-renders guest ratings on the server.
+
+## [1.7.0] - 2026-01-18
+
+### Added
+
+- **Public Selection Interaction**:
+  - Added ability to rate and mark images directly on the public project page (for logged-in users).
+  - Integrated `RatingControls` into the Lightbox for both public and dashboard views.
+  - New `PublicSelection` component for better interactive experience on public links.
+- **Refactoring**:
+  - Extracted `RatingControls` into a standalone component for better reusability.
+
 ## [1.6.0] - 2026-01-18
 
 ### Added

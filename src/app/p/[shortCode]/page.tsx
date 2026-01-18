@@ -7,6 +7,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { PublicGallery } from "@/components/public/PublicGallery"
 import { PublicResults } from "@/components/public/PublicResults"
+import { PublicSelection } from "@/components/public/PublicSelection"
 import { ApplicationForm } from "@/components/projects/ApplicationForm"
 import { AppointmentPublicList } from "@/components/appointments/AppointmentPublicList"
 import { getLocale, getDictionary } from "@/lib/i18n"
@@ -59,6 +60,9 @@ export default async function PublicProjectPage({
                 orderBy: { name: 'asc' }
             },
             selectionImages: {
+                include: {
+                    ratings: true
+                },
                 orderBy: { importedAt: 'desc' }
             },
             resultFolders: true,
@@ -354,10 +358,12 @@ export default async function PublicProjectPage({
                                 </div>
                                 <Card className="border-none shadow-xl overflow-hidden bg-white/60 backdrop-blur-md">
                                     <CardContent className="pt-6">
-                                        <PublicGallery
+                                        <PublicSelection
+                                            projectId={project.id}
                                             images={project.selectionImages}
-                                            aspectRatio="portrait"
                                             layout={project.galleryLayout as any}
+                                            userId={session?.user?.id}
+                                            allowGuestSelection={project.allowGuestSelection}
                                         />
                                     </CardContent>
                                 </Card>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,6 +16,26 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { LayoutGrid, Columns } from "lucide-react"
 import { useI18n } from "@/components/I18nProvider"
+
+interface ProjectFormData {
+  name: string
+  description: string
+  date: string
+  location: string
+  address: string
+  isPublic: boolean
+  showMoodboardPublicly: boolean
+  showParticipantsPublicly: boolean
+  showContractsPublicly: boolean
+  showSelectionPublicly: boolean
+  showCallsheetPublicly: boolean
+  showResultsPublicly: boolean
+  showAppointmentsPublicly: boolean
+  allowGuestSelection: boolean
+  allowApplications: boolean
+  allowAppointments: boolean
+  galleryLayout: string
+}
 
 interface ProjectFormProps {
   onSuccess?: () => void
@@ -36,6 +56,7 @@ interface ProjectFormProps {
     showAppointmentsPublicly: boolean
     allowApplications: boolean
     allowAppointments: boolean
+    allowGuestSelection: boolean
     galleryLayout: string
   }
 }
@@ -44,7 +65,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
   const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ProjectFormData>({
     name: initialData?.name || "",
     description: initialData?.description || "",
     date: initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : "",
@@ -57,11 +78,36 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
     showSelectionPublicly: initialData?.showSelectionPublicly ?? false,
     showCallsheetPublicly: initialData?.showCallsheetPublicly ?? false,
     showResultsPublicly: initialData?.showResultsPublicly ?? false,
-    showAppointmentsPublicly: initialData?.showAppointmentsPublicly ?? false,
-    allowApplications: initialData?.allowApplications ?? false,
-    allowAppointments: initialData?.allowAppointments ?? false,
+    showAppointmentsPublicly: !!initialData?.showAppointmentsPublicly,
+    allowGuestSelection: !!initialData?.allowGuestSelection,
+    allowApplications: !!initialData?.allowApplications,
+    allowAppointments: !!initialData?.allowAppointments,
     galleryLayout: initialData?.galleryLayout || "masonry",
   })
+
+  useEffect(() => {
+    if (initialData && open) {
+      setFormData({
+        name: initialData.name,
+        description: initialData.description || "",
+        date: initialData.date ? new Date(initialData.date).toISOString().split('T')[0] : "",
+        location: initialData.location || "",
+        address: initialData.address || "",
+        isPublic: !!initialData.isPublic,
+        showMoodboardPublicly: !!initialData.showMoodboardPublicly,
+        showParticipantsPublicly: !!initialData.showParticipantsPublicly,
+        showContractsPublicly: !!initialData.showContractsPublicly,
+        showSelectionPublicly: !!initialData.showSelectionPublicly,
+        showCallsheetPublicly: !!initialData.showCallsheetPublicly,
+        showResultsPublicly: !!initialData.showResultsPublicly,
+        showAppointmentsPublicly: !!initialData.showAppointmentsPublicly,
+        allowGuestSelection: !!initialData.allowGuestSelection,
+        allowApplications: !!initialData.allowApplications,
+        allowAppointments: !!initialData.allowAppointments,
+        galleryLayout: initialData.galleryLayout,
+      })
+    }
+  }, [initialData, open])
 
   const isEditing = !!initialData
 
@@ -105,6 +151,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
             showCallsheetPublicly: false,
             showResultsPublicly: false,
             showAppointmentsPublicly: false,
+            allowGuestSelection: false,
             allowApplications: false,
             allowAppointments: false,
             galleryLayout: "masonry",
@@ -205,7 +252,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
               </div>
               <Switch
                 id="isPublic"
-                checked={formData.isPublic}
+                checked={!!formData.isPublic}
                 onCheckedChange={(checked) =>
                   setFormData({ ...formData, isPublic: checked })
                 }
@@ -214,6 +261,20 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
 
             {formData.isPublic && (
               <div className="space-y-4 pt-2 border-t border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="allowGuestSelection">{t('projectForm.allowGuestSelection')}</Label>
+                    <p className="text-[10px] text-gray-500">{t('projectForm.allowGuestSelectionDescription')}</p>
+                  </div>
+                  <Switch
+                    id="allowGuestSelection"
+                    checked={!!formData.allowGuestSelection}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, allowGuestSelection: checked })
+                    }
+                  />
+                </div>
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="allowApplications">{t('projectForm.allowApplications')}</Label>
@@ -226,7 +287,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
                   </div>
                   <Switch
                     id="allowApplications"
-                    checked={formData.allowApplications}
+                    checked={!!formData.allowApplications}
                     onCheckedChange={(checked) =>
                       setFormData({ ...formData, allowApplications: checked })
                     }
@@ -240,7 +301,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
                   </div>
                   <Switch
                     id="allowAppointments"
-                    checked={formData.allowAppointments}
+                    checked={!!formData.allowAppointments}
                     onCheckedChange={(checked) =>
                       setFormData({ ...formData, allowAppointments: checked })
                     }

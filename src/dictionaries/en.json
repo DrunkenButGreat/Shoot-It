@@ -352,6 +352,8 @@
     "allowApplicationsDescription": "Allows guests and users to apply for this project",
     "allowAppointments": "Enable Scheduling",
     "allowAppointmentsDescription": "Activates the scheduling module in the project dashboard.",
+    "allowGuestSelection": "Allow Guest Selection",
+    "allowGuestSelectionDescription": "Allows non-logged in users to rate the selection.",
     "recaptchaMissingWarning": "Note: ReCAPTCHA Site Key is missing in configuration. Guests might not be able to apply.",
     "save": "Save Project",
     "isEditingDescription": "Update your photoshoot project details.",
@@ -418,6 +420,7 @@
     "overview": "Overview",
     "areYouTeam": "Are you part of the team?",
     "loginToAccess": "Login to access detailed documents, high-res images and the callsheet.",
+    "loginToRate": "Login to rate images",
     "loginNow": "Login now",
     "projectOwner": "Project Owner"
   }

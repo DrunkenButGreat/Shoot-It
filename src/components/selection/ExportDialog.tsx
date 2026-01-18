@@ -28,7 +28,7 @@ interface SelectionImage {
   filename: string
   path: string
   thumbnail: string | null
-  ratings: Rating[]
+  ratings: Rating | null
 }
 
 interface ExportDialogProps {

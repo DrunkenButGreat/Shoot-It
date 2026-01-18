@@ -17,6 +17,7 @@ export const projectSchema = z.object({
   showAppointmentsPublicly: z.boolean().optional(),
   allowApplications: z.boolean().optional(),
   allowAppointments: z.boolean().optional(),
+  allowGuestSelection: z.boolean().optional(),
   galleryLayout: z.string().optional(),
 })
 
@@ -42,6 +43,7 @@ export const signatureSchema = z.object({
 export const ratingSchema = z.object({
   stars: z.number().min(1).max(5).optional().nullable(),
   color: z.enum(['RED', 'YELLOW', 'GREEN']).optional().nullable(),
+  guestId: z.string().optional(),
 })
 
 export const callsheetSchema = z.object({

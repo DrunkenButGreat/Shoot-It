@@ -1,5 +1,3 @@
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,37 +7,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ==================== AUTHENTICATION ====================
-
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String?
-  image         String?
-  password      String? // Für lokalen Login (bcrypt hash)
-  emailVerified DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  // Auth Relations
-  accounts Account[]
-  sessions Session[]
-
-  // App Relations
-  ownedProjects    Project[]            @relation("ProjectOwner")
-  projectAccess    ProjectAccess[]
-  participantLinks Participant[]        @relation("UserParticipant")
-  moodboardGroups  MoodboardGroup[]     @relation("MoodboardOwner")
-  comments         Comment[]
-  signatures       ContractSignature[]
-  imageRatings     ImageRating[]
-  applications     ProjectApplication[]
+  id                   String                @id @default(cuid())
+  email                String                @unique
+  name                 String?
+  image                String?
+  password             String?
+  emailVerified        DateTime?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  phone                String?
+  role                 String?
+  bio                  String?
+  accounts             Account[]
   appointmentResponses AppointmentResponse[]
-
-  // Profile fields for auto-filling participant data
-  phone String?
-  role  String?
-  bio   String? @db.Text
+  comments             Comment[]
+  signatures           ContractSignature[]
+  moodboardGroups      MoodboardGroup[]      @relation("MoodboardOwner")
+  participantLinks     Participant[]         @relation("UserParticipant")
+  ownedProjects        Project[]             @relation("ProjectOwner")
+  projectAccess        ProjectAccess[]
+  applications         ProjectApplication[]
+  sessions             Session[]
+  imageRatings         ImageRating[]
 }
 
 model Account {
@@ -48,15 +38,14 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -77,46 +66,41 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// ==================== PROJECTS ====================
-
 model Project {
-  id                       String    @id @default(cuid())
+  id                       String                 @id @default(cuid())
   name                     String
-  description              String?   @db.Text
+  description              String?
   date                     DateTime?
   location                 String?
   address                  String?
-  shortCode                String    @unique // Für öffentliche Kurz-URLs
-  isPublic                 Boolean   @default(false)
-  showMoodboardPublicly    Boolean   @default(false)
-  showParticipantsPublicly Boolean   @default(false)
-  showContractsPublicly    Boolean   @default(false)
-  showSelectionPublicly    Boolean   @default(false)
-  showCallsheetPublicly    Boolean   @default(false)
-  showResultsPublicly      Boolean   @default(false)
-  showAppointmentsPublicly Boolean   @default(false)
-  allowApplications        Boolean   @default(false)
-  allowAppointments        Boolean   @default(false)
-  galleryLayout            String    @default("masonry") // "grid" or "masonry"
-  isArchived               Boolean   @default(false)
-  createdAt                DateTime  @default(now())
-  updatedAt                DateTime  @updatedAt
-
-  // Owner
-  ownerId String
-  owner   User   @relation("ProjectOwner", fields: [ownerId], references: [id])
-
-  // Relations
-  access          ProjectAccess[]
-  moodboardLinks  ProjectMoodboardLink[]
-  participants    Participant[]
-  contracts       Contract[]
-  callsheet       Callsheet?
-  selectionImages SelectionImage[]
-  resultFolders   ResultFolder[]
-  resultImages    ResultFile[]
-  applications    ProjectApplication[]
-  appointmentSlots AppointmentSlot[]
+  shortCode                String                 @unique
+  isPublic                 Boolean                @default(false)
+  showMoodboardPublicly    Boolean                @default(false)
+  showParticipantsPublicly Boolean                @default(false)
+  showContractsPublicly    Boolean                @default(false)
+  showSelectionPublicly    Boolean                @default(false)
+  showCallsheetPublicly    Boolean                @default(false)
+  showResultsPublicly      Boolean                @default(false)
+  galleryLayout            String                 @default("masonry")
+  isArchived               Boolean                @default(false)
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime               @updatedAt
+  ownerId                  String
+  allowApplications        Boolean                @default(false)
+  showAppointmentsPublicly Boolean                @default(false)
+  allowAppointments        Boolean                @default(false)
+  allowGuestSelection      Boolean                @default(false)
+  appointmentSlots         AppointmentSlot[]
+  callsheet                Callsheet?
+  contracts                Contract[]
+  participants             Participant[]
+  owner                    User                   @relation("ProjectOwner", fields: [ownerId], references: [id])
+  access                   ProjectAccess[]
+  applications             ProjectApplication[]
+  moodboardLinks           ProjectMoodboardLink[]
+  resultImages             ResultFile[]
+  resultFolders            ResultFolder[]
+  selectionImages          SelectionImage[]
 
   @@index([shortCode])
   @@index([ownerId])
@@ -128,32 +112,22 @@ model ProjectAccess {
   userId    String
   role      ProjectRole @default(VIEWER)
   createdAt DateTime    @default(now())
-
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, userId])
 }
 
-enum ProjectRole {
-  OWNER
-  EDITOR
-  VIEWER
-}
-
-// ==================== MOODBOARD ====================
-
 model MoodboardGroup {
-  id          String   @id @default(cuid())
-  name        String
-  description String?  @db.Text
-  isArchived  Boolean  @default(false)
-  isLibrary   Boolean  @default(false)
-  isFavorite  Boolean  @default(false)
-  ownerId     String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
+  id           String                 @id @default(cuid())
+  name         String
+  description  String?
+  isArchived   Boolean                @default(false)
+  ownerId      String
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  isLibrary    Boolean                @default(false)
+  isFavorite   Boolean                @default(false)
   owner        User                   @relation("MoodboardOwner", fields: [ownerId], references: [id])
   images       MoodboardImage[]
   projectLinks ProjectMoodboardLink[]
@@ -169,71 +143,59 @@ model ProjectMoodboardLink {
   order     Int             @default(0)
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
-
-  project  Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  group    MoodboardGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  comments Comment[]
+  comments  Comment[]
+  group     MoodboardGroup  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  project   Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, groupId])
   @@index([projectId])
   @@index([groupId])
 }
 
-enum MoodboardStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-}
-
 model MoodboardImage {
-  id        String   @id @default(cuid())
+  id        String         @id @default(cuid())
   filename  String
   path      String
   thumbnail String?
   width     Int?
   height    Int?
   size      Int?
-  order     Int      @default(0)
+  order     Int            @default(0)
   groupId   String
-  createdAt DateTime @default(now())
-
-  group MoodboardGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdAt DateTime       @default(now())
+  group     MoodboardGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   @@index([groupId])
 }
 
 model Comment {
-  id              String   @id @default(cuid())
-  content         String   @db.Text
+  id              String               @id @default(cuid())
+  content         String
   moodboardLinkId String
   userId          String
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  moodboardLink ProjectMoodboardLink @relation(fields: [moodboardLinkId], references: [id], onDelete: Cascade)
-  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  moodboardLink   ProjectMoodboardLink @relation(fields: [moodboardLinkId], references: [id], onDelete: Cascade)
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([moodboardLinkId])
 }
 
-// ==================== PARTICIPANTS ====================
-
 model Participant {
-  id        String   @id @default(cuid())
-  name      String
-  email     String?
-  phone     String?
-  role      String? // z.B. "Model", "MUA", "Stylist", "Fotograf"
-  notes     String?  @db.Text
-  projectId String
-  userId    String? // Verknüpfung mit User-Account falls vorhanden
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id           String             @id @default(cuid())
+  name         String
+  email        String?
+  phone        String?
+  role         String?
+  notes        String?
+  projectId    String
+  userId       String?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
   project      Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user         User?              @relation("UserParticipant", fields: [userId], references: [id])
-  images       ParticipantImage[]
   customFields ParticipantField[]
+  images       ParticipantImage[]
 
   @@index([projectId])
   @@index([userId])
@@ -241,42 +203,37 @@ model Participant {
 }
 
 model ParticipantImage {
-  id            String   @id @default(cuid())
+  id            String      @id @default(cuid())
   filename      String
   path          String
   thumbnail     String?
-  width         Int?
+  participantId String
+  createdAt     DateTime    @default(now())
   height        Int?
   size          Int?
-  participantId String
-  createdAt     DateTime @default(now())
-
-  participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  width         Int?
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
 
   @@index([participantId])
 }
 
 model ParticipantField {
-  id            String @id @default(cuid())
+  id            String      @id @default(cuid())
   key           String
   value         String
   participantId String
-
-  participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
 
   @@unique([participantId, key])
 }
 
-// ==================== CONTRACTS ====================
-
 model Contract {
-  id        String   @id @default(cuid())
-  title     String
-  content   String   @db.Text // Markdown
-  projectId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id         String              @id @default(cuid())
+  title      String
+  content    String
+  projectId  String
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
   project    Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
   signatures ContractSignature[]
 
@@ -287,72 +244,56 @@ model ContractSignature {
   id         String   @id @default(cuid())
   contractId String
   userId     String?
-  name       String // Name des Unterzeichners
+  name       String
   email      String
-  signature  String   @db.Text // Base64 encoded signature image
+  signature  String
   ipAddress  String?
   userAgent  String?
   signedAt   DateTime @default(now())
-
-  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
-  user     User?    @relation(fields: [userId], references: [id])
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  user       User?    @relation(fields: [userId], references: [id])
 
   @@index([contractId])
 }
 
-// ==================== CALLSHEET ====================
-
 model Callsheet {
-  id        String @id @default(cuid())
-  projectId String @unique
-
-  // Zeitplan
-  callTime  DateTime?
-  startTime DateTime?
-  endTime   DateTime?
-  wrapTime  DateTime?
-
-  // Location Details
-  locationName    String?
-  locationAddress String?
-  locationNotes   String? @db.Text
-  parkingInfo     String? @db.Text
-
-  // Kontakte
+  id               String                  @id @default(cuid())
+  projectId        String                  @unique
+  callTime         DateTime?
+  startTime        DateTime?
+  endTime          DateTime?
+  wrapTime         DateTime?
+  locationName     String?
+  locationAddress  String?
+  locationNotes    String?
+  parkingInfo      String?
   emergencyContact String?
   emergencyPhone   String?
-
-  // Zusätzliche Infos
-  weatherInfo     String?
-  dresscode       String?
-  equipmentList   String? @db.Text
-  additionalNotes String? @db.Text
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  project       Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  scheduleItems CallsheetScheduleItem[]
+  weatherInfo      String?
+  dresscode        String?
+  equipmentList    String?
+  additionalNotes  String?
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  project          Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  scheduleItems    CallsheetScheduleItem[]
 }
 
 model CallsheetScheduleItem {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   callsheetId String
   time        DateTime
-  duration    Int? // Minuten
+  duration    Int?
   activity    String
   notes       String?
-  order       Int      @default(0)
-
-  callsheet Callsheet @relation(fields: [callsheetId], references: [id], onDelete: Cascade)
+  order       Int       @default(0)
+  callsheet   Callsheet @relation(fields: [callsheetId], references: [id], onDelete: Cascade)
 
   @@index([callsheetId])
 }
 
-// ==================== SELECTION GALLERY ====================
-
 model SelectionImage {
-  id         String   @id @default(cuid())
+  id         String       @id @default(cuid())
   filename   String
   path       String
   thumbnail  String?
@@ -360,58 +301,47 @@ model SelectionImage {
   height     Int?
   size       Int?
   projectId  String
-  importedAt DateTime @default(now())
-
-  project Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  ratings ImageRating[]
+  importedAt DateTime     @default(now())
+  project    Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  ratings    ImageRating?
 
   @@index([projectId])
   @@index([filename])
 }
 
 model ImageRating {
-  id        String       @id @default(cuid())
-  imageId   String
-  userId    String
-  stars     Int?         @db.SmallInt // 1-5
+  id        String         @id @default(cuid())
+  imageId   String         @unique
+  userId    String?
+  stars     Int?           @db.SmallInt
   color     RatingColor?
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  guestId   String?
+  image     SelectionImage @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  user      User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  image SelectionImage @relation(fields: [imageId], references: [id], onDelete: Cascade)
-  user  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([imageId, userId])
   @@map("image_rating")
 }
 
-enum RatingColor {
-  RED
-  YELLOW
-  GREEN
-}
-
-// ==================== RESULTS ====================
-
 model ResultFolder {
-  id        String   @id @default(cuid())
+  id        String         @id @default(cuid())
   name      String
   path      String
   parentId  String?
   projectId String
-  createdAt DateTime @default(now())
-
-  project  Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  parent   ResultFolder?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children ResultFolder[] @relation("FolderHierarchy")
-  images   ResultFile[]
+  createdAt DateTime       @default(now())
+  images    ResultFile[]
+  parent    ResultFolder?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children  ResultFolder[] @relation("FolderHierarchy")
+  project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@index([parentId])
 }
 
 model ResultFile {
-  id        String   @id @default(cuid())
+  id        String        @id @default(cuid())
   filename  String
   path      String
   thumbnail String?
@@ -420,76 +350,61 @@ model ResultFile {
   size      Int?
   folderId  String?
   projectId String
-  createdAt DateTime @default(now())
-
-  folder  ResultFolder? @relation(fields: [folderId], references: [id], onDelete: Cascade)
-  project Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+  folder    ResultFolder? @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  project   Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([folderId])
   @@index([projectId])
 }
 
-// ==================== APPLICATIONS ====================
-
 model ProjectApplication {
-  id           String            @id @default(cuid())
+  id           String             @id @default(cuid())
   projectId    String
-  userId       String? // Nullable for guest applications
-  name         String? // Mandatory for guests
-  email        String? // Mandatory for guests
-  role         String?
-  message      String?           @db.Text
-  portfolioUrl String?           @db.Text
+  userId       String?
+  name         String?
+  email        String?
+  message      String?
+  portfolioUrl String?
+  status       ApplicationStatus  @default(PENDING)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  deletedAt    DateTime?
   instagramUrl String?
-  status       ApplicationStatus @default(PENDING)
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
-  deletedAt    DateTime? // For 30-day cleanup after REJECTED
-
-  project Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user    User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
-  images  ApplicationImage[]
+  role         String?
+  images       ApplicationImage[]
+  project      Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user         User?              @relation(fields: [userId], references: [id])
 
   @@index([projectId])
   @@index([userId])
 }
 
 model ApplicationImage {
-  id            String   @id @default(cuid())
+  id            String             @id @default(cuid())
   filename      String
   path          String
   thumbnail     String?
-  width         Int?
+  applicationId String
+  createdAt     DateTime           @default(now())
   height        Int?
   size          Int?
-  applicationId String
-  createdAt     DateTime @default(now())
-
-  application ProjectApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  width         Int?
+  application   ProjectApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
   @@index([applicationId])
 }
 
-enum ApplicationStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-  WITHDRAWN
-}
-
-// ==================== APPOINTMENTS ====================
-
 model AppointmentSlot {
-  id        String   @id @default(cuid())
+  id        String                @id @default(cuid())
   startTime DateTime
   endTime   DateTime
-  color     String? // Hex or HSL
+  color     String?
   projectId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  project   Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
   responses AppointmentResponse[]
+  project   Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
 }
@@ -501,13 +416,37 @@ model AppointmentResponse {
   status    AppointmentStatus @default(PENDING)
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
-
-  slot AppointmentSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
-  user User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slot      AppointmentSlot   @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([slotId, userId])
   @@index([slotId])
   @@index([userId])
+}
+
+enum ProjectRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum MoodboardStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum RatingColor {
+  RED
+  YELLOW
+  GREEN
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
 }
 
 enum AppointmentStatus {

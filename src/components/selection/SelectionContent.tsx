@@ -7,6 +7,7 @@ import { FilterBar } from "./FilterBar"
 import ImageUpload from "../moodboard/ImageUpload"
 import { LocalMediaPicker } from "./LocalMediaPicker"
 import { ExportDialog } from "./ExportDialog"
+import { RatingControls } from "./RatingControls"
 import Lightbox from "yet-another-react-lightbox"
 import "yet-another-react-lightbox/styles.css"
 import { useI18n } from "@/components/I18nProvider"
@@ -24,7 +25,7 @@ interface SelectionImage {
   thumbnail: string | null
   width?: number | null
   height?: number | null
-  ratings: Rating[]
+  ratings: Rating | null
 }
 
 interface SelectionContentProps {
@@ -196,7 +197,34 @@ export function SelectionContent({ projectId, initialImages: images, userId, gal
         index={index}
         open={index >= 0}
         close={() => setIndex(-1)}
-        slides={images.map((img) => ({ src: img.path }))}
+        slides={images.map((img) => ({ 
+          src: img.path,
+          image: img
+        }))}
+        render={{
+          slide: ({ slide }: any) => (
+            <div className="flex flex-col items-center justify-center w-full h-full p-4 md:p-12 overflow-hidden">
+              <div className="flex-1 w-full flex items-center justify-center min-h-0">
+                <img 
+                  src={slide.src} 
+                  alt="" 
+                  className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" 
+                />
+              </div>
+              <div className="mt-8 shrink-0 pb-4" onClick={e => e.stopPropagation()}>
+                <div className="bg-black/40 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/10 shadow-2xl">
+                  <RatingControls
+                    projectId={projectId}
+                    imageId={slide.image.id}
+                    initialRating={slide.image.ratings || undefined}
+                    onRatingUpdated={handleRatingUpdated}
+                    className="scale-125"
+                  />
+                </div>
+              </div>
+            </div>
+          )
+        }}
       />
     </>
   )

@@ -353,6 +353,8 @@
     "allowApplicationsDescription": "Ermöglicht es Gästen und Nutzern, sich auf dieses Projekt zu bewerben",
     "allowAppointments": "Terminfindung aktivieren",
     "allowAppointmentsDescription": "Aktiviert das Modul zur Terminabstimmung im Projekt-Dashboard.",
+    "allowGuestSelection": "Gäste-Auswahl erlauben",
+    "allowGuestSelectionDescription": "Erlaubt nicht angemeldeten Benutzern die Auswahl zu bewerten.",
     "recaptchaMissingWarning": "Hinweis: ReCAPTCHA Site Key fehlt in der Konfiguration. Gäste können sich eventuell nicht bewerben.",
     "save": "Projekt speichern",
     "isEditingDescription": "Aktualisiere die Details deines Fotoshoot-Projekts.",
@@ -419,6 +421,7 @@
     "overview": "Übersicht",
     "areYouTeam": "Bist du Teil des Teams?",
     "loginToAccess": "Melde dich an, um auf detaillierte Dokumente, hochauflösende Bilder und das Callsheet zuzugreifen.",
+    "loginToRate": "Melde dich an, um Bilder zu bewerten",
     "loginNow": "Jetzt anmelden",
     "projectOwner": "Projekt-Besitzer"
   }

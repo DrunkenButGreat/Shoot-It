@@ -48,11 +48,9 @@ export default async function SelectionPage({
   const where: any = { projectId: id }
   if (stars.length > 0 || colors.length > 0) {
     where.ratings = {
-      some: {
-        userId: session.user.id,
-        ...(stars.length > 0 ? { stars: { in: stars } } : {}),
-        ...(colors.length > 0 ? { color: { in: colors } } : {}),
-      }
+      isNot: null,
+      ...(stars.length > 0 ? { stars: { in: stars } } : {}),
+      ...(colors.length > 0 ? { color: { in: colors } } : {}),
     }
   }
 
@@ -69,11 +67,7 @@ export default async function SelectionPage({
     prisma.selectionImage.findMany({
       where,
       include: {
-        ratings: {
-          where: {
-            userId: session.user.id,
-          },
-        },
+        ratings: true,
       },
       orderBy: { importedAt: 'desc' },
     }),

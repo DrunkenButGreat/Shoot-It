@@ -39,19 +39,13 @@ export async function GET(
         projectId: id,
         ...(Object.keys(ratingFilter).length > 0 && {
           ratings: {
-            some: {
-              userId: session.user.id,
-              ...ratingFilter,
-            },
+            isNot: null,
+            ...ratingFilter,
           },
         }),
       },
       include: {
-        ratings: {
-          where: {
-            userId: session.user.id,
-          },
-        },
+        ratings: true,
       },
       orderBy: { importedAt: 'desc' },
     })

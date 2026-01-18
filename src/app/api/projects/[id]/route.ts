@@ -90,9 +90,12 @@ export async function PUT(
     const body = await request.json()
     const validatedData = projectSchema.partial().parse(body)
 
+    // Ensure allowGuestSelection is handled if present
+    const updateData = { ...validatedData }
+
     const project = await prisma.project.update({
       where: { id },
-      data: validatedData,
+      data: updateData,
       include: {
         owner: {
           select: {
