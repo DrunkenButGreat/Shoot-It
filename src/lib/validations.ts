@@ -12,6 +12,7 @@ export const projectSchema = z.object({
   showParticipantsPublicly: z.boolean().optional(),
   showContractsPublicly: z.boolean().optional(),
   showSelectionPublicly: z.boolean().optional(),
+  showSelectionFolders: z.boolean().optional(),
   showCallsheetPublicly: z.boolean().optional(),
   showResultsPublicly: z.boolean().optional(),
   showAppointmentsPublicly: z.boolean().optional(),
@@ -82,6 +83,11 @@ export const scheduleItemSchema = z.object({
 })
 
 export const resultFolderSchema = z.object({
+  name: z.string().min(1).max(100),
+  parentId: z.string().optional().nullable(),
+})
+
+export const selectionFolderSchema = z.object({
   name: z.string().min(1).max(100),
   parentId: z.string().optional().nullable(),
 })

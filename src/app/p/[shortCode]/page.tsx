@@ -65,6 +65,14 @@ export default async function PublicProjectPage({
                 },
                 orderBy: { importedAt: 'desc' }
             },
+            selectionFolders: {
+                include: {
+                    images: {
+                        include: { ratings: true }
+                    },
+                    _count: { select: { images: true } }
+                }
+            },
             resultFolders: true,
             appointmentSlots: {
                 include: {
@@ -361,9 +369,11 @@ export default async function PublicProjectPage({
                                         <PublicSelection
                                             projectId={project.id}
                                             images={project.selectionImages}
+                                            folders={project.selectionFolders}
                                             layout={project.galleryLayout as any}
                                             userId={session?.user?.id}
                                             allowGuestSelection={project.allowGuestSelection}
+                                            showFolders={project.showSelectionFolders}
                                         />
                                     </CardContent>
                                 </Card>

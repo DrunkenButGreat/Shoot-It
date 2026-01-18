@@ -54,16 +54,26 @@ export default async function SelectionPage({
     }
   }
 
-  // Fetch project and selection images
-  const [project, images] = await Promise.all([
+  // Fetch project, folders and selection images
+  const [project, folders, images] = await Promise.all([
     prisma.project.findUnique({
       where: { id },
       select: {
         id: true,
         name: true,
         galleryLayout: true,
+        showSelectionFolders: true,
       } as any,
     }) as any,
+    prisma.selectionFolder.findMany({
+      where: { projectId: id },
+      include: {
+        images: {
+          include: { ratings: true }
+        },
+        _count: { select: { images: true } }
+      }
+    }),
     prisma.selectionImage.findMany({
       where,
       include: {
@@ -103,10 +113,12 @@ export default async function SelectionPage({
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <SelectionContent
           projectId={id}
-          initialImages={images}
+          initialImages={images as any}
+          initialFolders={folders as any}
           userId={session.user.id}
           galleryLayout={project.galleryLayout}
           hasLocalMedia={!!process.env.LOCAL_MEDIA_PATH}
+          showFolders={project.showSelectionFolders}
         />
       </main>
     </div>

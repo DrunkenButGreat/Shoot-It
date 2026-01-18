@@ -16,6 +16,7 @@ interface ImageUploadProps {
     disabled?: boolean
     maxSize?: number
     enableFolderUpload?: boolean
+    folderId?: string
 }
 
 export default function ImageUpload({
@@ -27,7 +28,8 @@ export default function ImageUpload({
     children,
     disabled,
     maxSize,
-    enableFolderUpload
+    enableFolderUpload,
+    folderId
 }: ImageUploadProps) {
     const { t } = useI18n()
     const defaultLabel = label || t('selection.dragAndDrop')
@@ -65,6 +67,9 @@ export default function ImageUpload({
             formData.append("file", file)
             if (file.relativePath) {
                 formData.append("relativePath", file.relativePath)
+            }
+            if (folderId) {
+                formData.append("folderId", folderId)
             }
 
             try {

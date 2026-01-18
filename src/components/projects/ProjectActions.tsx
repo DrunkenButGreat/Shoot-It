@@ -16,6 +16,7 @@ interface ProjectActionsProps {
         showParticipantsPublicly: boolean
         showContractsPublicly: boolean
         showSelectionPublicly: boolean
+        showSelectionFolders: boolean
         showCallsheetPublicly: boolean
         showResultsPublicly: boolean
         showAppointmentsPublicly: boolean

@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.2] - 2026-01-18
+
+### Added
+- **Optional Folder Structure**: The hierarchical folder system can now be toggled on/off per project in the settings.
+
+### Changed
+- **Public Folder Navigation**: Moved the folder menu from the sidebar to a horizontal pill-based menu above the gallery for a cleaner look.
+
+## [1.8.1] - 2026-01-18
+
+### Added
+- **Public Selection Folders**: Hierarchical folder structure is now also visible and navigable on the public selection page.
+- **Unassigned Images Filter**: Added an option to view images that are not assigned to any folder in both admin and public views.
+
+## [1.8.0] - 2026-01-18
+
+### Added
+
+- **Selection Folders**:
+  - Implemented hierarchical folder structure for selection images.
+  - Added support for folder-specific uploads and directory uploads (with automatic folder creation).
+  - Integrated Drag & Drop for organizing images between folders.
+  - Added bulk management: select multiple images to move or delete at once.
+  - New recursive folder navigation sidebar in the selection view.
+
+### Changed
+
+- Updated `SelectionContent` and `ImageCard` to support folder-based organization.
+- Enhanced `RatingControls` integration in Selection gallery and lightbox.
+
 ## [1.7.2] - 2026-01-18
 
 ### Changed

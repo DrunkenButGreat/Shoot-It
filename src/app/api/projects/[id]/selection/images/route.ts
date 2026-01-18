@@ -7,6 +7,74 @@ import path from "path"
 import { generateSecureFilename, validateUpload } from "@/lib/file-utils"
 import { getImageMetadata, generateResultPreview } from "@/lib/image-processing"
 
+// In-memory lock for folder creation to prevent race conditions during parallel uploads
+const folderCreationLocks = new Map<string, Promise<string | null>>();
+
+async function ensureFolderStructure(projectId: string, relativePath: string) {
+    const parts = relativePath.replace(/\\/g, '/').split('/').filter(p => p)
+    if (parts.length <= 1) return null // No folders, just filename or flat list
+
+    // Remove filename to get only the folder path
+    parts.pop()
+    const folderKey = `${projectId}:${parts.join('/')}`;
+
+    if (folderCreationLocks.has(folderKey)) {
+        return await folderCreationLocks.get(folderKey)!;
+    }
+
+    const creationPromise = (async () => {
+        let parentId: string | null = null
+        let currentPath = ""
+
+        for (const part of parts) {
+            currentPath = `${currentPath}/${part}`
+            
+            // Try to find existing folder first
+            let folder: any = await (prisma.selectionFolder as any).findFirst({
+                where: {
+                    name: part,
+                    projectId,
+                    parentId
+                }
+            })
+
+            if (!folder) {
+                try {
+                    folder = await (prisma.selectionFolder as any).create({
+                        data: {
+                            name: part,
+                            projectId,
+                            parentId,
+                            path: currentPath
+                        }
+                    })
+                } catch (e) {
+                    // Parallel request might have created it
+                    folder = await (prisma.selectionFolder as any).findFirst({
+                        where: {
+                            name: part,
+                            projectId,
+                            parentId
+                        }
+                    })
+                    if (!folder) throw new Error(`Failed to ensure folder: ${part}`)
+                }
+            }
+            parentId = folder.id
+        }
+        return parentId
+    })();
+
+    folderCreationLocks.set(folderKey, creationPromise);
+    
+    try {
+        return await creationPromise;
+    } finally {
+        // Clear lock after a short delay
+        setTimeout(() => folderCreationLocks.delete(folderKey), 5000);
+    }
+}
+
 export async function POST(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -27,9 +95,17 @@ export async function POST(
 
         const formData = await request.formData()
         const file = formData.get("file") as File
+        const relativePath = formData.get("relativePath") as string | null
+        const explicitFolderId = formData.get("folderId") as string | null
 
         if (!file) {
             return NextResponse.json({ error: "No file uploaded" }, { status: 400 })
+        }
+
+        // Handle folder structure from relativePath if provided
+        let folderId = explicitFolderId || null
+        if (!folderId && relativePath) {
+            folderId = await ensureFolderStructure(id, relativePath)
         }
 
         // Validate file
@@ -71,6 +147,7 @@ export async function POST(
                 filename: file.name,
                 path: dbPath,
                 projectId: id,
+                folderId,
                 thumbnail: thumbnailPath,
                 width: metadata.width,
                 height: metadata.height,

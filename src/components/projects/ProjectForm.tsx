@@ -28,6 +28,7 @@ interface ProjectFormData {
   showParticipantsPublicly: boolean
   showContractsPublicly: boolean
   showSelectionPublicly: boolean
+  showSelectionFolders: boolean
   showCallsheetPublicly: boolean
   showResultsPublicly: boolean
   showAppointmentsPublicly: boolean
@@ -51,6 +52,7 @@ interface ProjectFormProps {
     showParticipantsPublicly: boolean
     showContractsPublicly: boolean
     showSelectionPublicly: boolean
+    showSelectionFolders: boolean
     showCallsheetPublicly: boolean
     showResultsPublicly: boolean
     showAppointmentsPublicly: boolean
@@ -76,6 +78,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
     showParticipantsPublicly: initialData?.showParticipantsPublicly ?? false,
     showContractsPublicly: initialData?.showContractsPublicly ?? false,
     showSelectionPublicly: initialData?.showSelectionPublicly ?? false,
+    showSelectionFolders: initialData?.showSelectionFolders ?? true,
     showCallsheetPublicly: initialData?.showCallsheetPublicly ?? false,
     showResultsPublicly: initialData?.showResultsPublicly ?? false,
     showAppointmentsPublicly: !!initialData?.showAppointmentsPublicly,
@@ -98,6 +101,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
         showParticipantsPublicly: !!initialData.showParticipantsPublicly,
         showContractsPublicly: !!initialData.showContractsPublicly,
         showSelectionPublicly: !!initialData.showSelectionPublicly,
+        showSelectionFolders: !!initialData.showSelectionFolders,
         showCallsheetPublicly: !!initialData.showCallsheetPublicly,
         showResultsPublicly: !!initialData.showResultsPublicly,
         showAppointmentsPublicly: !!initialData.showAppointmentsPublicly,
@@ -148,6 +152,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
             showParticipantsPublicly: false,
             showContractsPublicly: false,
             showSelectionPublicly: false,
+            showSelectionFolders: true,
             showCallsheetPublicly: false,
             showResultsPublicly: false,
             showAppointmentsPublicly: false,
@@ -326,6 +331,19 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
                     value={formData.showSelectionPublicly}
                     onChange={(checked) => setFormData({ ...formData, showSelectionPublicly: checked })}
                   />
+                  {formData.showSelectionPublicly && (
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-gray-50 border border-gray-100 col-span-2">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="showSelectionFolders" className="text-sm font-medium">{t('projectForm.useFolders')}</Label>
+                        <p className="text-[10px] text-gray-500">{t('projectForm.useFoldersDescription')}</p>
+                      </div>
+                      <Switch
+                        id="showSelectionFolders"
+                        checked={formData.showSelectionFolders}
+                        onCheckedChange={(checked) => setFormData({ ...formData, showSelectionFolders: checked })}
+                      />
+                    </div>
+                  )}
                   <ModuleToggle
                     label={t('projectForm.showContracts')}
                     value={formData.showContractsPublicly}

@@ -79,6 +79,7 @@ model Project {
   showParticipantsPublicly Boolean                @default(false)
   showContractsPublicly    Boolean                @default(false)
   showSelectionPublicly    Boolean                @default(false)
+  showSelectionFolders     Boolean                @default(true)
   showCallsheetPublicly    Boolean                @default(false)
   showResultsPublicly      Boolean                @default(false)
   galleryLayout            String                 @default("masonry")
@@ -101,6 +102,7 @@ model Project {
   resultImages             ResultFile[]
   resultFolders            ResultFolder[]
   selectionImages          SelectionImage[]
+  selectionFolders         SelectionFolder[]
 
   @@index([shortCode])
   @@index([ownerId])
@@ -293,7 +295,7 @@ model CallsheetScheduleItem {
 }
 
 model SelectionImage {
-  id         String       @id @default(cuid())
+  id         String            @id @default(cuid())
   filename   String
   path       String
   thumbnail  String?
@@ -301,12 +303,32 @@ model SelectionImage {
   height     Int?
   size       Int?
   projectId  String
-  importedAt DateTime     @default(now())
-  project    Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  folderId   String?
+  importedAt DateTime          @default(now())
+  project    Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  folder     SelectionFolder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
   ratings    ImageRating?
 
   @@index([projectId])
+  @@index([folderId])
   @@index([filename])
+}
+
+model SelectionFolder {
+  id        String           @id @default(cuid())
+  name      String
+  path      String           // Full logical path
+  parentId  String?
+  projectId String
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  project   Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parent    SelectionFolder? @relation("SelectionSubfolders", fields: [parentId], references: [id], onDelete: Cascade)
+  children  SelectionFolder[] @relation("SelectionSubfolders")
+  images    SelectionImage[]
+
+  @@index([projectId])
+  @@index([parentId])
 }
 
 model ImageRating {

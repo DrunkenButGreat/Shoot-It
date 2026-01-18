@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Star } from "lucide-react"
+import { Star, Check } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { RatingControls } from "./RatingControls"
@@ -29,9 +29,22 @@ interface ImageCardProps {
   justified?: boolean
   readOnly?: boolean
   isGuest?: boolean
+  selected?: boolean
+  onSelect?: () => void
 }
 
-export function ImageCard({ image, projectId, onRatingUpdated, onImageClick, masonry, justified, readOnly, isGuest }: ImageCardProps) {
+export function ImageCard({ 
+  image, 
+  projectId, 
+  onRatingUpdated, 
+  onImageClick, 
+  masonry, 
+  justified, 
+  readOnly, 
+  isGuest,
+  selected,
+  onSelect
+}: ImageCardProps) {
   const currentRating = image.ratings
   const color = currentRating?.color || null
 
@@ -49,7 +62,29 @@ export function ImageCard({ image, projectId, onRatingUpdated, onImageClick, mas
   }
 
   return (
-    <Card className={`overflow-hidden ${color ? getColorClass(color) : ""} ${justified ? "h-full flex flex-col" : ""}`}>
+    <Card 
+      draggable={!readOnly && !isGuest}
+      onDragStart={(e) => {
+        if (!readOnly && !isGuest) {
+          e.dataTransfer.setData("application/json", JSON.stringify({ imageId: image.id }));
+          e.dataTransfer.effectAllowed = "move";
+        }
+      }}
+      className={`overflow-hidden relative group transition-all duration-200 ${selected ? "ring-2 ring-blue-500 shadow-md" : ""} ${color ? getColorClass(color) : ""} ${justified ? "h-full flex flex-col" : ""}`}
+    >
+      {/* Selection Checkbox */}
+      {!readOnly && !isGuest && (
+        <div 
+          className={`absolute top-2 left-2 z-10 w-6 h-6 rounded-md border-2 border-white/50 backdrop-blur-md flex items-center justify-center cursor-pointer transition-all ${selected ? 'bg-blue-500 border-blue-500 opacity-100' : 'bg-black/20 opacity-0 group-hover:opacity-100 hover:bg-black/40'}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect?.();
+          }}
+        >
+          {selected && <Check className="w-4 h-4 text-white" />}
+        </div>
+      )}
+
       {/* Image */}
       <div
         className={`${justified ? "h-[240px]" : masonry ? "" : "aspect-square"} bg-gray-100 relative overflow-hidden cursor-zoom-in group flex-shrink-0`}
@@ -60,6 +95,7 @@ export function ImageCard({ image, projectId, onRatingUpdated, onImageClick, mas
             src={image.thumbnail || image.path}
             alt={image.filename}
             className={`w-full ${justified || !masonry ? "h-full object-cover" : "h-auto"} group-hover:scale-105 transition-transform duration-300`}
+            draggable={false}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-xs p-2 text-center break-all">
