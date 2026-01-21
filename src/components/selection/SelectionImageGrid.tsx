@@ -35,6 +35,7 @@ export function SelectionImageGrid({
             onImageClick={() => onImageClick(i)}
             selected={selectedIds?.has(image.id)}
             onSelect={onToggleSelect ? () => onToggleSelect(image.id) : undefined}
+            hideRatings={false}
           />
         ))}
       </div>
@@ -51,10 +52,10 @@ export function SelectionImageGrid({
           return (
             <div
               key={image.id}
-              className="relative group h-[240px]"
+              className="relative group h-[340px]"
               style={{
                 flexGrow: aspect * 100,
-                flexBasis: `${aspect * 150}px`,
+                flexBasis: `${aspect * 240}px`,
               }}
             >
               <ImageCard
@@ -65,6 +66,7 @@ export function SelectionImageGrid({
                 justified={true}
                 selected={selectedIds?.has(image.id)}
                 onSelect={onToggleSelect ? () => onToggleSelect(image.id) : undefined}
+                hideRatings={false}
               />
             </div>
           );
@@ -93,6 +95,7 @@ export function SelectionImageGrid({
                     masonry={true}
                     selected={selectedIds?.has(image.id)}
                     onSelect={onToggleSelect ? () => onToggleSelect(image.id) : undefined}
+                    hideRatings={false}
                   />
                 </div>
               );
