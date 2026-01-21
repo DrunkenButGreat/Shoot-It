@@ -14,7 +14,7 @@ export async function GET(
 
     const project = await prisma.project.findUnique({
       where: { id },
-      select: { isPublic: true, showResultsPublicly: true }
+      select: { isPublic: true, showResultsPublicly: true, galleryLayout: true }
     })
 
     if (!project) {
@@ -59,7 +59,11 @@ export async function GET(
       orderBy: { createdAt: 'desc' }
     })
 
-    return NextResponse.json({ folders, rootImages })
+    return NextResponse.json({ 
+      folders, 
+      rootImages,
+      galleryLayout: project.galleryLayout
+    })
   } catch (error) {
     console.error('Error fetching results:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

@@ -328,6 +328,9 @@
     "description": "Fill out your profile so your data is automatically included in projects."
   },
   "projectForm": {
+    "tabDetails": "Details",
+    "tabSettings": "Settings",
+    "tabVisibility": "Visibility",
     "public": "Public",
     "private": "Private",
     "projectAccess": "Project Access",

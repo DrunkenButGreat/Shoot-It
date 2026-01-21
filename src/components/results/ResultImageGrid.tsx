@@ -12,6 +12,8 @@ type ResultFile = {
   filename: string;
   path: string;
   thumbnail: string | null;
+  width?: number | null;
+  height?: number | null;
 };
 
 export function ResultImageGrid({
@@ -20,7 +22,8 @@ export function ResultImageGrid({
   onToggleSelect,
   onDelete,
   showDelete = true,
-  projectId
+  projectId,
+  layout = "masonry"
 }: {
   images: ResultFile[];
   selectedIds: Set<string>;
@@ -28,24 +31,97 @@ export function ResultImageGrid({
   onDelete: (id: string) => void;
   showDelete?: boolean;
   projectId: string;
+  layout?: string;
 }) {
   const [index, setIndex] = useState(-1);
 
+  if (images.length === 0) return null;
+
+  const renderGridV2 = () => {
+    if (layout === "grid") {
+      return (
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+          {images.map((image, i) => (
+            <ImageCard
+              key={image.id}
+              image={{...image, ratings: null}}
+              projectId={projectId}
+              onImageClick={() => setIndex(i)}
+              selected={selectedIds.has(image.id)}
+              onSelect={() => onToggleSelect(image.id)}
+              hideRatings={true}
+            />
+          ))}
+        </div>
+      );
+    }
+
+    if (layout === "justified") {
+      return (
+        <div className="flex flex-wrap gap-4">
+          {images.map((image, i) => {
+            const width = image.width || 400;
+            const height = image.height || 300;
+            const aspect = width / height;
+            return (
+              <div
+                key={image.id}
+                className="relative group h-[240px]"
+                style={{
+                  flexGrow: aspect * 100,
+                  flexBasis: `${aspect * 240}px`,
+                }}
+              >
+                <ImageCard
+                  image={{...image, ratings: null}}
+                  projectId={projectId}
+                  onImageClick={() => setIndex(i)}
+                  justified={true}
+                  selected={selectedIds.has(image.id)}
+                  onSelect={() => onToggleSelect(image.id)}
+                  hideRatings={true}
+                />
+              </div>
+            );
+          })}
+          <div className="flex-[1000] h-0" />
+        </div>
+      );
+    }
+
+    // Masonry (Default)
+    return (
+      <div className="flex gap-4 items-start">
+        {Array.from({ length: 5 }).map((_, colIdx) => {
+          const columnImages = images.filter((_, i) => i % 5 === colIdx);
+          return (
+            <div key={colIdx} className="flex-1 flex flex-col gap-4">
+              {columnImages.map((image) => {
+                const globalIndex = images.findIndex(img => img.id === image.id);
+                return (
+                  <div key={image.id}>
+                    <ImageCard
+                       image={{...image, ratings: null}}
+                       projectId={projectId}
+                       onImageClick={() => setIndex(globalIndex)}
+                       masonry={true}
+                       selected={selectedIds.has(image.id)}
+                       onSelect={() => onToggleSelect(image.id)}
+                       hideRatings={true}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="py-4">
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
-        {images.map((image, i) => (
-          <ImageCard
-            key={image.id}
-            image={{...image, ratings: null}}
-            projectId={projectId}
-            onImageClick={() => setIndex(i)}
-            selected={selectedIds.has(image.id)}
-            onSelect={() => onToggleSelect(image.id)}
-            hideRatings={true}
-          />
-        ))}
-      </div>
+      {renderGridV2()}
 
       <Lightbox
         index={index}

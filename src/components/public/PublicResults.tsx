@@ -13,6 +13,8 @@ type ResultFile = {
   path: string;
   thumbnail: string | null;
   folderId: string | null;
+  width?: number | null;
+  height?: number | null;
 };
 
 type Folder = {
@@ -33,6 +35,7 @@ export function PublicResults({ projectId }: { projectId: string }) {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedImageIds, setSelectedImageIds] = useState<Set<string>>(new Set());
   const [isDownloading, setIsDownloading] = useState(false);
+  const [galleryLayout, setGalleryLayout] = useState<string>("masonry");
 
   const fetchResults = async () => {
     try {
@@ -41,6 +44,9 @@ export function PublicResults({ projectId }: { projectId: string }) {
         const data = await response.json();
         setFolders(data.folders || []);
         setRootImages(data.rootImages || []);
+        if (data.galleryLayout) {
+          setGalleryLayout(data.galleryLayout);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch results:', error);
@@ -244,6 +250,7 @@ export function PublicResults({ projectId }: { projectId: string }) {
                   onDelete={() => {}}
                   showDelete={false}
                   projectId={projectId}
+                  layout={galleryLayout}
                 />
              </>
            )}

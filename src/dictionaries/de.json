@@ -329,6 +329,9 @@
     "description": "Fülle dein Profil aus, damit deine Daten automatisch in Projekte übernommen werden."
   },
   "projectForm": {
+    "tabDetails": "Details",
+    "tabSettings": "Einstellungen",
+    "tabVisibility": "Sichtbarkeit",
     "public": "Öffentlich",
     "private": "Privat",
     "projectAccess": "Projektzugang",

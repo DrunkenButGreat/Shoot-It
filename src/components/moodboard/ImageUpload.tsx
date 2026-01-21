@@ -178,19 +178,25 @@ export default function ImageUpload({
         const items = e.dataTransfer.items
         const files: (File & { relativePath?: string })[] = []
 
-        // Try scanning items (files and folders)
+        // Capture all entries synchronously first to avoid DataTransfer expiration issues
+        const entries: FileSystemEntry[] = []
         if (items && items.length > 0) {
             for (let i = 0; i < items.length; i++) {
-                const item = items[i].webkitGetAsEntry()
-                if (item) {
-                    const scanned = await scanFiles(item)
-                    files.push(...scanned)
+                const entry = items[i].webkitGetAsEntry()
+                if (entry) {
+                    entries.push(entry)
                 }
             }
         }
 
-        // Fallback to basic files if scanning returned nothing (or failed/not supported)
-        // This ensures that simple file drops work even if webkitGetAsEntry fails
+        // Now process entries (async is fine here as we have the entries)
+        if (entries.length > 0) {
+            const scanPromises = entries.map(entry => scanFiles(entry))
+            const results = await Promise.all(scanPromises)
+            results.forEach(res => files.push(...res))
+        }
+
+        // Fallback to basic files if no valid entries were found/scanned
         if (files.length === 0) {
             const droppedFiles = e.dataTransfer.files
             if (droppedFiles && droppedFiles.length > 0) {

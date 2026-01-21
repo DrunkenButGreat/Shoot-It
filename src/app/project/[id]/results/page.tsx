@@ -90,6 +90,7 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
             projectId={id}
             initialFolders={folders}
             rootImages={rootImages}
+            layout={project.galleryLayout}
           />
         </Suspense>
       </main>

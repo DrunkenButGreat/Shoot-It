@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.7] - 2026-01-21
+
+### Fixed
+- **Multiple File Drag & Drop**: Fixed an issue where dragging multiple files into the upload area sometimes only uploaded the first file. This was due to browser data transfer items being cleared prematurely during asynchronous operations; the logic now correctly captures all items synchronously first.
+
+## [1.8.6] - 2026-01-21
+
+### Changed
+- **Results View Layout**: The "Results" view (Dashboard & Public) now correctly respects the project's configured Global Gallery Style (Grid, Masonry, Justified), matching the behavior of the Selection view.
+
+## [1.8.5] - 2026-01-21
+
+### Changed
+- **Project Settings UI**: Redesigned the Project Form (Edit/Create) to use a Tabbed interface ("Details", "Settings", "Visibility"). This greatly improves usability on mobile devices by reducing scrolling and organizing complex settings logically.
+
 ## [1.8.4] - 2026-01-18
 
 ### Changed

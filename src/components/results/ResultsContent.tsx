@@ -18,6 +18,8 @@ type ResultFile = {
   path: string;
   thumbnail: string | null;
   folderId: string | null;
+  width?: number | null;
+  height?: number | null;
 };
 
 type Folder = {
@@ -37,11 +39,13 @@ type Folder = {
 export function ResultsContent({
   projectId,
   initialFolders: folders,
-  rootImages = []
+  rootImages = [],
+  layout = "masonry"
 }: {
   projectId: string;
   initialFolders: Folder[];
   rootImages?: ResultFile[];
+  layout?: string;
 }) {
   const [isFolderFormOpen, setIsFolderFormOpen] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null); // null = All, 'unassigned' = Root
@@ -264,8 +268,7 @@ export function ResultsContent({
                   selectedIds={selectedImageIds}
                   onToggleSelect={toggleImageSelection}
                   onDelete={handleImageDelete}
-                  projectId={projectId}
-                />
+                  projectId={projectId}                  layout={layout}                />
              </>
            )}
 

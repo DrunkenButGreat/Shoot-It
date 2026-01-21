@@ -16,6 +16,7 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { LayoutGrid, Columns } from "lucide-react"
 import { useI18n } from "@/components/I18nProvider"
+import { cn } from "@/lib/utils"
 
 interface ProjectFormData {
   name: string
@@ -66,6 +67,7 @@ interface ProjectFormProps {
 export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
   const { t } = useI18n()
   const [open, setOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<'details' | 'settings' | 'visibility'>('details')
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState<ProjectFormData>({
     name: initialData?.name || "",
@@ -181,241 +183,304 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
           {isEditing ? t('projectForm.editProject') : `+ ${t('projectForm.newProject')}`}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[525px]">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>{isEditing ? t('projectForm.editProject') : t('projectForm.createProject')}</DialogTitle>
-            <DialogDescription>
-              {isEditing
-                ? t('projectForm.isEditingDescription')
-                : t('projectForm.isCreatingDescription')}
-            </DialogDescription>
+      <DialogContent className="sm:max-w-[550px] w-full max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <form onSubmit={handleSubmit} className="flex flex-col h-full overflow-hidden">
+          <DialogHeader className="p-6 pb-4 shrink-0 space-y-4 border-b border-gray-100 bg-white">
+            <div>
+              <DialogTitle>{isEditing ? t('projectForm.editProject') : t('projectForm.createProject')}</DialogTitle>
+              <DialogDescription>
+                {isEditing
+                  ? t('projectForm.isEditingDescription')
+                  : t('projectForm.isCreatingDescription')}
+              </DialogDescription>
+            </div>
+
+            <div className="flex items-center gap-1 bg-gray-100/50 p-1 rounded-lg border border-gray-100">
+              <button
+                type="button"
+                onClick={() => setActiveTab('details')}
+                className={cn(
+                  "flex-1 px-3 py-1.5 text-xs font-semibold rounded-md transition-all",
+                  activeTab === 'details' ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                )}
+              >
+                {t('projectForm.tabDetails')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('settings')}
+                className={cn(
+                  "flex-1 px-3 py-1.5 text-xs font-semibold rounded-md transition-all",
+                  activeTab === 'settings' ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                )}
+              >
+                {t('projectForm.tabSettings')}
+              </button>
+              <button
+                type="button"
+                disabled={!formData.isPublic}
+                onClick={() => setActiveTab('visibility')}
+                className={cn(
+                  "flex-1 px-3 py-1.5 text-xs font-semibold rounded-md transition-all",
+                  activeTab === 'visibility' ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700",
+                  !formData.isPublic && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                {t('projectForm.tabVisibility')}
+              </button>
+            </div>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">{t('projectForm.projectName')} *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                placeholder={t('projectForm.projectNamePlaceholder')}
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="description">{t('projectForm.description')}</Label>
-              <Input
-                id="description"
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                placeholder={t('projectForm.descriptionPlaceholder')}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="date">{t('projectForm.date')}</Label>
-              <Input
-                id="date"
-                type="date"
-                value={formData.date}
-                onChange={(e) =>
-                  setFormData({ ...formData, date: e.target.value })
-                }
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="location">{t('projectForm.location')}</Label>
-              <Input
-                id="location"
-                value={formData.location}
-                onChange={(e) =>
-                  setFormData({ ...formData, location: e.target.value })
-                }
-                placeholder={t('projectForm.locationPlaceholder')}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="address">{t('projectForm.address')}</Label>
-              <Input
-                id="address"
-                value={formData.address}
-                onChange={(e) =>
-                  setFormData({ ...formData, address: e.target.value })
-                }
-                placeholder={t('projectForm.addressPlaceholder')}
-              />
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50/50">
-              <div className="space-y-0.5">
-                <Label htmlFor="isPublic">{t('projectForm.publicAccess')}</Label>
-                <p className="text-xs text-muted-foreground">
-                  {t('projectForm.publicAccessDescription')}
-                </p>
-              </div>
-              <Switch
-                id="isPublic"
-                checked={!!formData.isPublic}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, isPublic: checked })
-                }
-              />
-            </div>
 
-            {formData.isPublic && (
-              <div className="space-y-4 pt-2 border-t border-gray-100">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="allowGuestSelection">{t('projectForm.allowGuestSelection')}</Label>
-                    <p className="text-[10px] text-gray-500">{t('projectForm.allowGuestSelectionDescription')}</p>
+          <div className="flex-1 overflow-y-auto min-h-0 px-6 py-6 bg-gray-50/30">
+            <div className="grid gap-6">
+
+              {activeTab === 'details' && (
+                <div className="space-y-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="name">{t('projectForm.projectName')} *</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                      placeholder={t('projectForm.projectNamePlaceholder')}
+                      required
+                      className="bg-white"
+                    />
                   </div>
-                  <Switch
-                    id="allowGuestSelection"
-                    checked={!!formData.allowGuestSelection}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, allowGuestSelection: checked })
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="allowApplications">{t('projectForm.allowApplications')}</Label>
-                    <p className="text-[10px] text-gray-500">{t('projectForm.allowApplicationsDescription')}</p>
-                    {!process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && formData.allowApplications && (
-                      <p className="text-[10px] text-red-500 font-bold mt-1">
-                        {t('projectForm.recaptchaMissingWarning')}
-                      </p>
-                    )}
+                  <div className="grid gap-2">
+                    <Label htmlFor="description">{t('projectForm.description')}</Label>
+                    <Input
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData({ ...formData, description: e.target.value })
+                      }
+                      placeholder={t('projectForm.descriptionPlaceholder')}
+                      className="bg-white"
+                    />
                   </div>
-                  <Switch
-                    id="allowApplications"
-                    checked={!!formData.allowApplications}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, allowApplications: checked })
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="allowAppointments">{t('projectForm.allowAppointments')}</Label>
-                    <p className="text-[10px] text-gray-500">{t('projectForm.allowAppointmentsDescription')}</p>
+                  <div className="grid gap-2">
+                    <Label htmlFor="date">{t('projectForm.date')}</Label>
+                    <Input
+                      id="date"
+                      type="date"
+                      value={formData.date}
+                      onChange={(e) =>
+                        setFormData({ ...formData, date: e.target.value })
+                      }
+                      className="bg-white"
+                    />
                   </div>
-                  <Switch
-                    id="allowAppointments"
-                    checked={!!formData.allowAppointments}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, allowAppointments: checked })
-                    }
-                  />
+                  <div className="grid gap-2">
+                    <Label htmlFor="location">{t('projectForm.location')}</Label>
+                    <Input
+                      id="location"
+                      value={formData.location}
+                      onChange={(e) =>
+                        setFormData({ ...formData, location: e.target.value })
+                      }
+                      placeholder={t('projectForm.locationPlaceholder')}
+                      className="bg-white"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="address">{t('projectForm.address')}</Label>
+                    <Input
+                      id="address"
+                      value={formData.address}
+                      onChange={(e) =>
+                        setFormData({ ...formData, address: e.target.value })
+                      }
+                      placeholder={t('projectForm.addressPlaceholder')}
+                      className="bg-white"
+                    />
+                  </div>
                 </div>
+              )}
 
-                <div className="space-y-3">
-                  <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('projectForm.moduleVisibility')}</Label>
-                  <div className="grid grid-cols-2 gap-3">
-                  <ModuleToggle
-                    label={t('projectForm.showMoodboard')}
-                    value={formData.showMoodboardPublicly}
-                    onChange={(checked) => setFormData({ ...formData, showMoodboardPublicly: checked })}
-                  />
-                  <ModuleToggle
-                    label={t('projectForm.showParticipants')}
-                    value={formData.showParticipantsPublicly}
-                    onChange={(checked) => setFormData({ ...formData, showParticipantsPublicly: checked })}
-                  />
-                  <ModuleToggle
-                    label={t('projectForm.showSelection')}
-                    value={formData.showSelectionPublicly}
-                    onChange={(checked) => setFormData({ ...formData, showSelectionPublicly: checked })}
-                  />
-                  {formData.showSelectionPublicly && (
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-gray-50 border border-gray-100 col-span-2">
+              {activeTab === 'settings' && (
+                <div className="space-y-6">
+
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-4 rounded-xl border border-blue-100 bg-blue-50/50">
                       <div className="space-y-0.5">
-                        <Label htmlFor="showSelectionFolders" className="text-sm font-medium">{t('projectForm.useFolders')}</Label>
-                        <p className="text-[10px] text-gray-500">{t('projectForm.useFoldersDescription')}</p>
+                        <Label htmlFor="isPublic" className="text-blue-900">{t('projectForm.publicAccess')}</Label>
+                        <p className="text-xs text-blue-700/70">
+                          {t('projectForm.publicAccessDescription')}
+                        </p>
                       </div>
                       <Switch
-                        id="showSelectionFolders"
-                        checked={formData.showSelectionFolders}
-                        onCheckedChange={(checked) => setFormData({ ...formData, showSelectionFolders: checked })}
+                        id="isPublic"
+                        checked={!!formData.isPublic}
+                        onCheckedChange={(checked) =>
+                          setFormData({ ...formData, isPublic: checked })
+                        }
                       />
                     </div>
-                  )}
-                  <ModuleToggle
-                    label={t('projectForm.showContracts')}
-                    value={formData.showContractsPublicly}
-                    onChange={(checked) => setFormData({ ...formData, showContractsPublicly: checked })}
-                  />
-                  <ModuleToggle
-                    label={t('projectForm.showCallsheet')}
-                    value={formData.showCallsheetPublicly}
-                    onChange={(checked) => setFormData({ ...formData, showCallsheetPublicly: checked })}
-                  />
-                  <ModuleToggle
-                    label={t('projectForm.showResults')}
-                    value={formData.showResultsPublicly}
-                    onChange={(checked) => setFormData({ ...formData, showResultsPublicly: checked })}
-                  />
-                  <ModuleToggle
-                    label={t('projectForm.showAppointments')}
-                    value={formData.showAppointmentsPublicly}
-                    onChange={(checked) => setFormData({ ...formData, showAppointmentsPublicly: checked })}
-                  />
                   </div>
-                </div>
 
-                <div className="space-y-3">
-                  <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('projectForm.galleryStyle')}</Label>
-                  <div className="flex flex-wrap gap-1 bg-gray-100 p-1 rounded-lg">
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, galleryLayout: "justified" })}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${formData.galleryLayout === "justified"
-                        ? "bg-white text-blue-600 shadow-sm"
-                        : "text-gray-500 hover:text-gray-700"
-                        }`}
-                    >
-                      <LayoutGrid className="h-3.5 w-3.5" />
-                      {t('projectForm.justified')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, galleryLayout: "masonry" })}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${formData.galleryLayout === "masonry"
-                        ? "bg-white text-blue-600 shadow-sm"
-                        : "text-gray-500 hover:text-gray-700"
-                        }`}
-                    >
-                      <Columns className="h-3.5 w-3.5" />
-                      {t('projectForm.masonry')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, galleryLayout: "grid" })}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${formData.galleryLayout === "grid"
-                        ? "bg-white text-blue-600 shadow-sm"
-                        : "text-gray-500 hover:text-gray-700"
-                        }`}
-                    >
-                      <LayoutGrid className="h-3.5 w-3.5" />
-                      {t('projectForm.grid')}
-                    </button>
+                  {/* Appointments - accessible even if private? Keeping existing logic: mostly consistent but cleaner layout */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-white">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="allowAppointments">{t('projectForm.allowAppointments')}</Label>
+                        <p className="text-[10px] text-gray-500">{t('projectForm.allowAppointmentsDescription')}</p>
+                      </div>
+                      <Switch
+                        id="allowAppointments"
+                        checked={!!formData.allowAppointments}
+                        onCheckedChange={(checked) =>
+                          setFormData({ ...formData, allowAppointments: checked })
+                        }
+                      />
+                    </div>
                   </div>
-                  <p className="text-[10px] text-muted-foreground italic leading-tight">
-                    {formData.galleryLayout === "justified"
-                      ? t('projectForm.justifiedDescription')
-                      : formData.galleryLayout === "masonry"
-                        ? t('projectForm.masonryDescription')
-                        : t('projectForm.gridDescription')}
-                  </p>
+
+                  {formData.isPublic && (
+                    <div className="space-y-3 animate-in fade-in-50 slide-in-from-top-2">
+                      <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">{t('projectForm.publicSettings')}</Label>
+                      
+                      <div className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-white">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="allowGuestSelection">{t('projectForm.allowGuestSelection')}</Label>
+                          <p className="text-[10px] text-gray-500">{t('projectForm.allowGuestSelectionDescription')}</p>
+                        </div>
+                        <Switch
+                          id="allowGuestSelection"
+                          checked={!!formData.allowGuestSelection}
+                          onCheckedChange={(checked) =>
+                            setFormData({ ...formData, allowGuestSelection: checked })
+                          }
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-white">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="allowApplications">{t('projectForm.allowApplications')}</Label>
+                          <p className="text-[10px] text-gray-500">{t('projectForm.allowApplicationsDescription')}</p>
+                          {!process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && formData.allowApplications && (
+                            <p className="text-[10px] text-red-500 font-bold mt-1">
+                              {t('projectForm.recaptchaMissingWarning')}
+                            </p>
+                          )}
+                        </div>
+                        <Switch
+                          id="allowApplications"
+                          checked={!!formData.allowApplications}
+                          onCheckedChange={(checked) =>
+                            setFormData({ ...formData, allowApplications: checked })
+                          }
+                        />
+                      </div>
+
+                      <div className="space-y-2 pt-2">
+                        <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">{t('projectForm.galleryStyle')}</Label>
+                        <div className="flex flex-wrap gap-1 bg-white p-1 rounded-lg border border-gray-100">
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, galleryLayout: "justified" })}
+                            className={cn("flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-bold transition-all w-full sm:w-auto justify-center", formData.galleryLayout === "justified"
+                              ? "bg-blue-50 text-blue-600"
+                              : "text-gray-500 hover:bg-gray-50 hover:text-gray-700")}
+                          >
+                            <LayoutGrid className="h-4 w-4" />
+                            {t('projectForm.justified')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, galleryLayout: "masonry" })}
+                            className={cn("flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-bold transition-all w-full sm:w-auto justify-center", formData.galleryLayout === "masonry"
+                                ? "bg-blue-50 text-blue-600"
+                                : "text-gray-500 hover:bg-gray-50 hover:text-gray-700")}
+                          >
+                            <Columns className="h-4 w-4" />
+                            {t('projectForm.masonry')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, galleryLayout: "grid" })}
+                            className={cn("flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-bold transition-all w-full sm:w-auto justify-center", formData.galleryLayout === "grid"
+                                ? "bg-blue-50 text-blue-600"
+                                : "text-gray-500 hover:bg-gray-50 hover:text-gray-700")}
+                          >
+                            <LayoutGrid className="h-4 w-4" />
+                            {t('projectForm.grid')}
+                          </button>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground italic leading-tight pl-1">
+                          {formData.galleryLayout === "justified"
+                            ? t('projectForm.justifiedDescription')
+                            : formData.galleryLayout === "masonry"
+                              ? t('projectForm.masonryDescription')
+                              : t('projectForm.gridDescription')}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
+              )}
+
+              {activeTab === 'visibility' && formData.isPublic && (
+                <div className="space-y-3">
+                  <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('projectForm.moduleVisibility')}</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <ModuleToggle
+                      label={t('projectForm.showMoodboard')}
+                      value={formData.showMoodboardPublicly}
+                      onChange={(checked) => setFormData({ ...formData, showMoodboardPublicly: checked })}
+                    />
+                    <ModuleToggle
+                      label={t('projectForm.showParticipants')}
+                      value={formData.showParticipantsPublicly}
+                      onChange={(checked) => setFormData({ ...formData, showParticipantsPublicly: checked })}
+                    />
+                    <ModuleToggle
+                      label={t('projectForm.showSelection')}
+                      value={formData.showSelectionPublicly}
+                      onChange={(checked) => setFormData({ ...formData, showSelectionPublicly: checked })}
+                    />
+                    {formData.showSelectionPublicly && (
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200 sm:col-span-2 shadow-sm">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="showSelectionFolders" className="text-sm font-medium">{t('projectForm.useFolders')}</Label>
+                          <p className="text-[10px] text-gray-500">{t('projectForm.useFoldersDescription')}</p>
+                        </div>
+                        <Switch
+                          id="showSelectionFolders"
+                          checked={formData.showSelectionFolders}
+                          onCheckedChange={(checked) => setFormData({ ...formData, showSelectionFolders: checked })}
+                        />
+                      </div>
+                    )}
+                    <ModuleToggle
+                      label={t('projectForm.showContracts')}
+                      value={formData.showContractsPublicly}
+                      onChange={(checked) => setFormData({ ...formData, showContractsPublicly: checked })}
+                    />
+                    <ModuleToggle
+                      label={t('projectForm.showCallsheet')}
+                      value={formData.showCallsheetPublicly}
+                      onChange={(checked) => setFormData({ ...formData, showCallsheetPublicly: checked })}
+                    />
+                    <ModuleToggle
+                      label={t('projectForm.showResults')}
+                      value={formData.showResultsPublicly}
+                      onChange={(checked) => setFormData({ ...formData, showResultsPublicly: checked })}
+                    />
+                    <ModuleToggle
+                      label={t('projectForm.showAppointments')}
+                      value={formData.showAppointmentsPublicly}
+                      onChange={(checked) => setFormData({ ...formData, showAppointmentsPublicly: checked })}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-          <DialogFooter>
+
+          <DialogFooter className="p-6 shrink-0 bg-white border-t border-gray-100 w-full sm:justify-end">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               {t('common.cancel')}
             </Button>
