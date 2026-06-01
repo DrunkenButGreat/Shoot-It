@@ -122,6 +122,7 @@
     "download": "Download",
     "downloadAll": "Download All",
     "downloadSelected": "Download Selected ({count})",
+    "uploadPartialFailed": "{failed} of {total} files could not be uploaded. Please try uploading the missing ones again.",
     "uploading": "Uploading {count}...",
     "drop": "Drop",
     "imageConstraints": "JPG, PNG, WebP, GIF or video (MP4, WebM, max. 100MB)",

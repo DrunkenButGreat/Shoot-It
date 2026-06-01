@@ -1,7 +1,7 @@
 import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
 import { notFound, redirect } from "next/navigation"
-import { Calendar, MapPin, User, FileText, Image as ImageIcon, Users, Clock, CheckSquare } from "lucide-react"
+import { Calendar, MapPin, Image as ImageIcon, Users, Clock, CheckSquare } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"

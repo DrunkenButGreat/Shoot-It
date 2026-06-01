@@ -62,41 +62,82 @@ export default function ImageUpload({
 
         setUploadingCount(prev => prev + fileArray.length)
 
-        const uploadPromises = fileArray.map(async (file) => {
-            const formData = new FormData()
-            formData.append("file", file)
-            if (file.relativePath) {
-                formData.append("relativePath", file.relativePath)
-            }
-            if (folderId) {
-                formData.append("folderId", folderId)
-            }
+        // Upload through a bounded concurrency pool with retries. Firing thousands
+        // of parallel requests overwhelms the browser/server and silently drops
+        // uploads — this keeps a few in flight at a time and retries transient errors.
+        const CONCURRENCY = 6
+        const MAX_RETRIES = 3
+        let lastResult: any = null
+        let failed = 0
 
-            try {
-                const response = await fetch(uploadUrl, {
-                    method: "POST",
-                    body: formData,
-                })
+        const uploadOne = async (file: File & { relativePath?: string }): Promise<boolean> => {
+            for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+                try {
+                    const formData = new FormData()
+                    formData.append("file", file)
+                    if (file.relativePath) {
+                        formData.append("relativePath", file.relativePath)
+                    }
+                    if (folderId) {
+                        formData.append("folderId", folderId)
+                    }
 
-                if (!response.ok) {
-                    const error = await response.json()
-                    console.error(`Upload failed for ${file.name}:`, error.error)
-                    return null
+                    const response = await fetch(uploadUrl, {
+                        method: "POST",
+                        body: formData,
+                    })
+
+                    if (response.ok) {
+                        lastResult = await response.json()
+                        return true
+                    }
+
+                    // Client errors (validation, auth) won't succeed on retry.
+                    if (response.status >= 400 && response.status < 500) {
+                        const error = await response.json().catch(() => ({}))
+                        console.error(`Upload failed for ${file.name}:`, error.error)
+                        return false
+                    }
+                    // 5xx: fall through to retry
+                } catch (error) {
+                    console.error(`Upload error for ${file.name} (attempt ${attempt + 1}):`, error)
+                    // network error: fall through to retry
                 }
-                return await response.json()
-            } catch (error) {
-                console.error(`Upload error for ${file.name}:`, error)
-                return null
-            } finally {
+
+                if (attempt < MAX_RETRIES) {
+                    await new Promise(r => setTimeout(r, 400 * (attempt + 1)))
+                }
+            }
+            return false
+        }
+
+        let cursor = 0
+        const worker = async () => {
+            while (cursor < fileArray.length) {
+                const file = fileArray[cursor++]
+                const ok = await uploadOne(file)
+                if (!ok) failed++
                 setUploadingCount(prev => Math.max(0, prev - 1))
             }
-        })
+        }
 
-        const results = await Promise.all(uploadPromises)
-        const lastResult = results.filter(Boolean).pop()
+        const workers = Array.from(
+            { length: Math.min(CONCURRENCY, fileArray.length) },
+            () => worker()
+        )
+        await Promise.all(workers)
+
         onSuccess(lastResult)
         if (fileInputRef.current) fileInputRef.current.value = ""
-    }, [uploadUrl, onSuccess, t])
+
+        if (failed > 0) {
+            alert(
+                t('selection.uploadPartialFailed')
+                    .replace('{failed}', failed.toString())
+                    .replace('{total}', fileArray.length.toString())
+            )
+        }
+    }, [uploadUrl, onSuccess, t, folderId])
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files

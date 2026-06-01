@@ -123,6 +123,7 @@
     "download": "Herunterladen",
     "downloadAll": "Alle herunterladen",
     "downloadSelected": "Auswahl herunterladen ({count})",
+    "uploadPartialFailed": "{failed} von {total} Dateien konnten nicht hochgeladen werden. Bitte lade die fehlenden erneut hoch.",
     "uploading": "Wird hochgeladen {count}...",
     "drop": "Ablegen",
     "imageConstraints": "JPG, PNG, WebP, GIF oder Video (MP4, WebM, max. 100MB)",

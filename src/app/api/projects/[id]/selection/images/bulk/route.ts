@@ -24,7 +24,8 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { ids, folderId } = body
+    const ids = body.ids ?? body.imageIds
+    const { folderId } = body
 
     if (!Array.isArray(ids) || ids.length === 0) {
       return NextResponse.json({ error: 'No IDs provided' }, { status: 400 })
@@ -76,7 +77,7 @@ export async function DELETE(
     }
 
     const body = await request.json()
-    const { ids } = body
+    const ids = body.ids ?? body.imageIds
 
     if (!Array.isArray(ids) || ids.length === 0) {
       return NextResponse.json({ error: 'No IDs provided' }, { status: 400 })
