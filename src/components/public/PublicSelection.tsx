@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { useRouter } from "next/navigation"
-import { X, ChevronLeft, ChevronRight, Star, Folder as FolderIcon } from "lucide-react"
+import { X, ChevronLeft, ChevronRight, Star, Folder as FolderIcon, Download, Loader2 } from "lucide-react"
 import { ImageCard } from "../selection/ImageCard"
 import { RatingControls } from "../selection/RatingControls"
 import { useI18n } from "@/components/I18nProvider"
@@ -43,6 +43,8 @@ interface PublicSelectionProps {
   userId?: string
   allowGuestSelection?: boolean
   showFolders?: boolean
+  allowDownload?: boolean
+  brandColor?: string | null
 }
 
 export function PublicSelection({
@@ -53,11 +55,15 @@ export function PublicSelection({
   columns = 4,
   userId,
   allowGuestSelection,
-  showFolders = true
+  showFolders = true,
+  allowDownload = false,
+  brandColor
 }: PublicSelectionProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
+  const [isDownloadingAll, setIsDownloadingAll] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const router = useRouter()
   const { t } = useI18n()
 
@@ -123,6 +129,66 @@ export function PublicSelection({
     }
   }
 
+  // Download a single image (keeps its original file/format).
+  const downloadSingle = async (image: SelectionImage) => {
+    try {
+      const res = await fetch(image.path)
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = image.filename
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (e) {
+      console.error('Download failed:', e)
+    }
+  }
+
+  // Download the given image ids as a ZIP.
+  const downloadZip = async (imageIds: string[]) => {
+    if (imageIds.length === 0) return
+    setIsDownloadingAll(true)
+    try {
+      const res = await fetch(`/api/projects/${projectId}/selection/download`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageIds }),
+      })
+      if (!res.ok) throw new Error('Download failed')
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'selection.zip'
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (e) {
+      console.error('Download failed:', e)
+    } finally {
+      setIsDownloadingAll(false)
+    }
+  }
+
+  // Download all currently shown images.
+  const downloadAll = () => downloadZip(filteredImages.map(img => img.id))
+
+  // Download the marked images.
+  const downloadSelected = () => downloadZip(Array.from(selectedIds))
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
   const getColumnsData = () => {
     const cols: { image: SelectionImage; index: number }[][] = Array.from({ length: columns }, () => [])
     filteredImages.forEach((image, index) => {
@@ -157,12 +223,23 @@ export function PublicSelection({
           <p className="text-sm font-bold uppercase tracking-widest">{images[selectedIndex].filename}</p>
           <p className="text-xs text-white/50">{selectedIndex + 1} / {images.length}</p>
         </div>
-        <button
-          className="p-3 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-2xl transition-all shadow-xl backdrop-blur-md border border-white/10"
-          onClick={closeLightbox}
-        >
-          <X className="h-6 w-6" />
-        </button>
+        <div className="flex items-center gap-2">
+          {allowDownload && (
+            <button
+              className="p-3 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-2xl transition-all shadow-xl backdrop-blur-md border border-white/10"
+              onClick={(e) => { e.stopPropagation(); downloadSingle(filteredImages[selectedIndex]) }}
+              title={t('selection.download')}
+            >
+              <Download className="h-6 w-6" />
+            </button>
+          )}
+          <button
+            className="p-3 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-2xl transition-all shadow-xl backdrop-blur-md border border-white/10"
+            onClick={closeLightbox}
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
       </div>
 
       {/* Lightbox Main Content */}
@@ -219,6 +296,42 @@ export function PublicSelection({
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Download toolbar */}
+      {allowDownload && filteredImages.length > 0 && (
+        <div className="flex justify-end gap-2">
+          {selectedIds.size > 0 && (
+            <>
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                disabled={isDownloadingAll}
+                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-white text-gray-500 border border-gray-200 hover:bg-gray-50 transition-all shadow-sm disabled:opacity-60"
+              >
+                <X className="h-4 w-4" />
+                {t('common.clear')}
+              </button>
+              <button
+                onClick={downloadSelected}
+                disabled={isDownloadingAll}
+                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-amber-500 text-white border border-transparent hover:bg-amber-600 transition-all shadow-sm disabled:opacity-60"
+                style={brandColor ? { backgroundColor: brandColor } : undefined}
+              >
+                {isDownloadingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                {t('selection.downloadSelected').replace('{count}', selectedIds.size.toString())}
+              </button>
+            </>
+          )}
+          <button
+            onClick={downloadAll}
+            disabled={isDownloadingAll}
+            className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 transition-all shadow-sm disabled:opacity-60"
+            style={brandColor ? { color: brandColor, borderColor: `${brandColor}33` } : undefined}
+          >
+            {isDownloadingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {t('selection.downloadAll')}
+          </button>
+        </div>
+      )}
+
       {/* Folder Breadcrumbs / Pills */}
       {showFolders && folders.length > 0 && (
         <div className="flex flex-wrap gap-2 pb-2">
@@ -229,6 +342,7 @@ export function PublicSelection({
                 ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30'
                 : 'bg-white text-gray-600 border border-gray-100 hover:bg-gray-50'
             }`}
+            style={selectedFolderId === null && brandColor ? { backgroundColor: brandColor, boxShadow: `0 10px 15px -3px ${brandColor}4d`, borderColor: 'transparent' } : undefined}
           >
             {t('selection.allImages')}
           </button>
@@ -240,6 +354,7 @@ export function PublicSelection({
                 ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30'
                 : 'bg-white text-gray-600 border border-gray-100 hover:bg-gray-50'
             }`}
+            style={selectedFolderId === 'unassigned' && brandColor ? { backgroundColor: brandColor, boxShadow: `0 10px 15px -3px ${brandColor}4d`, borderColor: 'transparent' } : undefined}
           >
             {t('selection.unassigned')}
           </button>
@@ -253,8 +368,9 @@ export function PublicSelection({
                   ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30'
                   : 'bg-white text-gray-600 border border-gray-100 hover:bg-gray-50'
               }`}
+              style={selectedFolderId === folder.id && brandColor ? { backgroundColor: brandColor, boxShadow: `0 10px 15px -3px ${brandColor}4d`, borderColor: 'transparent' } : undefined}
             >
-              <FolderIcon className={`h-3.5 w-3.5 ${selectedFolderId === folder.id ? 'fill-white/20' : 'text-amber-500'}`} />
+              <FolderIcon className={`h-3.5 w-3.5 ${selectedFolderId === folder.id ? 'fill-white/20' : 'text-amber-500'}`} style={selectedFolderId !== folder.id && brandColor ? { color: brandColor } : undefined} />
               {folder.name}
             </button>
           ))}
@@ -279,6 +395,10 @@ export function PublicSelection({
                     onRatingUpdated={handleRatingUpdated}
                     readOnly={!canRate}
                     isGuest={isGuest}
+                    selected={selectedIds.has(image.id)}
+                    onSelect={allowDownload ? () => toggleSelect(image.id) : undefined}
+                    forceSelectable={allowDownload}
+                    onDownload={allowDownload ? () => downloadSingle(image) : undefined}
                   />
                 ))}
               </div>
@@ -305,6 +425,10 @@ export function PublicSelection({
                         justified={true}
                         readOnly={!canRate}
                         isGuest={isGuest}
+                        selected={selectedIds.has(image.id)}
+                        onSelect={allowDownload ? () => toggleSelect(image.id) : undefined}
+                        forceSelectable={allowDownload}
+                        onDownload={allowDownload ? () => downloadSingle(image) : undefined}
                       />
                     </div>
                   )
@@ -326,6 +450,10 @@ export function PublicSelection({
                           masonry={true}
                           readOnly={!canRate}
                           isGuest={isGuest}
+                          selected={selectedIds.has(image.id)}
+                          onSelect={allowDownload ? () => toggleSelect(image.id) : undefined}
+                          forceSelectable={allowDownload}
+                          onDownload={allowDownload ? () => downloadSingle(image) : undefined}
                         />
                       </div>
                     ))}

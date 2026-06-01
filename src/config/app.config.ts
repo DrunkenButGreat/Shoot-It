@@ -5,11 +5,13 @@ export const appConfig = {
   limits: {
     maxUploadSize: 10 * 1024 * 1024, // 10MB
     maxResultsUploadSize: 100 * 1024 * 1024, // 100MB
+    maxVideoUploadSize: 100 * 1024 * 1024, // 100MB (capped by next.config body limit)
     maxUploadsPerRequest: 20,
   },
-  
+
   imageProcessing: {
     supportedFormats: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'tiff', 'heic'],
+    videoFormats: ['mp4', 'webm', 'mov'],
     thumbnailWidth: 300,
     thumbnailHeight: 300,
     thumbnailQuality: 80,

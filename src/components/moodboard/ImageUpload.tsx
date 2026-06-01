@@ -8,7 +8,7 @@ import { useI18n } from "@/components/I18nProvider"
 
 interface ImageUploadProps {
     uploadUrl: string
-    onSuccess: () => void
+    onSuccess: (data?: any) => void
     label?: string
     className?: string
     compact?: boolean
@@ -53,7 +53,7 @@ export default function ImageUpload({
     }, [uploadMode])
 
     const uploadFiles = useCallback(async (files: (File & { relativePath?: string })[]) => {
-        const fileArray = files.filter(file => file.type.startsWith("image/"))
+        const fileArray = files.filter(file => file.type.startsWith("image/") || file.type.startsWith("video/"))
 
         if (fileArray.length === 0) {
             alert(t('selection.pleaseUploadImages'))
@@ -81,16 +81,20 @@ export default function ImageUpload({
                 if (!response.ok) {
                     const error = await response.json()
                     console.error(`Upload failed for ${file.name}:`, error.error)
+                    return null
                 }
+                return await response.json()
             } catch (error) {
                 console.error(`Upload error for ${file.name}:`, error)
+                return null
             } finally {
                 setUploadingCount(prev => Math.max(0, prev - 1))
             }
         })
 
-        await Promise.all(uploadPromises)
-        onSuccess()
+        const results = await Promise.all(uploadPromises)
+        const lastResult = results.filter(Boolean).pop()
+        onSuccess(lastResult)
         if (fileInputRef.current) fileInputRef.current.value = ""
     }, [uploadUrl, onSuccess, t])
 
@@ -225,7 +229,7 @@ export default function ImageUpload({
                     ref={fileInputRef}
                     onChange={handleFileChange}
                     className="hidden"
-                    accept="image/*"
+                    accept="image/*,video/*"
                     multiple
                 />
 
@@ -271,7 +275,7 @@ export default function ImageUpload({
                 ref={fileInputRef}
                 onChange={handleFileChange}
                 className="hidden"
-                accept="image/*"
+                accept="image/*,video/*"
                 multiple
                 disabled={disabled || isUploading}
             />

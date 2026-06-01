@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-06-01
+
+### Added
+- **Video Upload & Playback**: Moodboards and Results now support video files (MP4, WebM, MOV) alongside images. Videos play muted as a preview when hovering over them in the gallery and open in the lightbox with full controls and sound on click. A poster frame is generated server-side via ffmpeg, and a duration badge is shown on each video. Works in both the authenticated app and public sharing views (max. 100MB per file).
+- **Selection Downloads**: New per-project option ("Allow Downloads" in the Visibility settings) that lets visitors download the public selection images. When enabled, each image gets a download button on hover, images can be marked with checkboxes and downloaded together as a ZIP ("Download selected"), the whole view can be downloaded at once ("Download all"), and single images can be downloaded from the lightbox. Disabled by default; downloads are gated server-side.
+
+### Changed
+- **File serving** (`/api/uploads`) now supports HTTP Range requests, enabling video seeking in the player.
+
 ## [1.8.7] - 2026-01-21
 
 ### Fixed

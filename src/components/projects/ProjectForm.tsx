@@ -30,6 +30,7 @@ interface ProjectFormData {
   showContractsPublicly: boolean
   showSelectionPublicly: boolean
   showSelectionFolders: boolean
+  allowSelectionDownload: boolean
   showCallsheetPublicly: boolean
   showResultsPublicly: boolean
   showAppointmentsPublicly: boolean
@@ -54,6 +55,7 @@ interface ProjectFormProps {
     showContractsPublicly: boolean
     showSelectionPublicly: boolean
     showSelectionFolders: boolean
+    allowSelectionDownload?: boolean
     showCallsheetPublicly: boolean
     showResultsPublicly: boolean
     showAppointmentsPublicly: boolean
@@ -61,6 +63,8 @@ interface ProjectFormProps {
     allowAppointments: boolean
     allowGuestSelection: boolean
     galleryLayout: string
+    brandingColor?: string | null
+    brandingImage?: string | null
   }
 }
 
@@ -81,6 +85,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
     showContractsPublicly: initialData?.showContractsPublicly ?? false,
     showSelectionPublicly: initialData?.showSelectionPublicly ?? false,
     showSelectionFolders: initialData?.showSelectionFolders ?? true,
+    allowSelectionDownload: initialData?.allowSelectionDownload ?? false,
     showCallsheetPublicly: initialData?.showCallsheetPublicly ?? false,
     showResultsPublicly: initialData?.showResultsPublicly ?? false,
     showAppointmentsPublicly: !!initialData?.showAppointmentsPublicly,
@@ -104,6 +109,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
         showContractsPublicly: !!initialData.showContractsPublicly,
         showSelectionPublicly: !!initialData.showSelectionPublicly,
         showSelectionFolders: !!initialData.showSelectionFolders,
+        allowSelectionDownload: !!initialData.allowSelectionDownload,
         showCallsheetPublicly: !!initialData.showCallsheetPublicly,
         showResultsPublicly: !!initialData.showResultsPublicly,
         showAppointmentsPublicly: !!initialData.showAppointmentsPublicly,
@@ -155,6 +161,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
             showContractsPublicly: false,
             showSelectionPublicly: false,
             showSelectionFolders: true,
+            allowSelectionDownload: false,
             showCallsheetPublicly: false,
             showResultsPublicly: false,
             showAppointmentsPublicly: false,
@@ -422,6 +429,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
                 </div>
               )}
 
+
               {activeTab === 'visibility' && formData.isPublic && (
                 <div className="space-y-3">
                   <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('projectForm.moduleVisibility')}</Label>
@@ -451,6 +459,19 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
                           id="showSelectionFolders"
                           checked={formData.showSelectionFolders}
                           onCheckedChange={(checked) => setFormData({ ...formData, showSelectionFolders: checked })}
+                        />
+                      </div>
+                    )}
+                    {formData.showSelectionPublicly && (
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200 sm:col-span-2 shadow-sm">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="allowSelectionDownload" className="text-sm font-medium">{t('projectForm.allowSelectionDownload')}</Label>
+                          <p className="text-[10px] text-gray-500">{t('projectForm.allowSelectionDownloadDescription')}</p>
+                        </div>
+                        <Switch
+                          id="allowSelectionDownload"
+                          checked={formData.allowSelectionDownload}
+                          onCheckedChange={(checked) => setFormData({ ...formData, allowSelectionDownload: checked })}
                         />
                       </div>
                     )}

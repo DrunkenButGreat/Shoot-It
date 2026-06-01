@@ -1,15 +1,74 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
-import { X, ChevronLeft, ChevronRight, ZoomIn } from "lucide-react"
+import { X, ChevronLeft, ChevronRight, ZoomIn, Play } from "lucide-react"
 
 interface Image {
     id: string
     path: string
     filename: string
+    thumbnail?: string | null
     width?: number | null
     height?: number | null
+    isVideo?: boolean
+    duration?: number | null
+}
+
+function formatDuration(seconds: number): string {
+    const total = Math.round(seconds)
+    const m = Math.floor(total / 60)
+    const s = total % 60
+    return `${m}:${s.toString().padStart(2, "0")}`
+}
+
+// Renders a public gallery item as an image or a hover-playable video.
+function PublicMedia({ image, className }: { image: Image; className: string }) {
+    const videoRef = useRef<HTMLVideoElement>(null)
+
+    if (image.isVideo) {
+        return (
+            <>
+                <video
+                    ref={videoRef}
+                    src={`${image.path}#t=0.1`}
+                    poster={image.thumbnail || undefined}
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    className={className}
+                    draggable={false}
+                    onMouseEnter={() => videoRef.current?.play().catch(() => {})}
+                    onMouseLeave={() => {
+                        const v = videoRef.current
+                        if (v) { v.pause(); v.currentTime = 0 }
+                    }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none group-hover:opacity-0 transition-opacity duration-200">
+                    <div className="bg-black/50 rounded-full p-3 backdrop-blur-sm">
+                        <Play className="w-6 h-6 text-white fill-white" />
+                    </div>
+                </div>
+                {image.duration ? (
+                    <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs font-medium px-1.5 py-0.5 rounded pointer-events-none">
+                        {formatDuration(image.duration)}
+                    </div>
+                ) : null}
+            </>
+        )
+    }
+
+    return (
+        <img
+            src={image.path}
+            alt={image.filename}
+            className={className}
+            onError={(e) => {
+                (e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=Error+Loading+Image'
+            }}
+        />
+    )
 }
 
 interface PublicGalleryProps {
@@ -118,11 +177,22 @@ export function PublicGallery({
                 className="relative w-full h-full flex items-center justify-center"
                 onClick={(e) => e.stopPropagation()}
             >
-                <img
-                    src={images[selectedIndex].path}
-                    alt={images[selectedIndex].filename}
-                    className="max-w-full max-h-full object-contain shadow-2xl rounded-lg animate-in zoom-in-95 duration-500"
-                />
+                {images[selectedIndex].isVideo ? (
+                    <video
+                        src={images[selectedIndex].path}
+                        poster={images[selectedIndex].thumbnail || undefined}
+                        controls
+                        autoPlay
+                        playsInline
+                        className="max-w-full max-h-full object-contain shadow-2xl rounded-lg animate-in zoom-in-95 duration-500"
+                    />
+                ) : (
+                    <img
+                        src={images[selectedIndex].path}
+                        alt={images[selectedIndex].filename}
+                        className="max-w-full max-h-full object-contain shadow-2xl rounded-lg animate-in zoom-in-95 duration-500"
+                    />
+                )}
             </div>
         </div>,
         document.body
@@ -138,13 +208,9 @@ export function PublicGallery({
                             className={`${aspectClass} relative rounded-xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all border border-gray-100 bg-gray-50`}
                             onClick={() => openLightbox(index)}
                         >
-                            <img
-                                src={image.path}
-                                alt={image.filename}
+                            <PublicMedia
+                                image={image}
                                 className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
-                                onError={(e) => {
-                                    (e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=Error+Loading+Image'
-                                }}
                             />
                             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                 <ZoomIn className="text-white h-8 w-8" />
@@ -160,13 +226,9 @@ export function PublicGallery({
                             className="relative break-inside-avoid rounded-xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all border border-gray-100 bg-gray-50 mb-4"
                             onClick={() => openLightbox(index)}
                         >
-                            <img
-                                src={image.path}
-                                alt={image.filename}
+                            <PublicMedia
+                                image={image}
                                 className="w-full h-auto transition-transform duration-500 group-hover:scale-110 block"
-                                onError={(e) => {
-                                    (e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=Error+Loading+Image'
-                                }}
                             />
                             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                 <ZoomIn className="text-white h-8 w-8" />
@@ -194,13 +256,9 @@ export function PublicGallery({
                                 }}
                                 onClick={() => openLightbox(index)}
                             >
-                                <img
-                                    src={image.path}
-                                    alt={image.filename}
+                                <PublicMedia
+                                    image={image}
                                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 block"
-                                    onError={(e) => {
-                                        (e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=Error+Loading+Image'
-                                    }}
                                 />
                                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                     <ZoomIn className="text-white h-8 w-8" />
@@ -222,13 +280,9 @@ export function PublicGallery({
                                     className="relative rounded-xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all border border-gray-100 bg-gray-50 h-fit"
                                     onClick={() => openLightbox(index)}
                                 >
-                                    <img
-                                        src={image.path}
-                                        alt={image.filename}
+                                    <PublicMedia
+                                        image={image}
                                         className="w-full h-auto transition-transform duration-500 group-hover:scale-110 block"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=Error+Loading+Image'
-                                        }}
                                     />
                                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                         <ZoomIn className="text-white h-8 w-8" />

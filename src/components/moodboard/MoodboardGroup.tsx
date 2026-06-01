@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Archive, ArchiveRestore, Check, Link as LinkIcon, MessageSquare, Trash2, X, Download, CheckSquare, Square, Loader2, ChevronDown, ChevronRight, Heart } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { Archive, ArchiveRestore, Check, Link as LinkIcon, MessageSquare, Trash2, X, Download, CheckSquare, Square, Loader2, ChevronDown, ChevronRight, Heart, Play } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,7 @@ import { useI18n } from "@/components/I18nProvider"
 import { useSession } from "next-auth/react"
 
 import Lightbox from "yet-another-react-lightbox"
+import Video from "yet-another-react-lightbox/plugins/video"
 import "yet-another-react-lightbox/styles.css"
 
 interface MoodboardImage {
@@ -19,6 +20,78 @@ interface MoodboardImage {
   path: string
   thumbnail: string | null
   order: number
+  width?: number | null
+  height?: number | null
+  isVideo?: boolean
+  duration?: number | null
+}
+
+function videoMimeFor(path: string): string {
+  const p = path.split("?")[0].split("#")[0].toLowerCase()
+  if (p.endsWith(".webm")) return "video/webm"
+  if (p.endsWith(".mov")) return "video/quicktime"
+  return "video/mp4"
+}
+
+function formatDuration(seconds: number): string {
+  const total = Math.round(seconds)
+  const m = Math.floor(total / 60)
+  const s = total % 60
+  return `${m}:${s.toString().padStart(2, "0")}`
+}
+
+// Renders a moodboard item as either an image or a hover-playable video.
+function MoodboardMedia({
+  image,
+  className,
+  useFullForImage,
+}: {
+  image: MoodboardImage
+  className: string
+  useFullForImage?: boolean
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  if (image.isVideo) {
+    return (
+      <>
+        <video
+          ref={videoRef}
+          src={`${image.path}#t=0.1`}
+          poster={image.thumbnail || undefined}
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          className={className}
+          draggable={false}
+          onMouseEnter={() => videoRef.current?.play().catch(() => {})}
+          onMouseLeave={() => {
+            const v = videoRef.current
+            if (v) { v.pause(); v.currentTime = 0 }
+          }}
+        />
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none group-hover:opacity-0 transition-opacity duration-200">
+          <div className="bg-black/50 rounded-full p-3 backdrop-blur-sm">
+            <Play className="w-6 h-6 text-white fill-white" />
+          </div>
+        </div>
+        {image.duration ? (
+          <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs font-medium px-1.5 py-0.5 rounded pointer-events-none">
+            {formatDuration(image.duration)}
+          </div>
+        ) : null}
+      </>
+    )
+  }
+
+  return (
+    <img
+      src={useFullForImage ? image.path : (image.thumbnail || image.path)}
+      alt={image.filename}
+      className={className}
+    />
+  )
 }
 
 interface Comment {
@@ -480,12 +553,8 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
                       } cursor-zoom-in`}
                       onClick={() => setIndex(i)}
                     >
-                      <img
-                        src={image.thumbnail || image.path}
-                        alt={image.filename}
-                        className="w-full h-full object-cover"
-                      />
-                      
+                      <MoodboardMedia image={image} className="w-full h-full object-cover" />
+
                       {isOwner && (
                         <>
                           <div 
@@ -549,11 +618,7 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
                       }}
                       onClick={() => setIndex(i)}
                     >
-                      <img
-                        src={image.thumbnail || image.path}
-                        alt={image.filename}
-                        className="w-full h-full object-cover"
-                      />
+                      <MoodboardMedia image={image} className="w-full h-full object-cover" />
 
                       {isOwner && (
                         <>
@@ -617,11 +682,7 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
                             } cursor-zoom-in`}
                             onClick={() => setIndex(globalIndex)}
                           >
-                            <img
-                              src={image.path}
-                              alt={image.filename}
-                              className="w-full h-auto block"
-                            />
+                            <MoodboardMedia image={image} className="w-full h-auto block" useFullForImage />
 
                             {isOwner && (
                               <>
@@ -704,9 +765,17 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
             index={index}
             open={index >= 0}
             close={() => setIndex(-1)}
-            slides={group.images.map((img) => ({ 
+            plugins={[Video]}
+            slides={group.images.map((img) => img.isVideo ? ({
+              type: "video" as const,
+              poster: img.thumbnail || undefined,
+              width: img.width || undefined,
+              height: img.height || undefined,
+              sources: [{ src: img.path, type: videoMimeFor(img.path) }],
+              downloadUrl: img.path,
+            }) : ({
               src: img.thumbnail || img.path,
-              downloadUrl: img.path
+              downloadUrl: img.path,
             }))}
           />
 

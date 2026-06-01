@@ -4,9 +4,10 @@ import prisma from "@/lib/prisma"
 import { canEditProject } from "@/lib/permissions"
 import { writeFile, mkdir } from "fs/promises"
 import path from "path"
-import { generateSecureFilename, validateUpload } from "@/lib/file-utils"
+import { generateSecureFilename, validateUpload, isVideoFile } from "@/lib/file-utils"
 import { appConfig } from "@/config/app.config"
 import { getImageMetadata, generateResultPreview } from "@/lib/image-processing"
+import { getVideoMetadata, generateVideoPoster } from "@/lib/video-processing"
 
 // In-memory lock for folder creation to prevent race conditions during parallel uploads
 const folderCreationLocks = new Map<string, Promise<string | null>>();
@@ -128,18 +129,26 @@ export async function POST(
         await writeFile(filePath, buffer)
         console.log(`[UploadAPI] Original saved to: ${filePath}`)
 
-        // Generate metadata and preview
-        let metadata = { width: 0, height: 0 }
+        const isVideo = isVideoFile(file)
+
+        // Generate metadata and preview/poster
+        let metadata: { width: number; height: number; duration?: number } = { width: 0, height: 0 }
         const previewFilename = `preview_${secureFilename}.webp`
         const previewPath = path.join(uploadDir, previewFilename)
         console.log(`[UploadAPI] Target preview path: ${previewPath}`)
-        
+
         try {
-            metadata = await getImageMetadata(filePath)
-            await generateResultPreview(filePath, previewPath)
+            if (isVideo) {
+                const videoMeta = await getVideoMetadata(filePath)
+                metadata = videoMeta
+                await generateVideoPoster(filePath, previewPath)
+            } else {
+                metadata = await getImageMetadata(filePath)
+                await generateResultPreview(filePath, previewPath)
+            }
             console.log(`[UploadAPI] Metadata & Preview generated successfully`)
         } catch (err) {
-            console.error("[UploadAPI] Error processing image after upload:", err)
+            console.error("[UploadAPI] Error processing upload:", err)
         }
 
         const dbPath = `/api/uploads/${relativeDir}/${secureFilename}`.replace(/\\/g, '/')
@@ -153,6 +162,8 @@ export async function POST(
                 width: metadata.width,
                 height: metadata.height,
                 size: file.size,
+                isVideo,
+                duration: metadata.duration ?? null,
                 project: { connect: { id } },
                 folder: folderId ? { connect: { id: folderId } } : undefined
             }

@@ -8,6 +8,8 @@ const profileSchema = z.object({
     phone: z.string().optional().nullable(),
     role: z.string().optional().nullable(),
     bio: z.string().optional().nullable(),
+    brandingColor: z.string().optional().nullable(),
+    brandingImage: z.string().optional().nullable(),
 })
 
 export async function GET() {
@@ -25,6 +27,8 @@ export async function GET() {
                 phone: true,
                 role: true,
                 bio: true,
+                brandingColor: true,
+                brandingImage: true,
             },
         })
 
@@ -56,6 +60,8 @@ export async function PUT(request: NextRequest) {
                 phone: validatedData.phone,
                 role: validatedData.role,
                 bio: validatedData.bio,
+                brandingColor: validatedData.brandingColor,
+                brandingImage: validatedData.brandingImage,
             },
         })
 

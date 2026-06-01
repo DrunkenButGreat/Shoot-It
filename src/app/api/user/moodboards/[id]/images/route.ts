@@ -3,7 +3,8 @@ import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
 import { writeFile, mkdir } from "fs/promises"
 import path from "path"
-import { generateSecureFilename, validateUpload } from "@/lib/file-utils"
+import { generateSecureFilename, validateUpload, isVideoFile } from "@/lib/file-utils"
+import { getVideoMetadata, generateVideoPoster } from "@/lib/video-processing"
 
 export async function POST(
     request: NextRequest,
@@ -52,14 +53,36 @@ export async function POST(
         const imagePath = path.join(uploadDir, secureFilename)
         await writeFile(imagePath, buffer)
 
-        const sharp = (await import("sharp")).default
-        const metadata = await sharp(buffer).metadata()
+        const isVideo = isVideoFile(file)
+        const dbPath = `/api/uploads/${relativeDir}/${secureFilename}`.replace(/\\/g, '/')
+
+        let width: number | undefined
+        let height: number | undefined
+        let duration: number | null = null
+        let thumbnail = dbPath
+
+        try {
+            if (isVideo) {
+                const meta = await getVideoMetadata(imagePath)
+                width = meta.width
+                height = meta.height
+                duration = meta.duration
+                const previewFilename = `preview_${secureFilename}.webp`
+                await generateVideoPoster(imagePath, path.join(uploadDir, previewFilename))
+                thumbnail = `/api/uploads/${relativeDir}/${previewFilename}`.replace(/\\/g, '/')
+            } else {
+                const sharp = (await import("sharp")).default
+                const metadata = await sharp(buffer).metadata()
+                width = metadata.width
+                height = metadata.height
+            }
+        } catch (err) {
+            console.error("Error processing moodboard upload:", err)
+        }
 
         const count = await prisma.moodboardImage.count({
             where: { groupId }
         })
-
-        const dbPath = `/api/uploads/${relativeDir}/${secureFilename}`.replace(/\\/g, '/')
 
         const image = await prisma.moodboardImage.create({
             data: {
@@ -67,9 +90,11 @@ export async function POST(
                 path: dbPath,
                 order: count,
                 groupId,
-                thumbnail: dbPath,
-                width: metadata.width,
-                height: metadata.height
+                thumbnail,
+                width,
+                height,
+                isVideo,
+                duration
             }
         })
 

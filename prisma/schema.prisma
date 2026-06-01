@@ -19,6 +19,8 @@ model User {
   phone                String?
   role                 String?
   bio                  String?
+  brandingColor        String?
+  brandingImage        String?
   accounts             Account[]
   appointmentResponses AppointmentResponse[]
   comments             Comment[]
@@ -80,6 +82,7 @@ model Project {
   showContractsPublicly    Boolean                @default(false)
   showSelectionPublicly    Boolean                @default(false)
   showSelectionFolders     Boolean                @default(true)
+  allowSelectionDownload   Boolean                @default(false)
   showCallsheetPublicly    Boolean                @default(false)
   showResultsPublicly      Boolean                @default(false)
   galleryLayout            String                 @default("masonry")
@@ -162,6 +165,8 @@ model MoodboardImage {
   width     Int?
   height    Int?
   size      Int?
+  isVideo   Boolean        @default(false)
+  duration  Float?
   order     Int            @default(0)
   groupId   String
   createdAt DateTime       @default(now())
@@ -370,6 +375,8 @@ model ResultFile {
   width     Int?
   height    Int?
   size      Int?
+  isVideo   Boolean       @default(false)
+  duration  Float?
   folderId  String?
   projectId String
   createdAt DateTime      @default(now())

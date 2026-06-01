@@ -4,6 +4,7 @@ import { useI18n } from '@/components/I18nProvider';
 import { Download, Trash2, CheckCircle2, Circle, Eye } from 'lucide-react';
 import { useState } from 'react';
 import Lightbox from "yet-another-react-lightbox";
+import Video from "yet-another-react-lightbox/plugins/video";
 import "yet-another-react-lightbox/styles.css";
 import { ImageCard } from '../selection/ImageCard';
 
@@ -14,7 +15,16 @@ type ResultFile = {
   thumbnail: string | null;
   width?: number | null;
   height?: number | null;
+  isVideo?: boolean;
+  duration?: number | null;
 };
+
+function videoMimeFor(path: string): string {
+  const ext = path.split("?")[0].split("#")[0].toLowerCase();
+  if (ext.endsWith(".webm")) return "video/webm";
+  if (ext.endsWith(".mov")) return "video/quicktime";
+  return "video/mp4";
+}
 
 export function ResultImageGrid({
   images,
@@ -127,10 +137,19 @@ export function ResultImageGrid({
         index={index}
         open={index >= 0}
         close={() => setIndex(-1)}
-        slides={images.map(img => ({ 
-          src: img.path, 
+        plugins={[Video]}
+        slides={images.map(img => img.isVideo ? ({
+          type: "video" as const,
+          poster: img.thumbnail || undefined,
+          width: img.width || undefined,
+          height: img.height || undefined,
+          sources: [{ src: img.path, type: videoMimeFor(img.path) }],
           downloadUrl: img.path,
-          title: img.filename 
+          title: img.filename,
+        }) : ({
+          src: img.path,
+          downloadUrl: img.path,
+          title: img.filename,
         }))}
       />
     </div>

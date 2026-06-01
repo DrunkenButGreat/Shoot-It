@@ -10,6 +10,8 @@ import { PublicResults } from "@/components/public/PublicResults"
 import { PublicSelection } from "@/components/public/PublicSelection"
 import { ApplicationForm } from "@/components/projects/ApplicationForm"
 import { AppointmentPublicList } from "@/components/appointments/AppointmentPublicList"
+import { ModuleBox } from "@/components/public/ModuleBox"
+import { TeamLoginBox } from "@/components/public/TeamLoginBox"
 import { getLocale, getDictionary } from "@/lib/i18n"
 import { cookies } from "next/headers"
 
@@ -33,6 +35,8 @@ export default async function PublicProjectPage({
                     name: true,
                     email: true,
                     image: true,
+                    brandingColor: true,
+                    brandingImage: true,
                 },
             },
             moodboardLinks: {
@@ -143,18 +147,22 @@ export default async function PublicProjectPage({
     }
 
     const projectDate = project.date ? new Date(project.date) : null
+    const brandingImage = project.owner.brandingImage || 'https://images.unsplash.com/photo-1492691523567-617025285ede?q=80&w=2070'
+    const brandColor = project.owner.brandingColor
 
     return (
-        <div className="flex-1 bg-gray-50 pb-12">
+        <div className="flex-1 bg-gray-50 pb-12" style={brandColor ? { '--brand-color': brandColor } as React.CSSProperties : undefined}>
             {/* Premium Public Header */}
-            <div className="relative h-64 bg-slate-900 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-indigo-900/40 z-10" />
-                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1492691523567-617025285ede?q=80&w=2070')] bg-cover bg-center opacity-30" />
+            <div className="relative h-64 bg-slate-900 overflow-hidden" 
+                 style={brandColor ? { backgroundColor: brandColor } : undefined}>
+                <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-black/60 z-10" />
+                <div className="absolute inset-0 bg-cover bg-center opacity-30 transition-opacity" 
+                     style={{ backgroundImage: `url('${brandingImage}')` }} />
 
                 <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col justify-end pb-8">
                     <div className="flex flex-wrap items-end justify-between gap-6">
                         <div className="space-y-4">
-                            <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-200 border border-blue-500/30 backdrop-blur-md">
+                            <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/20 text-white border border-white/30 backdrop-blur-md">
                                 {project.isPublic ? dict.projectForm.public : dict.projectForm.private} {dict.publicProject.showcase}
                             </div>
                             <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight">
@@ -163,14 +171,14 @@ export default async function PublicProjectPage({
                             <div className="flex flex-wrap gap-6 text-slate-300">
                                 {projectDate && (
                                     <div className="flex items-center gap-2">
-                                        <Calendar className="h-5 w-5 text-blue-400" />
-                                        <span className="font-medium">{projectDate.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                        <Calendar className="h-5 w-5 text-white/80" />
+                                        <span className="font-medium text-white/90">{projectDate.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                                     </div>
                                 )}
                                 {project.location && (
                                     <div className="flex items-center gap-2">
-                                        <MapPin className="h-5 w-5 text-blue-400" />
-                                        <span className="font-medium">{project.location}</span>
+                                        <MapPin className="h-5 w-5 text-white/80" />
+                                        <span className="font-medium text-white/90">{project.location}</span>
                                     </div>
                                 )}
                             </div>
@@ -180,7 +188,8 @@ export default async function PublicProjectPage({
                             {project.owner.image ? (
                                 <img src={project.owner.image} alt={project.owner.name || ''} className="w-12 h-12 rounded-full border-2 border-white/20" />
                             ) : (
-                                <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
+                                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white font-bold backdrop-blur-sm"
+                                     style={brandColor ? { backgroundColor: brandColor, opacity: 1 } : undefined}>
                                     {project.owner.name?.[0] || 'O'}
                                 </div>
                             )}
@@ -216,6 +225,7 @@ export default async function PublicProjectPage({
                                         href={session ? `/project/${project.id}/moodboard` : (project.showMoodboardPublicly ? '#moodboard' : '#')}
                                         disabled={!session && !project.showMoodboardPublicly}
                                         dict={dict}
+                                        brandColor={brandColor}
                                     />
                                     <ModuleBox
                                         title={dict.project.participants}
@@ -225,6 +235,7 @@ export default async function PublicProjectPage({
                                         href={session ? `/project/${project.id}/participants` : (project.showParticipantsPublicly ? '#participants' : '#')}
                                         disabled={!session && !project.showParticipantsPublicly}
                                         dict={dict}
+                                        brandColor={brandColor}
                                     />
                                     <ModuleBox
                                         title={dict.project.selection}
@@ -234,6 +245,7 @@ export default async function PublicProjectPage({
                                         href={session ? `/project/${project.id}/selection` : (project.showSelectionPublicly ? '#selection' : '#')}
                                         disabled={!session && !project.showSelectionPublicly}
                                         dict={dict}
+                                        brandColor={brandColor}
                                     />
                                     <ModuleBox
                                         title={dict.project.callsheet}
@@ -243,6 +255,7 @@ export default async function PublicProjectPage({
                                         href={session ? `/project/${project.id}/callsheet` : (project.showCallsheetPublicly ? '#callsheet' : '#')}
                                         disabled={!session && !project.showCallsheetPublicly}
                                         dict={dict}
+                                        brandColor={brandColor}
                                     />
                                     <ModuleBox
                                         title={dict.project.results}
@@ -252,6 +265,7 @@ export default async function PublicProjectPage({
                                         href={session ? `/project/${project.id}/results` : (project.showResultsPublicly ? '#results' : '#')}
                                         disabled={!session && !project.showResultsPublicly}
                                         dict={dict}
+                                        brandColor={brandColor}
                                     />
                                     <ModuleBox
                                         title={dict.project.appointments || 'Termine'}
@@ -261,21 +275,16 @@ export default async function PublicProjectPage({
                                         href={session ? `/project/${project.id}/appointments` : (project.showAppointmentsPublicly ? '#appointments' : '#')}
                                         disabled={!session && !project.showAppointmentsPublicly}
                                         dict={dict}
+                                        brandColor={brandColor}
                                     />
                                 </div>
 
                                 {!session && (
-                                    <div className="mt-8 p-6 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 flex flex-col md:flex-row items-center justify-between gap-4">
-                                        <div>
-                                            <h4 className="font-bold text-blue-900 text-lg">{dict.publicProject.areYouTeam}</h4>
-                                            <p className="text-blue-700 text-sm">{dict.publicProject.loginToAccess}</p>
-                                        </div>
-                                        <Link href={`/login?callbackUrl=/p/${shortCode}`}>
-                                            <Button className="bg-blue-600 hover:bg-blue-700 whitespace-nowrap">
-                                                {dict.auth.signIn}
-                                            </Button>
-                                        </Link>
-                                    </div>
+                                    <TeamLoginBox 
+                                        shortCode={shortCode}
+                                        dict={dict}
+                                        brandColor={brandColor}
+                                    />
                                 )}
                             </CardContent>
                         </Card>
@@ -284,7 +293,7 @@ export default async function PublicProjectPage({
                         {project.showMoodboardPublicly && moodboardGroups.length > 0 && (
                             <section id="moodboard" className="space-y-6 scroll-mt-20">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20">
+                                    <div className="p-2 rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20" style={brandColor ? { backgroundColor: brandColor, boxShadow: `0 10px 15px -3px ${brandColor}33` } : undefined}>
                                         <ImageIcon className="h-5 w-5" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.project.moodboard}</h2>
@@ -311,7 +320,7 @@ export default async function PublicProjectPage({
                         {project.showResultsPublicly && (
                             <section id="results" className="space-y-6 scroll-mt-20">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-xl bg-indigo-500 text-white shadow-lg shadow-indigo-500/20">
+                                    <div className="p-2 rounded-xl bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" style={brandColor ? { backgroundColor: brandColor, boxShadow: `0 10px 15px -3px ${brandColor}33` } : undefined}>
                                         <ImageIcon className="h-5 w-5" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.project.results}</h2>
@@ -323,7 +332,7 @@ export default async function PublicProjectPage({
                         {project.showParticipantsPublicly && project.participants.length > 0 && (
                             <section id="participants" className="space-y-6 scroll-mt-20">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-xl bg-indigo-500 text-white shadow-lg shadow-indigo-500/20">
+                                    <div className="p-2 rounded-xl bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" style={brandColor ? { backgroundColor: brandColor, boxShadow: `0 10px 15px -3px ${brandColor}33` } : undefined}>
                                         <Users className="h-5 w-5" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.project.participants}</h2>
@@ -336,7 +345,10 @@ export default async function PublicProjectPage({
                                                     {participant.user?.image ? (
                                                         <img src={participant.user.image} alt={participant.name} className="w-16 h-16 rounded-2xl object-cover ring-2 ring-white" />
                                                     ) : (
-                                                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-100 to-blue-50 flex items-center justify-center text-indigo-400 font-bold text-xl">
+                                                        <div 
+                                                            className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-100 to-blue-50 flex items-center justify-center text-indigo-400 font-bold text-xl"
+                                                            style={brandColor ? { backgroundImage: `linear-gradient(135deg, ${brandColor}1a, ${brandColor}0d)`, color: brandColor } : undefined}
+                                                        >
                                                             {participant.name[0]}
                                                         </div>
                                                     )}
@@ -345,8 +357,10 @@ export default async function PublicProjectPage({
                                                     )}
                                                 </div>
                                                 <div>
-                                                    <h3 className="font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">{participant.name}</h3>
-                                                    <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest mt-0.5">{participant.role || 'Contributor'}</p>
+                                                    <h3 className={`font-bold text-gray-900 transition-colors ${brandColor ? 'group-hover:text-[var(--brand-color)]' : 'group-hover:text-indigo-600'}`}>
+                                                        {participant.name}
+                                                    </h3>
+                                                    <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest mt-0.5" style={brandColor ? { color: brandColor } : undefined}>{participant.role || 'Contributor'}</p>
                                                     {participant.notes && <p className="text-xs text-gray-500 mt-2 line-clamp-1 italic">{participant.notes}</p>}
                                                 </div>
                                             </div>
@@ -359,7 +373,7 @@ export default async function PublicProjectPage({
                         {project.showSelectionPublicly && project.selectionImages.length > 0 && (
                             <section id="selection" className="space-y-6 scroll-mt-20">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-xl bg-amber-500 text-white shadow-lg shadow-amber-500/20">
+                                    <div className="p-2 rounded-xl bg-amber-500 text-white shadow-lg shadow-amber-500/20" style={brandColor ? { backgroundColor: brandColor, boxShadow: `0 10px 15px -3px ${brandColor}33` } : undefined}>
                                         <ImageIcon className="h-5 w-5" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.project.selection}</h2>
@@ -374,6 +388,8 @@ export default async function PublicProjectPage({
                                             userId={session?.user?.id}
                                             allowGuestSelection={project.allowGuestSelection}
                                             showFolders={project.showSelectionFolders}
+                                            allowDownload={project.allowSelectionDownload}
+                                            brandColor={brandColor}
                                         />
                                     </CardContent>
                                 </Card>
@@ -383,7 +399,7 @@ export default async function PublicProjectPage({
                         {project.showCallsheetPublicly && project.callsheet && (
                             <section id="callsheet" className="space-y-6 scroll-mt-20">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-xl bg-rose-500 text-white shadow-lg shadow-rose-500/20">
+                                    <div className="p-2 rounded-xl bg-rose-500 text-white shadow-lg shadow-rose-500/20" style={brandColor ? { backgroundColor: brandColor, boxShadow: `0 10px 15px -3px ${brandColor}33` } : undefined}>
                                         <Clock className="h-5 w-5" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.project.callsheet}</h2>
@@ -440,7 +456,7 @@ export default async function PublicProjectPage({
                         {project.showAppointmentsPublicly && project.appointmentSlots?.length > 0 && (
                             <section id="appointments" className="space-y-6 scroll-mt-20">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20">
+                                    <div className="p-2 rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20" style={brandColor ? { backgroundColor: brandColor, boxShadow: `0 10px 15px -3px ${brandColor}33` } : undefined}>
                                         <Calendar className="h-5 w-5" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.project.appointments || 'Terminfindung'}</h2>
@@ -456,10 +472,10 @@ export default async function PublicProjectPage({
                     {/* Right Column: Info & Actions */}
                     <div className="space-y-6">
                         {project.allowApplications && (
-                            <Card className="border-none shadow-lg bg-gradient-to-br from-blue-600 to-indigo-700 text-white overflow-hidden">
+                            <Card className="border-none shadow-lg bg-gradient-to-br from-blue-600 to-indigo-700 text-white overflow-hidden" style={brandColor ? { backgroundImage: `linear-gradient(135deg, ${brandColor}, color-mix(in srgb, ${brandColor}, black 20%))` } : undefined}>
                                 <CardHeader>
                                     <CardTitle className="text-xl text-white">{dict.applications.sectionTitle}</CardTitle>
-                                    <CardDescription className="text-blue-100 italic">
+                                    <CardDescription className="text-blue-100 italic" style={brandColor ? { color: 'rgba(255,255,255,0.9)' } : undefined}>
                                         {dict.applications.sectionDescription}
                                     </CardDescription>
                                 </CardHeader>
@@ -513,27 +529,6 @@ export default async function PublicProjectPage({
             </main>
         </div>
     )
-}
-
-function ModuleBox({ title, icon, count, label, href, disabled, dict }: any) {
-    const content = (
-        <div className={`p-4 rounded-2xl border transition-all ${disabled ? 'bg-gray-50 border-gray-100 opacity-60' : 'bg-white border-gray-100 hover:border-blue-200 hover:shadow-lg hover:-translate-y-1'}`}>
-            <div className="flex items-start justify-between mb-4">
-                <div className={`p-2 rounded-xl ${disabled ? 'bg-gray-200 text-gray-400' : 'bg-blue-50 text-blue-600'}`}>
-                    {icon}
-                </div>
-                <div className="text-right">
-                    <p className="text-2xl font-black text-gray-900">{count}</p>
-                    <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400">{label}</p>
-                </div>
-            </div>
-            <h3 className="font-bold text-gray-800">{title}</h3>
-            {disabled && <p className="text-[10px] text-gray-400 mt-1 italic">{dict.publicProject.loginRequired}</p>}
-        </div>
-    )
-
-    if (disabled) return content
-    return <Link href={href}>{content}</Link>
 }
 
 function TimeItem({ label, time, color }: { label: string, time: any, color: string }) {

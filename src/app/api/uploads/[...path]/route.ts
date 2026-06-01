@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from "next/server"
-import { readFile, stat } from "fs/promises"
+import { readFile, stat, open } from "fs/promises"
 import path from "path"
 import { auth } from "@/auth"
 import { generateResultPreview } from "@/lib/image-processing"
+
+function getContentType(filePath: string): string {
+    const ext = path.extname(filePath).toLowerCase()
+    if (ext === ".jpg" || ext === ".jpeg") return "image/jpeg"
+    if (ext === ".png") return "image/png"
+    if (ext === ".webp") return "image/webp"
+    if (ext === ".gif") return "image/gif"
+    if (ext === ".mp4") return "video/mp4"
+    if (ext === ".webm") return "video/webm"
+    if (ext === ".mov") return "video/quicktime"
+    return "application/octet-stream"
+}
 
 export async function GET(
     request: NextRequest,
@@ -66,7 +78,7 @@ export async function GET(
                             console.error(`[PreviewGen] Failed to generate:`, genError)
                             // IMPORTANT: Fallback to original if generation fails
                             console.log(`[PreviewGen] Falling back to original: ${originalPath}`)
-                            return await serveFile(originalPath)
+                            return await serveFile(originalPath, request)
                         }
                     } else {
                         console.warn(`[PreviewGen] Original not found for: ${filename} (tried basename: ${basename})`)
@@ -79,7 +91,7 @@ export async function GET(
             }
         }
 
-        return await serveFile(filePath)
+        return await serveFile(filePath, request)
 
     } catch (error: any) {
         if (error.code === 'ENOENT') {
@@ -91,20 +103,52 @@ export async function GET(
     }
 }
 
-async function serveFile(filePath: string) {
-    const fileBuffer = await readFile(filePath)
-    
-    // Determine content type
-    const ext = path.extname(filePath).toLowerCase()
-    let contentType = "application/octet-stream"
-    if (ext === ".jpg" || ext === ".jpeg") contentType = "image/jpeg"
-    else if (ext === ".png") contentType = "image/png"
-    else if (ext === ".webp") contentType = "image/webp"
-    else if (ext === ".gif") contentType = "image/gif"
+async function serveFile(filePath: string, request: NextRequest) {
+    const contentType = getContentType(filePath)
+    const { size } = await stat(filePath)
+    const rangeHeader = request.headers.get("range")
 
+    // HTTP Range support — required for <video> seeking.
+    if (rangeHeader) {
+        const match = /^bytes=(\d*)-(\d*)$/.exec(rangeHeader)
+        if (match) {
+            const start = match[1] ? parseInt(match[1], 10) : 0
+            const end = Math.min(match[2] ? parseInt(match[2], 10) : size - 1, size - 1)
+
+            if (start > end || start >= size) {
+                return new NextResponse("Range Not Satisfiable", {
+                    status: 416,
+                    headers: { "Content-Range": `bytes */${size}` },
+                })
+            }
+
+            const chunkSize = end - start + 1
+            const fh = await open(filePath, "r")
+            try {
+                const buffer = Buffer.alloc(chunkSize)
+                await fh.read(buffer, 0, chunkSize, start)
+                return new NextResponse(buffer, {
+                    status: 206,
+                    headers: {
+                        "Content-Type": contentType,
+                        "Content-Range": `bytes ${start}-${end}/${size}`,
+                        "Accept-Ranges": "bytes",
+                        "Content-Length": String(chunkSize),
+                        "Cache-Control": "public, max-age=31536000, immutable",
+                    },
+                })
+            } finally {
+                await fh.close()
+            }
+        }
+    }
+
+    const fileBuffer = await readFile(filePath)
     return new NextResponse(fileBuffer, {
         headers: {
             "Content-Type": contentType,
+            "Accept-Ranges": "bytes",
+            "Content-Length": String(size),
             "Cache-Control": "public, max-age=31536000, immutable",
         },
     })

@@ -13,6 +13,7 @@ export const projectSchema = z.object({
   showContractsPublicly: z.boolean().optional(),
   showSelectionPublicly: z.boolean().optional(),
   showSelectionFolders: z.boolean().optional(),
+  allowSelectionDownload: z.boolean().optional(),
   showCallsheetPublicly: z.boolean().optional(),
   showResultsPublicly: z.boolean().optional(),
   showAppointmentsPublicly: z.boolean().optional(),

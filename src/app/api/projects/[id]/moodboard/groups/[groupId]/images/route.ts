@@ -4,8 +4,9 @@ import prisma from "@/lib/prisma"
 import { canEditProject } from "@/lib/permissions"
 import { writeFile, mkdir } from "fs/promises"
 import path from "path"
-import { generateSecureFilename, validateUpload } from "@/lib/file-utils"
+import { generateSecureFilename, validateUpload, isVideoFile } from "@/lib/file-utils"
 import { getImageMetadata, generateResultPreview } from "@/lib/image-processing"
+import { getVideoMetadata, generateVideoPoster } from "@/lib/video-processing"
 
 export async function POST(
     request: NextRequest,
@@ -67,16 +68,23 @@ export async function POST(
         const imagePath = path.join(uploadDir, secureFilename)
         await writeFile(imagePath, buffer)
 
-        // Get image metadata and generate preview
-        let metadata = { width: 0, height: 0 }
+        const isVideo = isVideoFile(file)
+
+        // Get metadata and generate preview/poster
+        let metadata: { width: number; height: number; duration?: number } = { width: 0, height: 0 }
         const previewFilename = `preview_${secureFilename}.webp`
         const previewPath = path.join(uploadDir, previewFilename)
 
         try {
-            metadata = await getImageMetadata(imagePath)
-            await generateResultPreview(imagePath, previewPath)
+            if (isVideo) {
+                metadata = await getVideoMetadata(imagePath)
+                await generateVideoPoster(imagePath, previewPath)
+            } else {
+                metadata = await getImageMetadata(imagePath)
+                await generateResultPreview(imagePath, previewPath)
+            }
         } catch (err) {
-            console.error("Error processing moodboard image:", err)
+            console.error("Error processing moodboard upload:", err)
         }
 
         // Database record
@@ -96,7 +104,9 @@ export async function POST(
                 thumbnail: thumbnailPath,
                 width: metadata.width,
                 height: metadata.height,
-                size: file.size
+                size: file.size,
+                isVideo,
+                duration: metadata.duration ?? null
             }
         })
 
