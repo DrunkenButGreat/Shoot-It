@@ -147,8 +147,8 @@ export default async function PublicProjectPage({
     }
 
     const projectDate = project.date ? new Date(project.date) : null
-    const brandingImage = project.owner.brandingImage || 'https://images.unsplash.com/photo-1492691523567-617025285ede?q=80&w=2070'
-    const brandColor = project.owner.brandingColor
+    const brandingImage = project.brandingImage || project.owner.brandingImage || 'https://images.unsplash.com/photo-1492691523567-617025285ede?q=80&w=2070'
+    const brandColor = project.brandingColor || project.owner.brandingColor
 
     return (
         <div className="flex-1 bg-gray-50 pb-12" style={brandColor ? { '--brand-color': brandColor } as React.CSSProperties : undefined}>

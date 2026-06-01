@@ -86,6 +86,8 @@ model Project {
   showCallsheetPublicly    Boolean                @default(false)
   showResultsPublicly      Boolean                @default(false)
   galleryLayout            String                 @default("masonry")
+  brandingColor            String?
+  brandingImage            String?
   isArchived               Boolean                @default(false)
   createdAt                DateTime               @default(now())
   updatedAt                DateTime               @updatedAt
