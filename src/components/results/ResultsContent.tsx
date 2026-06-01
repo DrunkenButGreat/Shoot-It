@@ -11,6 +11,7 @@ import { ResultImageGrid } from './ResultImageGrid';
 import ImageUpload from '../moodboard/ImageUpload';
 import { appConfig } from '@/config/app.config';
 import { Checkbox } from '@/components/ui/checkbox';
+import { supportsDirectDownload, directDownloadViaManifest } from '@/lib/direct-download';
 
 type ResultFile = {
   id: string;
@@ -51,6 +52,8 @@ export function ResultsContent({
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null); // null = All, 'unassigned' = Root
   const [selectedImageIds, setSelectedImageIds] = useState<Set<string>>(new Set());
   const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadMode, setDownloadMode] = useState<'zip' | 'files'>('zip');
+  const canDirectDownload = supportsDirectDownload();
   
   const router = useRouter();
   const { t } = useI18n();
@@ -78,16 +81,20 @@ export function ResultsContent({
     if (selectedImageIds.size === 0) return;
     
     setIsDownloading(true);
+    const endpoint = `/api/projects/${projectId}/results/download`;
+    const body = { imageIds: Array.from(selectedImageIds), folderIds: [] };
     try {
-      const response = await fetch(`/api/projects/${projectId}/results/download`, {
+      if (downloadMode === 'files' && canDirectDownload) {
+        await directDownloadViaManifest(endpoint, body);
+        return;
+      }
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          imageIds: Array.from(selectedImageIds),
-          folderIds: [], // We only support image selection for now to match UI
-        }),
+        body: JSON.stringify(body),
       });
 
       if (response.ok) {
@@ -166,10 +173,29 @@ export function ResultsContent({
             {t('results.newFolder')}
           </Button>
 
+          {selectedImageIds.size > 0 && canDirectDownload && (
+            <div className="flex items-center rounded-md border border-gray-200 bg-white p-0.5 text-xs shadow-sm">
+              <button
+                onClick={() => setDownloadMode('zip')}
+                disabled={isDownloading}
+                className={`px-2.5 py-1.5 rounded font-medium transition-all ${downloadMode === 'zip' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                {t('selection.downloadAsZip')}
+              </button>
+              <button
+                onClick={() => setDownloadMode('files')}
+                disabled={isDownloading}
+                className={`px-2.5 py-1.5 rounded font-medium transition-all ${downloadMode === 'files' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                {t('selection.downloadAsFiles')}
+              </button>
+            </div>
+          )}
+
           {selectedImageIds.size > 0 && (
-            <Button 
-                variant="default" 
-                size="sm" 
+            <Button
+                variant="default"
+                size="sm"
                 disabled={isDownloading}
                 onClick={handleDownload}
                 className="gap-2 bg-blue-600 hover:bg-blue-700"

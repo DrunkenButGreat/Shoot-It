@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] - 2026-06-01
+
+### Added
+- **Direct file download**: Downloads in the public selection and the results view can now be saved directly to a chosen folder as individual files (toggle "Individual files"), recreating the folder structure on disk instead of producing a ZIP. Available in Chromium-based browsers (Chrome/Edge); other browsers automatically use ZIP.
+
+### Fixed
+- **Large download stability**: ZIP downloads (selection, results, moodboards) no longer overload the server on big folders. Archives are now streamed without compression (already-compressed photos/videos gained nothing from it) and with proper backpressure, so CPU and memory stay bounded and large downloads complete reliably. Folder structure is preserved.
+
 ## [1.9.0] - 2026-06-01
 
 ### Added

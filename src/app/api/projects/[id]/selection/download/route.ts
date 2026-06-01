@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { canAccessProject } from '@/lib/permissions';
-import archiver from 'archiver';
 import path from 'path';
-import fs from 'fs';
+import { archiveResponse } from '@/lib/zip';
 
 export async function POST(
   request: NextRequest,
@@ -36,7 +35,7 @@ export async function POST(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { imageIds = [], folderIds = [] } = await request.json();
+    const { imageIds = [], folderIds = [], mode } = await request.json();
 
     if (imageIds.length === 0 && folderIds.length === 0) {
       return NextResponse.json({ error: 'No items selected' }, { status: 400 });
@@ -87,38 +86,30 @@ export async function POST(
       return NextResponse.json({ error: 'No images found in selection' }, { status: 404 });
     }
 
-    const archive = archiver('zip', {
-      zlib: { level: 9 }
+    // Build file list with relative (zip / on-disk) paths preserving folder structure.
+    const items = Array.from(finalImagesToInclude.values()).map((image) => {
+      const relativePath = image.folderId
+        ? path.join(getFolderPath(image.folderId), image.filename)
+        : image.filename;
+      return { image, relativePath };
     });
 
-    const stream = new ReadableStream({
-      start(controller) {
-        archive.on('data', (chunk) => controller.enqueue(chunk));
-        archive.on('end', () => controller.close());
-        archive.on('error', (err) => controller.error(err));
+    // Manifest mode: return the file list for client-side direct download.
+    if (mode === 'manifest') {
+      return NextResponse.json({
+        files: items.map(({ image, relativePath }) => ({
+          url: image.path,
+          relativePath: relativePath.split(path.sep).join('/'),
+        })),
+      });
+    }
 
-        finalImagesToInclude.forEach((image) => {
-          const relativePath = image.path.replace('/api/uploads/', '');
-          const fullPath = path.join(process.cwd(), 'uploads', relativePath);
+    const files = items.map(({ image, relativePath }) => ({
+      fullPath: path.join(process.cwd(), 'uploads', image.path.replace('/api/uploads/', '')),
+      name: relativePath,
+    }));
 
-          if (fs.existsSync(fullPath)) {
-            const zipPath = image.folderId
-              ? path.join(getFolderPath(image.folderId), image.filename)
-              : image.filename;
-            archive.file(fullPath, { name: zipPath });
-          }
-        });
-
-        archive.finalize();
-      }
-    });
-
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'application/zip',
-        'Content-Disposition': `attachment; filename="selection_${projectId}.zip"`,
-      },
-    });
+    return archiveResponse(files, `selection_${projectId}.zip`);
   } catch (error) {
     console.error('Error creating selection ZIP:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

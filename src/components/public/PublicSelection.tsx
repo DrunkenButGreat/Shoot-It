@@ -7,6 +7,7 @@ import { X, ChevronLeft, ChevronRight, Star, Folder as FolderIcon, Download, Loa
 import { ImageCard } from "../selection/ImageCard"
 import { RatingControls } from "../selection/RatingControls"
 import { useI18n } from "@/components/I18nProvider"
+import { supportsDirectDownload, directDownloadViaManifest } from "@/lib/direct-download"
 
 interface Rating {
   id: string
@@ -63,7 +64,9 @@ export function PublicSelection({
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
   const [isDownloadingAll, setIsDownloadingAll] = useState(false)
+  const [downloadMode, setDownloadMode] = useState<'zip' | 'files'>('zip')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const canDirectDownload = supportsDirectDownload()
   const router = useRouter()
   const { t } = useI18n()
 
@@ -147,12 +150,24 @@ export function PublicSelection({
     }
   }
 
-  // Download the given image ids as a ZIP.
-  const downloadZip = async (imageIds: string[]) => {
+  const endpoint = `/api/projects/${projectId}/selection/download`
+
+  // Download the given image ids — either as a ZIP or directly as individual files.
+  const runDownload = async (imageIds: string[]) => {
     if (imageIds.length === 0) return
     setIsDownloadingAll(true)
     try {
-      const res = await fetch(`/api/projects/${projectId}/selection/download`, {
+      if (downloadMode === 'files' && canDirectDownload) {
+        const result = await directDownloadViaManifest(endpoint, { imageIds })
+        if (result && result.failed > 0) {
+          alert(t('selection.downloadPartialFailed')
+            .replace('{failed}', result.failed.toString())
+            .replace('{total}', imageIds.length.toString()))
+        }
+        return
+      }
+
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageIds }),
@@ -169,16 +184,17 @@ export function PublicSelection({
       document.body.removeChild(a)
     } catch (e) {
       console.error('Download failed:', e)
+      alert(t('common.error'))
     } finally {
       setIsDownloadingAll(false)
     }
   }
 
   // Download all currently shown images.
-  const downloadAll = () => downloadZip(filteredImages.map(img => img.id))
+  const downloadAll = () => runDownload(filteredImages.map(img => img.id))
 
   // Download the marked images.
-  const downloadSelected = () => downloadZip(Array.from(selectedIds))
+  const downloadSelected = () => runDownload(Array.from(selectedIds))
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
@@ -298,7 +314,26 @@ export function PublicSelection({
     <div className="flex flex-col gap-6">
       {/* Download toolbar */}
       {allowDownload && filteredImages.length > 0 && (
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end items-center gap-2 flex-wrap">
+          {/* Download mode: ZIP vs. individual files (Chromium only) */}
+          {canDirectDownload && (
+            <div className="flex items-center rounded-full border border-gray-200 bg-white p-0.5 text-sm shadow-sm mr-auto">
+              <button
+                onClick={() => setDownloadMode('zip')}
+                disabled={isDownloadingAll}
+                className={`px-3 py-1.5 rounded-full font-medium transition-all ${downloadMode === 'zip' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                {t('selection.downloadAsZip')}
+              </button>
+              <button
+                onClick={() => setDownloadMode('files')}
+                disabled={isDownloadingAll}
+                className={`px-3 py-1.5 rounded-full font-medium transition-all ${downloadMode === 'files' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                {t('selection.downloadAsFiles')}
+              </button>
+            </div>
+          )}
           {selectedIds.size > 0 && (
             <>
               <button

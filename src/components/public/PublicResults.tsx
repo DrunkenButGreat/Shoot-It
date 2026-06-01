@@ -6,6 +6,7 @@ import { ResultImageGrid } from '../results/ResultImageGrid';
 import { FolderTree } from '../results/FolderTree';
 import { Download, FolderOpen, Loader2, CheckSquare, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { supportsDirectDownload, directDownloadViaManifest } from '@/lib/direct-download';
 
 type ResultFile = {
   id: string;
@@ -35,6 +36,8 @@ export function PublicResults({ projectId }: { projectId: string }) {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedImageIds, setSelectedImageIds] = useState<Set<string>>(new Set());
   const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadMode, setDownloadMode] = useState<'zip' | 'files'>('zip');
+  const canDirectDownload = supportsDirectDownload();
   const [galleryLayout, setGalleryLayout] = useState<string>("masonry");
 
   const fetchResults = async () => {
@@ -77,16 +80,20 @@ export function PublicResults({ projectId }: { projectId: string }) {
     if (selectedImageIds.size === 0) return;
     
     setIsDownloading(true);
+    const endpoint = `/api/projects/${projectId}/results/download`;
+    const body = { imageIds: Array.from(selectedImageIds), folderIds: [] };
     try {
-      const response = await fetch(`/api/projects/${projectId}/results/download`, {
+      if (downloadMode === 'files' && canDirectDownload) {
+        await directDownloadViaManifest(endpoint, body);
+        return;
+      }
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          imageIds: Array.from(selectedImageIds),
-          folderIds: [], // We only support image selection for now
-        }),
+        body: JSON.stringify(body),
       });
 
       if (response.ok) {
@@ -149,9 +156,28 @@ export function PublicResults({ projectId }: { projectId: string }) {
             {hasSelection ? t('results.itemsSelected').replace('{count}', selectedImageIds.size.toString()) : t('results.subtitle')}
          </div>
          {hasSelection && (
-            <Button 
-                variant="default" 
-                size="sm" 
+           <div className="flex items-center gap-2">
+            {canDirectDownload && (
+              <div className="flex items-center rounded-md border border-gray-200 bg-white p-0.5 text-xs shadow-sm">
+                <button
+                  onClick={() => setDownloadMode('zip')}
+                  disabled={isDownloading}
+                  className={`px-2.5 py-1.5 rounded font-medium transition-all ${downloadMode === 'zip' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  {t('selection.downloadAsZip')}
+                </button>
+                <button
+                  onClick={() => setDownloadMode('files')}
+                  disabled={isDownloading}
+                  className={`px-2.5 py-1.5 rounded font-medium transition-all ${downloadMode === 'files' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  {t('selection.downloadAsFiles')}
+                </button>
+              </div>
+            )}
+            <Button
+                variant="default"
+                size="sm"
                 disabled={isDownloading}
                 onClick={handleDownload}
                 className="bg-blue-600 hover:bg-blue-700 rounded-xl gap-2"
@@ -159,6 +185,7 @@ export function PublicResults({ projectId }: { projectId: string }) {
                 <Download className="h-4 w-4" />
                 {isDownloading ? t('common.loading') : t('results.downloadSelected')}
             </Button>
+           </div>
          )}
       </div>
 
