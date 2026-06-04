@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.1] - 2026-06-04
+
+### Fixed
+- **Public gallery performance with many images**: The public page (selection, results and moodboard galleries) no longer freezes or loads slowly when a project contains a large number of images or videos. Gallery thumbnails now load lazily (native `loading="lazy"`) so only media near the viewport is fetched as the visitor scrolls, and gallery videos no longer preload their metadata up front (`preload="none"`), drastically reducing the number of simultaneous network requests on first paint. Moodboard grid items also use the generated thumbnail instead of the full-size image.
+
 ## [1.10.0] - 2026-06-01
 
 ### Added
