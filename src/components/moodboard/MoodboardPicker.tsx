@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { useI18n } from "@/components/I18nProvider"
+import { gridThumbUrl } from "@/lib/image-urls"
 import { Search, Plus, Check } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
@@ -128,7 +129,7 @@ export function MoodboardPicker({ projectId, onLink }: MoodboardPickerProps) {
                   >
                     <div className="aspect-video bg-gray-100 relative">
                       {group.images?.[0] ? (
-                        <img src={group.images[0].path} className="w-full h-full object-cover" alt="" />
+                        <img src={gridThumbUrl(group.images[0])} loading="lazy" decoding="async" className="w-full h-full object-cover" alt="" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">
                           {t('moodboard.noImage')}

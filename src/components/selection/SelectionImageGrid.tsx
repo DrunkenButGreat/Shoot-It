@@ -76,33 +76,23 @@ export function SelectionImageGrid({
     );
   }
 
-  // Masonry (Default)
+  // Masonry (Default) — responsive CSS columns
   return (
-    <div className="flex gap-4 items-start">
-      {Array.from({ length: 5 }).map((_, colIdx) => {
-        const columnImages = images.filter((_, i) => i % 5 === colIdx);
-        return (
-          <div key={colIdx} className="flex-1 flex flex-col gap-4">
-            {columnImages.map((image) => {
-              const globalIndex = images.findIndex(img => img.id === image.id);
-              return (
-                <div key={image.id}>
-                  <ImageCard
-                    image={image}
-                    projectId={projectId}
-                    onRatingUpdated={onRatingUpdated}
-                    onImageClick={() => onImageClick(globalIndex)}
-                    masonry={true}
-                    selected={selectedIds?.has(image.id)}
-                    onSelect={onToggleSelect ? () => onToggleSelect(image.id) : undefined}
-                    hideRatings={false}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        );
-      })}
+    <div className="columns-2 sm:columns-3 lg:columns-5 gap-4">
+      {images.map((image, i) => (
+        <div key={image.id} className="break-inside-avoid mb-4">
+          <ImageCard
+            image={image}
+            projectId={projectId}
+            onRatingUpdated={onRatingUpdated}
+            onImageClick={() => onImageClick(i)}
+            masonry={true}
+            selected={selectedIds?.has(image.id)}
+            onSelect={onToggleSelect ? () => onToggleSelect(image.id) : undefined}
+            hideRatings={false}
+          />
+        </div>
+      ))}
     </div>
   );
 }

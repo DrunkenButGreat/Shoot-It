@@ -9,6 +9,14 @@ import { RatingControls } from "../selection/RatingControls"
 import { useI18n } from "@/components/I18nProvider"
 import { supportsDirectDownload, directDownloadViaManifest } from "@/lib/direct-download"
 
+// Tailwind's JIT can't see dynamically-built class names — spell column counts out statically.
+const GRID_COLS: Record<number, string> = {
+  2: "md:grid-cols-2", 3: "md:grid-cols-3", 4: "md:grid-cols-4", 5: "md:grid-cols-5",
+}
+const MASONRY_COLS: Record<number, string> = {
+  2: "md:columns-2", 3: "md:columns-3", 4: "md:columns-4", 5: "md:columns-5",
+}
+
 interface Rating {
   id: string
   stars: number | null
@@ -205,13 +213,8 @@ export function PublicSelection({
     })
   }
 
-  const getColumnsData = () => {
-    const cols: { image: SelectionImage; index: number }[][] = Array.from({ length: columns }, () => [])
-    filteredImages.forEach((image, index) => {
-      cols[index % columns].push({ image, index })
-    })
-    return cols
-  }
+  const gridColsClass = GRID_COLS[columns] || GRID_COLS[4]
+  const masonryColsClass = MASONRY_COLS[columns] || MASONRY_COLS[4]
 
   // Get flat list of folders with names that show their hierarchy
   const getFlatFolders = (folderList: SelectionFolder[], prefix = ''): { id: string, name: string }[] => {
@@ -420,7 +423,7 @@ export function PublicSelection({
         ) : (
           <>
             {layout === "grid" ? (
-              <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-${columns} gap-4`}>
+              <div className={`grid grid-cols-2 sm:grid-cols-3 ${gridColsClass} gap-4`}>
                 {filteredImages.map((image, index) => (
                   <ImageCard
                     key={image.id}
@@ -471,27 +474,23 @@ export function PublicSelection({
                 <div className="flex-[1000] h-0" />
               </div>
             ) : (
-              /* Masonry */
-              <div className={`flex gap-4 items-start`}>
-                {getColumnsData().map((column, colIdx) => (
-                  <div key={colIdx} className="flex-1 flex flex-col gap-4">
-                    {column.map(({ image, index: globalIndex }) => (
-                      <div key={image.id}>
-                        <ImageCard
-                          image={image}
-                          projectId={projectId}
-                          onImageClick={() => openLightbox(globalIndex)}
-                          onRatingUpdated={handleRatingUpdated}
-                          masonry={true}
-                          readOnly={!canRate}
-                          isGuest={isGuest}
-                          selected={selectedIds.has(image.id)}
-                          onSelect={allowDownload ? () => toggleSelect(image.id) : undefined}
-                          forceSelectable={allowDownload}
-                          onDownload={allowDownload ? () => downloadSingle(image) : undefined}
-                        />
-                      </div>
-                    ))}
+              /* Masonry — responsive CSS columns */
+              <div className={`columns-2 sm:columns-3 ${masonryColsClass} gap-4`}>
+                {filteredImages.map((image, index) => (
+                  <div key={image.id} className="break-inside-avoid mb-4">
+                    <ImageCard
+                      image={image}
+                      projectId={projectId}
+                      onImageClick={() => openLightbox(index)}
+                      onRatingUpdated={handleRatingUpdated}
+                      masonry={true}
+                      readOnly={!canRate}
+                      isGuest={isGuest}
+                      selected={selectedIds.has(image.id)}
+                      onSelect={allowDownload ? () => toggleSelect(image.id) : undefined}
+                      forceSelectable={allowDownload}
+                      onDownload={allowDownload ? () => downloadSingle(image) : undefined}
+                    />
                   </div>
                 ))}
               </div>

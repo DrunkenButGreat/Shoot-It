@@ -6,7 +6,7 @@ import { sendMail } from '@/lib/mail'
 import { mkdir, writeFile } from 'fs/promises'
 import path from 'path'
 import { generateSecureFilename, validateUpload } from '@/lib/file-utils'
-import { getImageMetadata, generateResultPreview } from "@/lib/image-processing"
+import { getImageMetadata, generateResultPreview, generateGridThumbnail } from "@/lib/image-processing"
 
 // GET /api/projects/[id]/applications - List applications for the project owner
 export async function GET(
@@ -153,6 +153,7 @@ export async function POST(
         try {
             metadata = await getImageMetadata(filePath)
             await generateResultPreview(filePath, previewPath)
+            await generateGridThumbnail(filePath, path.join(uploadDir, `thumb_${secureFilename}.webp`))
         } catch (err) {
             console.error("Error processing application image:", err)
         }

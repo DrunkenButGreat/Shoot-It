@@ -5,6 +5,7 @@ import { writeFile, mkdir } from "fs/promises"
 import path from "path"
 import { generateSecureFilename, validateUpload, isVideoFile } from "@/lib/file-utils"
 import { getVideoMetadata, generateVideoPoster } from "@/lib/video-processing"
+import { generateGridThumbnail } from "@/lib/image-processing"
 
 export async function POST(
     request: NextRequest,
@@ -75,6 +76,7 @@ export async function POST(
                 const metadata = await sharp(buffer).metadata()
                 width = metadata.width
                 height = metadata.height
+                await generateGridThumbnail(imagePath, path.join(uploadDir, `thumb_${secureFilename}.webp`))
             }
         } catch (err) {
             console.error("Error processing moodboard upload:", err)

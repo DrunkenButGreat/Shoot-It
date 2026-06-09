@@ -2,7 +2,18 @@
 
 import { useState, useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
+import Image from "next/image"
 import { X, ChevronLeft, ChevronRight, ZoomIn, Play } from "lucide-react"
+import { gridThumbUrl } from "@/lib/image-urls"
+
+// Tailwind's JIT can't see dynamically-built class names, so the responsive
+// column counts must be spelled out statically.
+const GRID_COLS: Record<number, string> = {
+    2: "md:grid-cols-2", 3: "md:grid-cols-3", 4: "md:grid-cols-4", 5: "md:grid-cols-5",
+}
+const MASONRY_COLS: Record<number, string> = {
+    2: "md:columns-2", 3: "md:columns-3", 4: "md:columns-4", 5: "md:columns-5",
+}
 
 interface Image {
     id: string
@@ -23,8 +34,11 @@ function formatDuration(seconds: number): string {
 }
 
 // Renders a public gallery item as an image or a hover-playable video.
-function PublicMedia({ image, className }: { image: Image; className: string }) {
+// `fill` chooses next/image fill mode (object-cover layouts) vs. intrinsic
+// width/height (masonry/columns layouts that flow to natural height).
+function PublicMedia({ image, className, fill, sizes }: { image: Image; className: string; fill?: boolean; sizes?: string }) {
     const videoRef = useRef<HTMLVideoElement>(null)
+    const [errored, setErrored] = useState(false)
 
     if (image.isVideo) {
         return (
@@ -59,14 +73,36 @@ function PublicMedia({ image, className }: { image: Image; className: string }) 
         )
     }
 
+    if (errored) {
+        return (
+            <img src="https://placehold.co/400x400?text=Error+Loading+Image" alt={image.filename} className={className} />
+        )
+    }
+
+    if (fill) {
+        return (
+            <Image
+                src={gridThumbUrl(image)}
+                alt={image.filename}
+                fill
+                quality={72}
+                sizes={sizes}
+                className={className}
+                onError={() => setErrored(true)}
+            />
+        )
+    }
+
     return (
-        <img
-            src={image.path}
+        <Image
+            src={gridThumbUrl(image)}
             alt={image.filename}
+            width={image.width || 800}
+            height={image.height || 600}
+            quality={72}
+            sizes={sizes}
             className={className}
-            onError={(e) => {
-                (e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=Error+Loading+Image'
-            }}
+            onError={() => setErrored(true)}
         />
     )
 }
@@ -129,14 +165,8 @@ export function PublicGallery({
         }
     }
 
-    // Distribute images into columns for masonry-balanced
-    const getColumnsData = () => {
-        const cols: { image: Image; index: number }[][] = Array.from({ length: columns }, () => [])
-        images.forEach((image, index) => {
-            cols[index % columns].push({ image, index })
-        })
-        return cols
-    }
+    const masonryColsClass = MASONRY_COLS[columns] || MASONRY_COLS[4]
+    const gridColsClass = GRID_COLS[columns] || GRID_COLS[4]
 
     const lightbox = selectedIndex !== null && mounted ? createPortal(
         <div
@@ -201,7 +231,7 @@ export function PublicGallery({
     return (
         <>
             {layout === "grid" ? (
-                <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-${columns} gap-4`}>
+                <div className={`grid grid-cols-2 sm:grid-cols-3 ${gridColsClass} gap-4`}>
                     {images.map((image, index) => (
                         <div
                             key={image.id}
@@ -210,6 +240,8 @@ export function PublicGallery({
                         >
                             <PublicMedia
                                 image={image}
+                                fill
+                                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
                                 className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
                             />
                             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -219,7 +251,7 @@ export function PublicGallery({
                     ))}
                 </div>
             ) : layout === "columns" ? (
-                <div className={`columns-2 sm:columns-3 md:columns-${columns} gap-4 space-y-4`}>
+                <div className={`columns-2 sm:columns-3 ${masonryColsClass} gap-4 space-y-4`}>
                     {images.map((image, index) => (
                         <div
                             key={image.id}
@@ -228,6 +260,7 @@ export function PublicGallery({
                         >
                             <PublicMedia
                                 image={image}
+                                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
                                 className="w-full h-auto transition-transform duration-500 group-hover:scale-110 block"
                             />
                             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -258,6 +291,8 @@ export function PublicGallery({
                             >
                                 <PublicMedia
                                     image={image}
+                                    fill
+                                    sizes="(max-width: 768px) 50vw, 33vw"
                                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 block"
                                 />
                                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -270,25 +305,22 @@ export function PublicGallery({
                     <div className="flex-[1000] h-0" />
                 </div>
             ) : (
-                /* Balanced Masonry */
-                <div className={`flex gap-4 items-start`}>
-                    {getColumnsData().map((column, colIdx) => (
-                        <div key={colIdx} className="flex-1 flex flex-col gap-4">
-                            {column.map(({ image, index }) => (
-                                <div
-                                    key={image.id}
-                                    className="relative rounded-xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all border border-gray-100 bg-gray-50 h-fit"
-                                    onClick={() => openLightbox(index)}
-                                >
-                                    <PublicMedia
-                                        image={image}
-                                        className="w-full h-auto transition-transform duration-500 group-hover:scale-110 block"
-                                    />
-                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                        <ZoomIn className="text-white h-8 w-8" />
-                                    </div>
-                                </div>
-                            ))}
+                /* Balanced Masonry — CSS columns (responsive, no JS distribution) */
+                <div className={`columns-2 sm:columns-3 ${masonryColsClass} gap-4 space-y-4`}>
+                    {images.map((image, index) => (
+                        <div
+                            key={image.id}
+                            className="relative break-inside-avoid rounded-xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all border border-gray-100 bg-gray-50 mb-4"
+                            onClick={() => openLightbox(index)}
+                        >
+                            <PublicMedia
+                                image={image}
+                                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+                                className="w-full h-auto transition-transform duration-500 group-hover:scale-110 block"
+                            />
+                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <ZoomIn className="text-white h-8 w-8" />
+                            </div>
                         </div>
                     ))}
                 </div>

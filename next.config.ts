@@ -19,6 +19,10 @@ const nextConfig: NextConfig = {
         hostname: '**',
       },
     ],
+    // Next.js 16 requires explicit allowlists for local image optimization.
+    formats: ['image/avif', 'image/webp'],
+    qualities: [72, 85], // 72 = grid thumbnails, 85 = previews
+    localPatterns: [{ pathname: '/api/uploads/**' }],
   },
   experimental: {
     serverActions: {

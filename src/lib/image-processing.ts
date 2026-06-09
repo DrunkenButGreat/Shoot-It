@@ -43,6 +43,23 @@ export async function generateResultPreview(
     .toFile(targetPath)
 }
 
+export async function generateGridThumbnail(
+  sourcePath: string,
+  targetPath: string
+): Promise<void> {
+  await sharp(sourcePath)
+    .resize(
+      appConfig.imageProcessing.gridThumbMaxWidth,
+      appConfig.imageProcessing.gridThumbMaxHeight,
+      {
+        fit: 'inside',
+        withoutEnlargement: true,
+      }
+    )
+    .webp({ quality: appConfig.imageProcessing.gridThumbQuality })
+    .toFile(targetPath)
+}
+
 export async function getImageMetadata(filePath: string): Promise<ImageMetadata> {
   const metadata = await sharp(filePath).metadata()
   const stats = await fs.stat(filePath)

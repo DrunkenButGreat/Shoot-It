@@ -5,7 +5,7 @@ import { canEditProject } from "@/lib/permissions"
 import { writeFile, mkdir } from "fs/promises"
 import path from "path"
 import { generateSecureFilename, validateUpload, isVideoFile } from "@/lib/file-utils"
-import { getImageMetadata, generateResultPreview } from "@/lib/image-processing"
+import { getImageMetadata, generateResultPreview, generateGridThumbnail } from "@/lib/image-processing"
 import { getVideoMetadata, generateVideoPoster } from "@/lib/video-processing"
 
 export async function POST(
@@ -82,6 +82,7 @@ export async function POST(
             } else {
                 metadata = await getImageMetadata(imagePath)
                 await generateResultPreview(imagePath, previewPath)
+                await generateGridThumbnail(imagePath, path.join(uploadDir, `thumb_${secureFilename}.webp`))
             }
         } catch (err) {
             console.error("Error processing moodboard upload:", err)

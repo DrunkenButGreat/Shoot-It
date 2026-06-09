@@ -5,7 +5,7 @@ import { canEditProject } from "@/lib/permissions"
 import { writeFile, mkdir } from "fs/promises"
 import path from "path"
 import { generateSecureFilename, validateUpload } from "@/lib/file-utils"
-import { getImageMetadata, generateResultPreview } from "@/lib/image-processing"
+import { getImageMetadata, generateResultPreview, generateGridThumbnail } from "@/lib/image-processing"
 
 // In-memory lock for folder creation to prevent race conditions during parallel uploads
 const folderCreationLocks = new Map<string, Promise<string | null>>();
@@ -135,6 +135,7 @@ export async function POST(
         try {
             metadata = await getImageMetadata(imagePath)
             await generateResultPreview(imagePath, previewPath)
+            await generateGridThumbnail(imagePath, path.join(uploadDir, `thumb_${secureFilename}.webp`))
         } catch (err) {
             console.error("Error processing selection image:", err)
         }

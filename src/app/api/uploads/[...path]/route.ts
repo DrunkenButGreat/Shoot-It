@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { readFile, stat, open } from "fs/promises"
 import path from "path"
 import { auth } from "@/auth"
-import { generateResultPreview } from "@/lib/image-processing"
+import { generateResultPreview, generateGridThumbnail } from "@/lib/image-processing"
 
 function getContentType(filePath: string): string {
     const ext = path.extname(filePath).toLowerCase()
@@ -23,7 +23,6 @@ export async function GET(
     try {
         const { path: pathParts } = await params
         const relativePath = path.join(...pathParts)
-        console.log(`[UploadServer] Requesting: ${relativePath}`)
 
         // Path traversal protection
         if (relativePath.includes('..') || relativePath.startsWith('/') || relativePath.startsWith('\\')) {
@@ -34,24 +33,29 @@ export async function GET(
         const uploadsDir = path.join(process.cwd(), "uploads")
         const filePath = path.join(uploadsDir, relativePath)
         
-        // Handle on-the-fly preview generation
+        // Handle on-the-fly derivative generation (preview_ = 2560px lightbox,
+        // thumb_ = small grid thumbnail). Both are derived from the original and
+        // backfill on first request, so pre-update uploads work without a migration.
         const filename = path.basename(filePath)
-        if (filename.startsWith('preview_') && filename.endsWith('.webp')) {
+        const prefix = filename.startsWith('preview_')
+            ? 'preview_'
+            : filename.startsWith('thumb_')
+                ? 'thumb_'
+                : null
+        if (prefix && filename.endsWith('.webp')) {
+            const generate = prefix === 'preview_' ? generateResultPreview : generateGridThumbnail
             try {
                 // Check if already exists using stat instead of readFile
                 await stat(filePath)
-                console.log(`[UploadServer] Preview exists: ${filename}`)
             } catch (error: any) {
                 if (error.code === 'ENOENT') {
-                    console.log(`[UploadServer] Preview missing, generating for: ${filename}`)
-                    
-                    // Extract basename: preview_123.jpg.webp -> 123.jpg
-                    const basename = filename.slice('preview_'.length, filename.lastIndexOf('.webp'))
+                    // Extract basename: thumb_123.jpg.webp -> 123.jpg
+                    const basename = filename.slice(prefix.length, filename.lastIndexOf('.webp'))
                     const dir = path.dirname(filePath)
-                    
+
                     let originalPath = null
                     const directPath = path.join(dir, basename)
-                    
+
                     try {
                         await stat(directPath)
                         originalPath = directPath
@@ -59,7 +63,7 @@ export async function GET(
                         // Try common extensions if direct didn't work
                         const nameWithoutExt = path.parse(basename).name
                         const extensions = ['.jpg', '.jpeg', '.png', '.webp', '.tiff', '.heic', '.HEIC', '.JPG', '.PNG']
-                        
+
                         for (const ext of extensions) {
                             const potentialPath = path.join(dir, nameWithoutExt + ext)
                             try {
@@ -72,17 +76,14 @@ export async function GET(
 
                     if (originalPath) {
                         try {
-                            await generateResultPreview(originalPath, filePath)
-                            console.log(`[PreviewGen] Success: ${path.basename(originalPath)} -> ${filename}`)
+                            await generate(originalPath, filePath)
                         } catch (genError) {
-                            console.error(`[PreviewGen] Failed to generate:`, genError)
+                            console.error(`[DerivativeGen] Failed to generate ${filename}:`, genError)
                             // IMPORTANT: Fallback to original if generation fails
-                            console.log(`[PreviewGen] Falling back to original: ${originalPath}`)
                             return await serveFile(originalPath, request)
                         }
                     } else {
-                        console.warn(`[PreviewGen] Original not found for: ${filename} (tried basename: ${basename})`)
-                        // If it's a preview request and we can't find original, we still can't serve anything
+                        console.warn(`[DerivativeGen] Original not found for: ${filename} (tried basename: ${basename})`)
                         return new NextResponse("Original not found", { status: 404 })
                     }
                 } else {

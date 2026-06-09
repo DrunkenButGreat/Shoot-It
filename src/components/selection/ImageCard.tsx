@@ -1,10 +1,12 @@
 "use client"
 
 import { useRef, useState } from "react"
+import Image from "next/image"
 import { Star, Check, Play, Download } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { RatingControls } from "./RatingControls"
+import { gridThumbUrl } from "@/lib/image-urls"
 
 interface Rating {
   id: string
@@ -20,6 +22,8 @@ interface SelectionImage {
   ratings: Rating | null
   isVideo?: boolean
   duration?: number | null
+  width?: number | null
+  height?: number | null
 }
 
 function formatDuration(seconds: number): string {
@@ -164,12 +168,28 @@ export function ImageCard({
             ) : null}
           </>
         ) : (image.thumbnail || image.path) ? (
-          <img
-            src={image.thumbnail || image.path}
-            alt={image.filename}
-            className={`w-full ${justified || !masonry ? "h-full object-cover" : "h-auto"} group-hover:scale-105 transition-transform duration-300`}
-            draggable={false}
-          />
+          masonry ? (
+            <Image
+              src={gridThumbUrl(image)}
+              alt={image.filename}
+              width={image.width || 800}
+              height={image.height || 600}
+              quality={72}
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+              className="w-full h-auto group-hover:scale-105 transition-transform duration-300"
+              draggable={false}
+            />
+          ) : (
+            <Image
+              src={gridThumbUrl(image)}
+              alt={image.filename}
+              fill
+              quality={72}
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 12vw"
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
+              draggable={false}
+            />
+          )
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-xs p-2 text-center break-all">
             {image.filename}

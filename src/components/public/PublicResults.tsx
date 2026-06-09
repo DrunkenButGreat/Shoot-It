@@ -7,6 +7,7 @@ import { FolderTree } from '../results/FolderTree';
 import { Download, FolderOpen, Loader2, CheckSquare, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supportsDirectDownload, directDownloadViaManifest } from '@/lib/direct-download';
+import { useIncrementalReveal } from '@/hooks/useIncrementalReveal';
 
 type ResultFile = {
   id: string;
@@ -75,6 +76,8 @@ export function PublicResults({ projectId }: { projectId: string }) {
     const folder = folders.find(f => f.id === selectedFolderId);
     return folder ? folder.images : [];
   }, [selectedFolderId, folders, rootImages]);
+
+  const { visible: visibleImages, hasMore, sentinelRef } = useIncrementalReveal(filteredImages, 40);
 
   const handleDownload = async () => {
     if (selectedImageIds.size === 0) return;
@@ -271,7 +274,7 @@ export function PublicResults({ projectId }: { projectId: string }) {
                </div>
 
                 <ResultImageGrid
-                  images={filteredImages}
+                  images={visibleImages}
                   selectedIds={selectedImageIds}
                   onToggleSelect={toggleImageSelection}
                   onDelete={() => {}}
@@ -279,6 +282,7 @@ export function PublicResults({ projectId }: { projectId: string }) {
                   projectId={projectId}
                   layout={galleryLayout}
                 />
+                {hasMore && <div ref={sentinelRef} className="h-10" />}
              </>
            )}
         </div>

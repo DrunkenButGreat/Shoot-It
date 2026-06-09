@@ -6,7 +6,7 @@ import { writeFile, mkdir } from "fs/promises"
 import path from "path"
 import { generateSecureFilename, validateUpload, isVideoFile } from "@/lib/file-utils"
 import { appConfig } from "@/config/app.config"
-import { getImageMetadata, generateResultPreview } from "@/lib/image-processing"
+import { getImageMetadata, generateResultPreview, generateGridThumbnail } from "@/lib/image-processing"
 import { getVideoMetadata, generateVideoPoster } from "@/lib/video-processing"
 
 // In-memory lock for folder creation
@@ -145,6 +145,7 @@ export async function POST(
             } else {
                 metadata = await getImageMetadata(filePath)
                 await generateResultPreview(filePath, previewPath)
+                await generateGridThumbnail(filePath, path.join(uploadDir, `thumb_${secureFilename}.webp`))
             }
             console.log(`[UploadAPI] Metadata & Preview generated successfully`)
         } catch (err) {

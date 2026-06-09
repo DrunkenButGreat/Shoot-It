@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0] - 2026-06-09
+
+### Added
+- **Grid thumbnails**: Galleries now render a dedicated small thumbnail stage (`thumb_*.webp`, ≤1280px) per image instead of loading the 2560px preview or the original. Thumbnails are generated at upload time and, for images uploaded before this release, on the first request (no database migration required). Serving goes through `next/image`, which additionally emits responsive AVIF/WebP variants sized to the device.
+- **Lazy loading & responsive columns**: Off-screen gallery tiles are no longer requested until they scroll into view, and masonry layouts now adapt their column count to the viewport (2 columns on mobile instead of a fixed 5).
+- **Windowing**: The public results "All" view reveals large image sets in batches as you scroll, keeping the number of mounted tiles bounded.
+
+### Changed
+- **Mobile gallery performance**: Public moodboards, selection and results galleries now load small thumbnails over `next/image` instead of full-size previews/originals, drastically reducing transferred bytes and fixing images that previously failed to load on mobile connections.
+
 ## [1.10.0] - 2026-06-01
 
 ### Added

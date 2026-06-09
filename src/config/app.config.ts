@@ -18,6 +18,9 @@ export const appConfig = {
     resultsPreviewMaxWidth: 2560,
     resultsPreviewMaxHeight: 2560,
     resultsPreviewQuality: 85,
+    gridThumbMaxWidth: 1280,
+    gridThumbMaxHeight: 1280,
+    gridThumbQuality: 72,
   },
   
   shortcode: {

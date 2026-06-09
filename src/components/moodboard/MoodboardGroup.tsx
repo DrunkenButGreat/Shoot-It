@@ -9,6 +9,7 @@ import ImageUpload from "./ImageUpload"
 import { LocalMediaPicker } from "../selection/LocalMediaPicker"
 import { useI18n } from "@/components/I18nProvider"
 import { useSession } from "next-auth/react"
+import { gridThumbUrl } from "@/lib/image-urls"
 
 import Lightbox from "yet-another-react-lightbox"
 import Video from "yet-another-react-lightbox/plugins/video"
@@ -87,8 +88,10 @@ function MoodboardMedia({
 
   return (
     <img
-      src={useFullForImage ? image.path : (image.thumbnail || image.path)}
+      src={useFullForImage ? image.path : gridThumbUrl(image)}
       alt={image.filename}
+      loading="lazy"
+      decoding="async"
       className={className}
     />
   )
