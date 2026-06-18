@@ -16,7 +16,13 @@ export async function PUT(
     const validatedData = ratingSchema.parse(body)
     const { guestId, ...ratingData } = validatedData
 
-    if (!session?.user?.id) {
+    const userId = session?.user?.id
+    // The path is decided by authorization (project access), not merely by
+    // whether someone is logged in. Anyone without access is treated as a guest
+    // when the project allows guest selection.
+    const hasAccess = userId ? await canAccessProject(userId, id) : false
+
+    if (!hasAccess) {
       // Guest access check
       const project = await prisma.project.findUnique({
         where: { id },
@@ -24,7 +30,11 @@ export async function PUT(
       })
 
       if (!project?.allowGuestSelection) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        // Logged-in users without access get 403, true guests get 401.
+        return NextResponse.json(
+          { error: userId ? 'Forbidden' : 'Unauthorized' },
+          { status: userId ? 403 : 401 }
+        )
       }
 
       if (!guestId) {
@@ -61,12 +71,6 @@ export async function PUT(
       return NextResponse.json(rating)
     }
 
-    // Check if user has access to this project
-    const hasAccess = await canAccessProject(session.user.id, id)
-    if (!hasAccess) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
     // Verify the image belongs to the project
     const image = await prisma.selectionImage.findUnique({
       where: { id: imageId },
@@ -83,14 +87,14 @@ export async function PUT(
       update: {
         stars: ratingData.stars,
         color: ratingData.color as any,
-        userId: session.user.id,
+        userId,
         guestId: null,
       },
       create: {
         imageId,
         stars: ratingData.stars,
         color: ratingData.color as any,
-        userId: session.user.id,
+        userId,
       },
     })
 
