@@ -460,6 +460,7 @@
     "areYouTeam": "Are you part of the team?",
     "loginToAccess": "Login to access detailed documents, high-res images and the callsheet.",
     "loginToRate": "Login to rate images",
+    "noPermissionToRate": "You don't have permission to rate images in this project",
     "loginNow": "Login now",
     "projectOwner": "Project Owner"
   }

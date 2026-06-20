@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.1] - 2026-06-18
+
+### Fixed
+- **Guest rating "Not authenticated" error**: Rating an image in a public selection gallery could fail with an authentication error even though guest selection was enabled. The cause was that the rating path (authenticated vs. guest) was chosen based on whether the visitor was logged in, rather than whether they actually had access to the project — so any logged-in user without project access was blocked instead of being treated as a guest. Both the API and the public gallery now decide based on project access: members rate as themselves, everyone else rates as a guest when guest selection is enabled. Logged-in users who lack permission to rate now see a clear "no permission" message instead of a misleading "login to rate" prompt.
+
 ## [1.10.0] - 2026-06-01
 
 ### Added

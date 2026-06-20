@@ -1,5 +1,6 @@
 import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
+import { canAccessProject } from "@/lib/permissions"
 import { notFound, redirect } from "next/navigation"
 import { Calendar, MapPin, Image as ImageIcon, Users, Clock, CheckSquare } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -113,25 +114,20 @@ export default async function PublicProjectPage({
         order: link.order
     }))
 
+    // Does the logged-in user have project access (owner/editor/viewer/participant)?
+    // This — not merely being logged in — decides whether ratings go through the
+    // authenticated path or the guest path.
+    const userHasAccess = session?.user?.id
+        ? await canAccessProject(session.user.id, project.id)
+        : false
+
     // If project is not public, check if user has access
     if (!project.isPublic) {
         if (!session?.user?.id) {
             redirect(`/login?callbackUrl=/p/${shortCode}`)
         }
 
-        // Check if user has access (owner or via ProjectAccess or Participant)
-        const hasAccess = await prisma.project.findFirst({
-            where: {
-                id: project.id,
-                OR: [
-                    { ownerId: session.user.id },
-                    { access: { some: { userId: session.user.id } } },
-                    { participants: { some: { email: session.user.email || undefined } } }
-                ]
-            }
-        })
-
-        if (!hasAccess) {
+        if (!userHasAccess) {
             return (
                 <div className="flex-1 flex items-center justify-center bg-gray-50 px-4">
                     <Card className="max-w-md w-full text-center p-8">
@@ -385,7 +381,8 @@ export default async function PublicProjectPage({
                                             images={project.selectionImages}
                                             folders={project.selectionFolders}
                                             layout={project.galleryLayout as any}
-                                            userId={session?.user?.id}
+                                            userHasAccess={userHasAccess}
+                                            isAuthenticated={!!session?.user?.id}
                                             allowGuestSelection={project.allowGuestSelection}
                                             showFolders={project.showSelectionFolders}
                                             allowDownload={project.allowSelectionDownload}

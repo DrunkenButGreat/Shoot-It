@@ -41,7 +41,8 @@ interface PublicSelectionProps {
   folders: SelectionFolder[]
   layout?: "grid" | "masonry" | "justified"
   columns?: number
-  userId?: string
+  userHasAccess: boolean
+  isAuthenticated: boolean
   allowGuestSelection?: boolean
   showFolders?: boolean
   allowDownload?: boolean
@@ -54,7 +55,8 @@ export function PublicSelection({
   folders,
   layout = "masonry",
   columns = 4,
-  userId,
+  userHasAccess,
+  isAuthenticated,
   allowGuestSelection,
   showFolders = true,
   allowDownload = false,
@@ -74,8 +76,10 @@ export function PublicSelection({
     router.refresh()
   }
 
-  const isGuest = !userId && allowGuestSelection
-  const canRate = !!userId || !!allowGuestSelection
+  // Project members rate as themselves; everyone else (true guests OR logged-in
+  // users without project access) rates as a guest when guest selection is on.
+  const isGuest = !userHasAccess && !!allowGuestSelection
+  const canRate = !!userHasAccess || !!allowGuestSelection
 
   const filteredImages = images.filter(img => {
     if (selectedFolderId === 'unassigned') return !img.folderId
@@ -301,7 +305,7 @@ export function PublicSelection({
             </div>
           ) : (
             <div className="text-white/50 text-xs italic bg-black/40 backdrop-blur-md px-4 py-2 rounded-xl border border-white/5">
-              {t('publicProject.loginToRate')}
+              {isAuthenticated ? t('publicProject.noPermissionToRate') : t('publicProject.loginToRate')}
             </div>
           )}
         </div>
