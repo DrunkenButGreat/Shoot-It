@@ -18,29 +18,9 @@ export async function PUT(
 
     const userId = session?.user?.id
     // The path is decided by authorization (project access), not merely by
-    // whether someone is logged in. Anyone without access is treated as a guest
-    // when the project allows guest selection.
-    const hasAccess = userId ? await canAccessProject(userId, id) : false
-
-    if (!hasAccess) {
-      // Guest access check
-      const project = await prisma.project.findUnique({
-        where: { id },
-        select: { allowGuestSelection: true }
-      })
-
-      if (!project?.allowGuestSelection) {
-        // Logged-in users without access get 403, true guests get 401.
-        return NextResponse.json(
-          { error: userId ? 'Forbidden' : 'Unauthorized' },
-          { status: userId ? 403 : 401 }
-        )
-      }
-
-      if (!guestId) {
-        return NextResponse.json({ error: 'Guest ID required' }, { status: 400 })
-      }
-
+    // whether someone is logged in. Members rate as themselves; anyone without
+    // access is treated as a guest when the project allows guest selection.
+    if (userId && (await canAccessProject(userId, id))) {
       // Verify the image belongs to the project
       const image = await prisma.selectionImage.findUnique({
         where: { id: imageId },
@@ -57,18 +37,36 @@ export async function PUT(
         update: {
           stars: ratingData.stars,
           color: ratingData.color as any,
-          guestId,
-          userId: null,
+          userId,
+          guestId: null,
         },
         create: {
           imageId,
           stars: ratingData.stars,
           color: ratingData.color as any,
-          guestId,
+          userId,
         },
       })
 
       return NextResponse.json(rating)
+    }
+
+    // Guest path (true guests and logged-in users without project access)
+    const project = await prisma.project.findUnique({
+      where: { id },
+      select: { allowGuestSelection: true }
+    })
+
+    if (!project?.allowGuestSelection) {
+      // Logged-in users without access get 403, true guests get 401.
+      return NextResponse.json(
+        { error: userId ? 'Forbidden' : 'Unauthorized' },
+        { status: userId ? 403 : 401 }
+      )
+    }
+
+    if (!guestId) {
+      return NextResponse.json({ error: 'Guest ID required' }, { status: 400 })
     }
 
     // Verify the image belongs to the project
@@ -87,14 +85,14 @@ export async function PUT(
       update: {
         stars: ratingData.stars,
         color: ratingData.color as any,
-        userId,
-        guestId: null,
+        guestId,
+        userId: null,
       },
       create: {
         imageId,
         stars: ratingData.stars,
         color: ratingData.color as any,
-        userId,
+        guestId,
       },
     })
 

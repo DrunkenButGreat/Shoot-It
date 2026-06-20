@@ -382,6 +382,7 @@ export default async function PublicProjectPage({
                                             folders={project.selectionFolders}
                                             layout={project.galleryLayout as any}
                                             userHasAccess={userHasAccess}
+                                            isAuthenticated={!!session?.user?.id}
                                             allowGuestSelection={project.allowGuestSelection}
                                             showFolders={project.showSelectionFolders}
                                             allowDownload={project.allowSelectionDownload}

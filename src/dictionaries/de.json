@@ -461,6 +461,7 @@
     "areYouTeam": "Bist du Teil des Teams?",
     "loginToAccess": "Melde dich an, um auf detaillierte Dokumente, hochauflösende Bilder und das Callsheet zuzugreifen.",
     "loginToRate": "Melde dich an, um Bilder zu bewerten",
+    "noPermissionToRate": "Du hast keine Berechtigung, Bilder in diesem Projekt zu bewerten",
     "loginNow": "Jetzt anmelden",
     "projectOwner": "Projekt-Besitzer"
   }

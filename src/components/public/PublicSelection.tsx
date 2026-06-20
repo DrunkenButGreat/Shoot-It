@@ -42,6 +42,7 @@ interface PublicSelectionProps {
   layout?: "grid" | "masonry" | "justified"
   columns?: number
   userHasAccess?: boolean
+  isAuthenticated?: boolean
   allowGuestSelection?: boolean
   showFolders?: boolean
   allowDownload?: boolean
@@ -55,6 +56,7 @@ export function PublicSelection({
   layout = "masonry",
   columns = 4,
   userHasAccess,
+  isAuthenticated,
   allowGuestSelection,
   showFolders = true,
   allowDownload = false,
@@ -303,7 +305,7 @@ export function PublicSelection({
             </div>
           ) : (
             <div className="text-white/50 text-xs italic bg-black/40 backdrop-blur-md px-4 py-2 rounded-xl border border-white/5">
-              {t('publicProject.loginToRate')}
+              {isAuthenticated ? t('publicProject.noPermissionToRate') : t('publicProject.loginToRate')}
             </div>
           )}
         </div>
