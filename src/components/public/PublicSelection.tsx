@@ -41,8 +41,8 @@ interface PublicSelectionProps {
   folders: SelectionFolder[]
   layout?: "grid" | "masonry" | "justified"
   columns?: number
-  userHasAccess?: boolean
-  isAuthenticated?: boolean
+  userHasAccess: boolean
+  isAuthenticated: boolean
   allowGuestSelection?: boolean
   showFolders?: boolean
   allowDownload?: boolean
