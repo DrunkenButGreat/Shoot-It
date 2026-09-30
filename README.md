@@ -224,6 +224,17 @@ See **[setup, existing-installation transition and recovery](deploy/UPDATES.md)*
 Existing installations must complete that transition before using the new image
 or recreating the PostgreSQL container. The updater is not enabled by default.
 
+From version 1.13.0, manage it on the Linux host with:
+
+```sh
+sudo python3 scripts/autoupdate.py check    # Check requirements and paths without changes
+sudo python3 scripts/autoupdate.py enable   # Check, install and enable the timer
+sudo python3 scripts/autoupdate.py disable  # Disable future runs; let an active update finish
+```
+
+Use `--project-dir /opt/shoot-it` and `--backup-dir /mnt/backups/shoot-it` for explicit
+paths on first setup. Existing configuration is preserved.
+
 ### Initial Setup
 
 1. Navigate to http://localhost:3000

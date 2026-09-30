@@ -6,6 +6,50 @@ Default: check every 15 minutes, install between **03:00 and 05:00 host local ti
 The app is unavailable during the consistent backup, migration and restart.
 Backup duration depends on the amount of media; this is not zero-downtime deployment.
 
+## Manage automatic updates (1.13.0+)
+
+Run from the checkout on the **Linux Docker host**:
+
+```sh
+sudo python3 scripts/autoupdate.py check
+sudo python3 scripts/autoupdate.py enable
+sudo python3 scripts/autoupdate.py disable
+```
+
+- `check` is read-only. It validates Linux/systemd/root access, Python (including
+  `/usr/bin/python3` used by the service), Docker with `docker.service`, Compose 2.20+, the local Docker
+  context, project and Compose paths, `.env`, state/backup locations, the running
+  app version, migration status, persistent DB/uploads mounts, image override support,
+  available disk space and unfinished transactions. It reports the first blocking
+  requirement with a nonzero exit code. It does not install units, pull images,
+  create backup directories or change the image pin.
+- `enable` runs those checks first, preserves existing configuration, pins the running
+  image, installs/refreshes the host updater and units, and activates the timer.
+  It refuses to overwrite a running updater or ignore an unresolved migration.
+- `disable` disables future timer runs even if Docker or the installation paths
+  are broken. It never stops an active update or changes the image pin, database,
+  configuration or backups. See the manual-mode transition below for removing a pin.
+
+For a different installation path or backup disk, pass explicit paths on first setup:
+
+```sh
+sudo python3 scripts/autoupdate.py check --project-dir /opt/shoot-it --backup-dir /mnt/backups/shoot-it
+sudo python3 scripts/autoupdate.py enable --project-dir /opt/shoot-it --backup-dir /mnt/backups/shoot-it
+```
+
+`--compose-file docker-compose.yml --compose-file production.override.yml` selects
+an explicit file list. Without this option the standard Compose file and an existing
+`docker-compose.override.yml` are included. Existing `/etc/shoot-it-updater.json`
+takes precedence; conflicting path/file arguments fail instead of silently switching
+installations. Edit that configuration deliberately to change an existing setup.
+Paths with spaces are supported. Backup/state directories inside live uploads are
+rejected. The old `sudo sh scripts/install-updater.sh` entry point remains an alias
+for `enable` and accepts the same path options.
+
+These are **local** prerequisites. Network availability, GitHub visibility and GHCR
+pull permissions are checked by the updater when fetching a release. No GitHub
+credentials or database connection strings are printed by this check.
+
 ## Manual updates without the updater
 
 Manual updates remain the default and need only Docker Compose. There is no
@@ -31,7 +75,8 @@ A fixed digest intentionally keeps the same image even after `pull`.
 
 ### Switch from automatic back to manual updates
 
-1. Disable future runs: `sudo systemctl disable --now shoot-it-updater.timer`.
+1. Disable future runs: `sudo python3 scripts/autoupdate.py disable` (or
+   `sudo systemctl disable --now shoot-it-updater.timer` on older checkouts).
 2. Let an already running update finish; disabling the timer does not stop its
    service. Check `systemctl is-active shoot-it-updater.service` and the journal.
    Do not interrupt migrations. If `transaction.json` reports an unfinished or
@@ -44,7 +89,7 @@ A fixed digest intentionally keeps the same image even after `pull`.
 
 The installed script and backups can remain on the host; nothing runs automatically
 while the timer is disabled. To opt in again after a successful manual update,
-rerun `sudo sh scripts/install-updater.sh`; it validates and pins the running image
+rerun `sudo python3 scripts/autoupdate.py enable`; it validates and pins the running image
 and re-enables the timer. Unresolved transactions must be recovered first.
 
 ## Requirements for automatic updates
@@ -73,7 +118,8 @@ with the files from that release. `docker compose up -d` creates the empty datab
 executes the migration history and starts the app. To opt into automatic updates:
 
 ```sh
-sudo sh scripts/install-updater.sh
+sudo python3 scripts/autoupdate.py check
+sudo python3 scripts/autoupdate.py enable
 systemctl status shoot-it-updater.timer
 sudo python3 /usr/local/lib/shoot-it/update.py check
 ```
@@ -86,7 +132,7 @@ in the shell or hardcode `app.image` in a Compose override.
 Configuration: `/etc/shoot-it-updater.json`. It contains the installation directory,
 explicit Compose files, state directory, backup directory and maintenance hours.
 The installer includes `docker-compose.override.yml` if present. Add other required
-Compose files before enabling the timer if you use a customized installation.
+Compose files with `--compose-file` on first setup if you use a customized installation.
 Existing configuration is preserved when the installer is run again.
 
 Change `windowHours` to e.g. `[1, 3]`; equal hours allow updates at any time.

@@ -38,7 +38,8 @@ class UpdateChecks(unittest.TestCase):
         self.events.append(args[0])
         if args[0] == 'config':
             env = self.updater.env_file.read_text()
-            return json.dumps({'services': {'app': {'image': env.split('SHOOT_IT_IMAGE=')[1].strip()}}})
+            image = kwargs.get('env', {}).get('SHOOT_IT_IMAGE') or env.split('SHOOT_IT_IMAGE=')[1].strip()
+            return json.dumps({'services': {'app': {'image': image}}})
         if args[0] == 'run' and self.fail == 'migration':
             raise RuntimeError('migration error')
         if args[0] == 'up':
@@ -166,6 +167,18 @@ class UpdateChecks(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'backup space'):
                 update.Updater.preflight(self.updater, 'app', 'db')
         self.assertNotIn('stop', self.events)
+
+    def test_hardcoded_image_rejected_before_env_is_changed(self):
+        before = self.updater.env_file.read_text()
+        self.updater.compose = lambda *args, **kwargs: json.dumps({'services': {'app': {'image': 'hardcoded:latest'}}})
+        with self.assertRaisesRegex(RuntimeError, 'support SHOOT_IT_IMAGE'):
+            self.updater.pin(OLD)
+        self.assertEqual(self.updater.env_file.read_text(), before)
+
+    def test_space_check_handles_not_yet_created_backup_directory(self):
+        missing = self.updater.backups / 'future/backup'
+        self.assertGreater(update.disk_space(missing), 0)
+        self.assertFalse(missing.exists())
 
     def test_redirect_does_not_leak_token(self):
         request = update.urllib.request.Request('https://api.github.com/test', headers={'Authorization': 'Bearer private'})

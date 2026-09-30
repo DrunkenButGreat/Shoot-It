@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.0] - 2026-09-30
+
+### Added
+- Host management script with read-only requirement/path checks and explicit automatic-update enable/disable commands, including custom project, backup and Compose paths.
+- Checks for service prerequisites, migration status, persistent storage, free space, image override support and interrupted/running updates; management regression tests.
+
+### Changed
+- Existing installer delegates to the management script. Disabling the timer preserves running migrations, the image pin, configuration and backups.
+
+### Fixed
+- Validate Compose image override support before changing `.env`.
+- Check backup capacity even before the configured backup directory exists.
+
 ## [1.12.0] - 2026-09-30
 
 ### Added

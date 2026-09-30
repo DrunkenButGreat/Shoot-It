@@ -65,13 +65,21 @@ def fetch(url, asset=False):
         return json.loads(data)
 
 
-def run(args, *, stdout=None, stdin=None, timeout=300):
+def run(args, *, stdout=None, stdin=None, timeout=300, env=None):
     result = subprocess.run(args, stdout=stdout or subprocess.PIPE, stdin=stdin,
-                            stderr=subprocess.PIPE, timeout=timeout, text=stdout is None)
+                            stderr=subprocess.PIPE, timeout=timeout, text=stdout is None, env=env)
     if result.returncode:
         # Compose diagnostics can contain secrets; keep them out of the journal.
         raise RuntimeError(f'{args[0]} {args[1]} failed (exit {result.returncode})')
     return result.stdout.strip() if stdout is None else None
+
+
+def disk_space(path):
+    # A requirements check must also work before the backup directory is created.
+    path = Path(path)
+    while not path.exists():
+        path = path.parent
+    return shutil.disk_usage(path).free
 
 
 def atomic(path, content, mode=0o600):
@@ -175,6 +183,7 @@ class Updater:
             raise ValueError('Invalid image pin')
         if self.env_file.is_symlink():
             raise ValueError('Managed .env must not be a symlink')
+        self.check_image_override()
         content = self.env_file.read_text()
         pattern = r'^\s*(?:export\s+)?SHOOT_IT_IMAGE\s*=.*$'
         content = re.sub(pattern, '', content, flags=re.MULTILINE)
@@ -182,6 +191,18 @@ class Updater:
         actual = json.loads(self.compose('config', '--format', 'json'))['services']['app']['image']
         if actual != image:
             raise RuntimeError('Compose app.image must use ${SHOOT_IT_IMAGE:-...}; an override ignores the managed pin')
+
+    def check_image_override(self):
+        probe = IMAGE + '@sha256:' + '0' * 64
+        config = json.loads(self.compose('config', '--format', 'json', env={**os.environ, 'SHOOT_IT_IMAGE': probe}))
+        if config['services']['app']['image'] != probe:
+            raise RuntimeError('Compose app.image must support SHOOT_IT_IMAGE; check your Compose overrides')
+
+    def transaction(self):
+        transaction = json.loads(self.journal_path.read_text()) if self.journal_path.exists() else {}
+        if transaction and transaction['phase'] not in ('complete', 'rolled-back', 'backup-failed'):
+            raise RuntimeError('Unfinished update requires manual recovery; see transaction.json')
+        return transaction
 
     def journal(self, transaction, phase):
         transaction['phase'] = phase
@@ -198,7 +219,7 @@ class Updater:
             'exec psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "SELECT pg_database_size(current_database())"'))
         # Uncompressed archives; allow dump/index overhead and one GiB headroom.
         needed = 2 * (uploads_kb * 1024 + db_bytes) + 1024 ** 3
-        if shutil.disk_usage(self.backups).free < needed:
+        if disk_space(self.backups) < needed:
             raise RuntimeError('Insufficient backup space; retain or move old backups before retrying')
         docker_root = run(['docker', 'info', '--format', '{{.DockerRootDir}}'])
         if not Path(docker_root).is_dir() or shutil.disk_usage(docker_root).free < 2 * 1024 ** 3:
@@ -288,9 +309,7 @@ class Updater:
             except BlockingIOError:
                 print('Another updater is running; skipping.')
                 return
-            transaction = json.loads(self.journal_path.read_text()) if self.journal_path.exists() else {}
-            if transaction and transaction['phase'] not in ('complete', 'rolled-back', 'backup-failed'):
-                raise RuntimeError('Unfinished update requires manual recovery; see transaction.json')
+            transaction = self.transaction()
             app, db = self.containers()
             current = self.current(app)
             if mode == 'init':
