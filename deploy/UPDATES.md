@@ -1,5 +1,14 @@
 # Manual and automatic Docker Compose updates
 
+**QNAP / Container Station and existing installations before 1.12:** use the
+[standalone update container](QNAP-UPDATES.md), available with release 1.15.0+.
+It includes its own tools and performs the 1.11 schema transition automatically
+before installing the latest compatible stable release. No host Python, systemd,
+Compose CLI, checkout or project path is needed. Manual updates remain supported.
+
+The host commands below are an alternative for conventional Linux/systemd hosts;
+they are **not QNAP installation instructions**.
+
 Version 1.12.0 introduces an **opt-in Linux host updater**. After the one-time
 setup, operators no longer need to pull or replace app images themselves.
 Default: check every 15 minutes, install between **03:00 and 05:00 host local time**.

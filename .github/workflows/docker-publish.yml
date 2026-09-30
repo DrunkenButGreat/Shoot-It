@@ -57,8 +57,10 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = release ]; then
             IMAGE_DIGEST=sha256:$(printf '%064d' 0) python3 scripts/release-manifest.py > /dev/null
             printf 'tags=ghcr.io/drunkenbutgreat/shoot-it:%s\n' "${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
+            printf 'updater_tags=ghcr.io/drunkenbutgreat/shoot-it-updater:%s\n' "${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
           else
             echo 'tags=ghcr.io/drunkenbutgreat/shoot-it:main' >> "$GITHUB_OUTPUT"
+            echo 'updater_tags=ghcr.io/drunkenbutgreat/shoot-it-updater:main' >> "$GITHUB_OUTPUT"
           fi
       - uses: docker/login-action@v3
         with:
@@ -76,12 +78,25 @@ jobs:
           labels: |
             org.opencontainers.image.source=https://github.com/DrunkenButGreat/Shoot-It
             org.opencontainers.image.revision=${{ github.sha }}
+      - name: Build and push updater container
+        id: build-updater
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: deploy/Dockerfile.updater
+          push: true
+          tags: ${{ steps.release.outputs.updater_tags }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/DrunkenButGreat/Shoot-It
+            org.opencontainers.image.revision=${{ github.sha }}
       - name: Verify published image with disposable data
         env:
           TEST_IMAGE: ghcr.io/drunkenbutgreat/shoot-it@${{ steps.build.outputs.digest }}
+          TEST_UPDATER: ghcr.io/drunkenbutgreat/shoot-it-updater@${{ steps.build-updater.outputs.digest }}
         run: |
           sh scripts/test-image.sh "$TEST_IMAGE"
           python3 scripts/test-compose-updater.py "$TEST_IMAGE"
+          python3 scripts/test-container-updater.py "$TEST_IMAGE" "$TEST_UPDATER"
       - name: Publish automatic-update manifest
         if: github.event_name == 'release'
         env:
@@ -97,8 +112,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
+          UPDATER_DIGEST: ${{ steps.build-updater.outputs.digest }}
         run: |
           latest_tag=$(gh api repos/DrunkenButGreat/Shoot-It/releases/latest --jq .tag_name)
           if [ "$latest_tag" = "$RELEASE_TAG" ]; then
             docker buildx imagetools create --tag ghcr.io/drunkenbutgreat/shoot-it:latest "ghcr.io/drunkenbutgreat/shoot-it@$IMAGE_DIGEST"
+            docker buildx imagetools create --tag ghcr.io/drunkenbutgreat/shoot-it-updater:latest "ghcr.io/drunkenbutgreat/shoot-it-updater@$UPDATER_DIGEST"
           fi

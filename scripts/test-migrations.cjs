@@ -64,6 +64,20 @@ async function main() {
     assert.equal((await legacy.db.user.findUnique({ where: { id: old.id } })).isAdmin, true)
     assert.equal((await legacy.db.registrationSettings.findUnique({ where: { id: 'global' } })).mode, 'CLOSED')
     legacy.command([migrate, 'baseline'], false)
+    legacy.command([migrate, 'upgrade']) // already-baselined installations skip legacy SQL
+    assert.equal((await legacy.db.registrationSettings.findUnique({ where: { id: 'global' } })).mode, 'CLOSED')
+
+    const before111 = database()
+    before111.command([cli, 'db', 'push', '--skip-generate'])
+    await before111.db.user.create({ data: { email: 'before111@example.test' } })
+    for (const sql of ['DROP TABLE "RegistrationInvite"', 'DROP TABLE "RegistrationSettings"',
+                       'DROP TYPE "RegistrationMode"', 'ALTER TABLE "User" DROP COLUMN "isAdmin"']) {
+      await before111.db.$executeRawUnsafe(sql)
+    }
+    before111.command([migrate, 'upgrade'])
+    before111.command([migrate, 'upgrade'])
+    assert.equal((await before111.db.user.findUnique({ where: { email: 'before111@example.test' } })).isAdmin, false)
+    assert.equal((await before111.db.registrationSettings.findUnique({ where: { id: 'global' } })).mode, 'OPEN')
 
     const drift = database()
     drift.command([cli, 'db', 'push', '--skip-generate'])
@@ -72,6 +86,9 @@ async function main() {
     const tables = await drift.db.$queryRaw`SELECT tablename FROM pg_tables WHERE schemaname = current_schema() AND tablename = '_prisma_migrations'`
     assert.equal(tables.length, 0)
     assert.equal((await readiness(drift.db)()).status, 503)
+    await drift.db.$executeRawUnsafe('ALTER TABLE "User" DROP COLUMN "bio"')
+    drift.command([migrate, 'upgrade'], false) // unrelated drift is not accepted by the bridge
+    assert.equal((await drift.db.$queryRaw`SELECT tablename FROM pg_tables WHERE schemaname = current_schema() AND tablename = '_prisma_migrations'`).length, 0)
 
     // Skipping an app release still applies every migration, in order.
     for (const [name, sql] of [['1_add_note', 'ALTER TABLE "User" ADD COLUMN "updateTestNote" TEXT;'],

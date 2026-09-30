@@ -74,6 +74,29 @@ def run(args, *, stdout=None, stdin=None, timeout=300, env=None):
     return result.stdout.strip() if stdout is None else None
 
 
+def latest_manifest():
+    try:
+        release = fetch(f'{API}/releases/latest')
+    except urllib.error.HTTPError as error:
+        if error.code == 404:
+            print('No visible release. For a private repository, configure GITHUB_TOKEN.')
+            return None
+        raise
+    if release.get('draft') or release.get('prerelease'):
+        return None
+    assets = [a for a in release.get('assets', []) if a['name'] == 'shoot-it-update.json' and a.get('state') == 'uploaded']
+    if len(assets) != 1:
+        print('Release is not ready for automatic updates (manifest missing).')
+        return None
+    asset_id = assets[0]['id']
+    if type(asset_id) is not int or asset_id <= 0:
+        raise ValueError('Invalid release asset')
+    manifest = fetch(f'{API}/releases/assets/{asset_id}', asset=True)
+    # Validate the contract even when no update is needed.
+    eligible(manifest, manifest['minVersion'], release['tag_name'])
+    return manifest
+
+
 def disk_space(path):
     # A requirements check must also work before the backup directory is created.
     path = Path(path)
@@ -317,24 +340,10 @@ class Updater:
                 self.pin(self.inspect(app)['Image'])
                 print(f'Installation verified and pinned at {current}.')
                 return
-            try:
-                release = fetch(f'{API}/releases/latest')
-            except urllib.error.HTTPError as error:
-                if error.code == 404:
-                    print('No visible release. For a private repository, configure GITHUB_TOKEN.')
-                    return
-                raise
-            if release.get('draft') or release.get('prerelease'):
+            manifest = latest_manifest()
+            if manifest is None:
                 return
-            assets = [a for a in release.get('assets', []) if a['name'] == 'shoot-it-update.json' and a.get('state') == 'uploaded']
-            if len(assets) != 1:
-                print('Release is not ready for automatic updates (manifest missing).')
-                return
-            asset_id = assets[0]['id']
-            if type(asset_id) is not int or asset_id <= 0:
-                raise ValueError('Invalid release asset')
-            manifest = fetch(f'{API}/releases/assets/{asset_id}', asset=True)
-            if not eligible(manifest, current, release['tag_name']):
+            if not eligible(manifest, current, 'v' + manifest['version']):
                 print('No newer compatible automatic update.')
                 return
             if manifest['version'] in transaction.get('blockedVersions', []):

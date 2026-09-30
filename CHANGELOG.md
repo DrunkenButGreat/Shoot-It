@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.0] - 2026-09-30
+
+### Added
+- Standalone updater image and QNAP Container Station template: detects installed versions, checks actual Docker storage, backs up the database/uploads, and replaces only the application container. No host Python, systemd, Compose CLI, checkout or `.env` path required.
+- Explicit, repeatable legacy upgrade from the 1.10 schema through the additive 1.11 changes, validated baseline and current migrations in one maintenance run.
+- One-time, check and scheduled modes; persistent recovery journal, daemon-wide update lock, compatible image rollback and blocked retries after interrupted migrations.
+- Disposable container integration tests for legacy PostgreSQL 18 mounts, backup restore, preserved container settings, failed migrations and rollback; release CI publishes the updater image only to `latest` after verification.
+
+### Changed
+- NAS documentation uses the container workflow; existing manual Compose and opt-in Linux host updater remain available.
+
 ## [1.14.0] - 2026-09-30
 
 ### Added

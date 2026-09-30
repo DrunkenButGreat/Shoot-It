@@ -1,5 +1,7 @@
 {
   "protocol": 1,
   "minVersion": "1.12.0",
-  "rollbackSafe": true
+  "rollbackSafe": true,
+  "containerProtocol": 1,
+  "legacyMinVersion": "1.10.0"
 }

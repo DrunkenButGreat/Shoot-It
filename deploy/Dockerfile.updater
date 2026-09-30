@@ -1,0 +1,7 @@
+FROM docker:27.5.1-cli
+RUN apk add --no-cache python3 tzdata
+WORKDIR /updater
+COPY scripts/update.py scripts/container-update.py ./
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 DOCKER_HOST=unix:///var/run/docker.sock
+ENTRYPOINT ["python3", "/updater/container-update.py"]
+CMD ["run"]

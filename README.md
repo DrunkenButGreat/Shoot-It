@@ -202,7 +202,18 @@ npx prisma generate
 npm run dev
 ```
 
-### Manual or automatic updates (1.12.0+)
+### QNAP / Container Station updates (1.15.0+)
+
+Use the [standalone update container](deploy/QNAP-UPDATES.md): create a separate
+Container Station application from [this YAML](deploy/docker-compose.updater.yml).
+It detects the installed version, backs up the live database/uploads, applies the
+necessary 1.11 schema upgrade and migration baseline, and installs the latest
+compatible release. Host Python, systemd, Compose commands and a checkout are not
+required. Choose `check`, `run` (one-time) or `watch` (automatic). The existing
+database container and its volumes remain in place. Requires a published 1.15.0+
+release; read the NAS guide for supported engines and manual-update settings.
+
+### Manual or automatic updates on a Linux host (1.12.0+)
 
 Manual updates remain the default. After completing the one-time 1.12.0 database
 transition and taking a backup, update the app with:

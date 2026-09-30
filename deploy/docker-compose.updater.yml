@@ -1,0 +1,21 @@
+# Create this as a SEPARATE application in QNAP Container Station.
+# Keep the existing Shoot-It app/database application and its volumes.
+version: '3.8'
+services:
+  updater:
+    image: ghcr.io/drunkenbutgreat/shoot-it-updater:latest
+    container_name: shoot-it-updater
+    command: ["run"] # check = inspect; run = update once; watch = automatic updates
+    restart: "no" # For watch: unless-stopped
+    stop_grace_period: 3h
+    environment:
+      APP_CONTAINER: photoshoot-app
+      DB_CONTAINER: photoshoot-db
+      TZ: Europe/Berlin
+      UPDATE_WINDOW: "3-5" # Used only by watch; 0-0 allows any time
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - updater_data:/data
+volumes:
+  updater_data:
+    name: shoot_it_updater_data

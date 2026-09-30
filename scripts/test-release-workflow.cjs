@@ -21,11 +21,14 @@ const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'shootit-release-'))
 try {
   fs.writeFileSync(path.join(temp, 'gh'), '#!/bin/sh\n[ "$API_FAILURE" != 1 ] || exit 1\nprintf "%s\\n" "$LATEST_TAG"\n', { mode: 0o755 })
   fs.writeFileSync(path.join(temp, 'docker'), '#!/bin/sh\nprintf "%s\\n" "$*"\n', { mode: 0o755 })
-  const env = { ...process.env, PATH: `${temp}:${process.env.PATH}`, RELEASE_TAG: 'v1.12.0', IMAGE_DIGEST: `sha256:${'a'.repeat(64)}` }
+  const env = { ...process.env, PATH: `${temp}:${process.env.PATH}`, RELEASE_TAG: 'v1.12.0', IMAGE_DIGEST: `sha256:${'a'.repeat(64)}`, UPDATER_DIGEST: `sha256:${'b'.repeat(64)}` }
   const run = extra => spawnSync('sh', ['-eu', '-c', promote.run], { env: { ...env, ...extra }, encoding: 'utf8' })
   const current = run({ LATEST_TAG: 'v1.12.0' })
   assert.equal(current.status, 0, current.stderr)
-  assert.equal(current.stdout.trim(), `buildx imagetools create --tag ghcr.io/drunkenbutgreat/shoot-it:latest ghcr.io/drunkenbutgreat/shoot-it@${env.IMAGE_DIGEST}`)
+  assert.deepEqual(current.stdout.trim().split('\n'), [
+    `buildx imagetools create --tag ghcr.io/drunkenbutgreat/shoot-it:latest ghcr.io/drunkenbutgreat/shoot-it@${env.IMAGE_DIGEST}`,
+    `buildx imagetools create --tag ghcr.io/drunkenbutgreat/shoot-it-updater:latest ghcr.io/drunkenbutgreat/shoot-it-updater@${env.UPDATER_DIGEST}`,
+  ])
   const older = run({ LATEST_TAG: 'v1.13.0' })
   assert.equal(older.status, 0, older.stderr)
   assert.equal(older.stdout, '')
