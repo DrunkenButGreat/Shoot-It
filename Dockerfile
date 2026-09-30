@@ -21,6 +21,10 @@ RUN npx prisma generate
 # Build Next.js
 RUN npm run build
 
+# Keep the locked production dependencies, including the migration CLI.
+FROM deps AS production-deps
+RUN npm prune --omit=dev
+
 # Production image, copy all the files and run next
 FROM base AS runner
 WORKDIR /app
@@ -43,6 +47,9 @@ RUN chown nextjs:nodejs .next
 # Automatically leverage output traces to reduce image size
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=production-deps --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/package.json ./package.json
 
 USER nextjs
 
@@ -54,6 +61,9 @@ ENV HOSTNAME="0.0.0.0"
 # Copy prisma schema for migrations
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/scripts/admin.cjs ./scripts/admin.cjs
+COPY --from=builder /app/scripts/migrate.cjs /app/scripts/healthcheck.cjs ./scripts/
 
-# Run migrations and start
-CMD ["sh", "-c", "npx prisma@^6.2.0 db push && node server.js"]
+HEALTHCHECK --interval=10s --timeout=6s --start-period=30s --retries=6 CMD ["node", "scripts/healthcheck.cjs"]
+
+# Automatic updates run migrations separately before starting this command.
+CMD ["sh", "-c", "node scripts/migrate.cjs deploy && exec node server.js"]

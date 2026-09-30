@@ -3,47 +3,102 @@ name: Docker Publish
 on:
   push:
     branches: ['main']
-    tags: ['v*.*.*']
+  release:
+    types: [published]
+  pull_request:
 
-env:
-  REGISTRY: ghcr.io
-  # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}
+concurrency:
+  group: docker-${{ github.event_name == 'release' && 'stable-releases' || github.ref }}
+  cancel-in-progress: false
 
 jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_PASSWORD: synthetic-test-only
+          POSTGRES_DB: shootit_update_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:synthetic-test-only@localhost:5432/shootit_update_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate
+      - run: npm run test:updater
+      - run: node scripts/test-release-workflow.cjs
+      - run: npm run test:migrations
+      - run: npm run test:registration
+      - run: npx tsc --noEmit
+
   build-and-push:
+    needs: verify
+    if: github.event_name != 'pull_request' && (github.event_name != 'release' || !github.event.release.prerelease)
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
+      - uses: actions/checkout@v4
+      - name: Validate release and choose image tags
+        id: release
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = release ]; then
+            IMAGE_DIGEST=sha256:$(printf '%064d' 0) python3 scripts/release-manifest.py > /dev/null
+            printf 'tags=ghcr.io/drunkenbutgreat/shoot-it:%s\n' "${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo 'tags=ghcr.io/drunkenbutgreat/shoot-it:main' >> "$GITHUB_OUTPUT"
+          fi
+      - uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata (tags, labels)
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=ref,event=branch
-            type=sha
-            latest
-
-      - name: Build and push Docker image
+      - uses: docker/setup-buildx-action@v3
+      - name: Build and push tested commit
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.release.outputs.tags }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/DrunkenButGreat/Shoot-It
+            org.opencontainers.image.revision=${{ github.sha }}
+      - name: Verify published image with disposable data
+        env:
+          TEST_IMAGE: ghcr.io/drunkenbutgreat/shoot-it@${{ steps.build.outputs.digest }}
+        run: |
+          sh scripts/test-image.sh "$TEST_IMAGE"
+          python3 scripts/test-compose-updater.py "$TEST_IMAGE"
+      - name: Publish automatic-update manifest
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          python3 scripts/release-manifest.py > shoot-it-update.json
+          gh release upload "$RELEASE_TAG" shoot-it-update.json
+      - name: Promote latest for manual Compose updates
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          latest_tag=$(gh api repos/DrunkenButGreat/Shoot-It/releases/latest --jq .tag_name)
+          if [ "$latest_tag" = "$RELEASE_TAG" ]; then
+            docker buildx imagetools create --tag ghcr.io/drunkenbutgreat/shoot-it:latest "ghcr.io/drunkenbutgreat/shoot-it@$IMAGE_DIGEST"
+          fi

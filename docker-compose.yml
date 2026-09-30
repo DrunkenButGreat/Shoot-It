@@ -8,7 +8,9 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: photoshoot_db
     volumes:
-      - db_data:/var/lib/postgresql/data
+      # New installations set the PostgreSQL 18 parent path in .env.example.
+      # Preserve older mounts until their data has been migrated (deploy/UPDATES.md).
+      - db_data:${POSTGRES_VOLUME_TARGET:-/var/lib/postgresql/data}
     networks:
       - photoshoot_network
     healthcheck:
@@ -18,7 +20,7 @@ services:
       retries: 5
 
   app:
-    image: ghcr.io/drunkenbutgreat/shoot-it:latest
+    image: ${SHOOT_IT_IMAGE:-ghcr.io/drunkenbutgreat/shoot-it:latest}
     container_name: photoshoot-app
     restart: unless-stopped
     ports:

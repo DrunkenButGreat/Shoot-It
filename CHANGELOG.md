@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.0] - 2026-09-30
+
+### Added
+- Opt-in Linux/systemd Docker Compose updater with stable GitHub release detection, digest pinning, a configurable maintenance window, persistent transaction state and exclusive locking.
+- Consistent database/uploads backups, storage/space checks, compatible image rollback, failed-release blocking and manual recovery instructions.
+- Versioned Prisma migrations and an explicit schema-checked baseline for existing 1.11.0 databases.
+- Side-effect-free `/api/ready` endpoint, Docker readiness checks, updater regression checks and disposable database/image backup-restore tests.
+
+### Changed
+- Manual `docker compose pull app` / `up` updates remain supported through `latest`, which is promoted only after stable-release verification. Automatic updates remain opt-in and use persistent `SHOOT_IT_IMAGE` digest pinning in `.env`.
+- Release CI publishes the updater manifest only after tests, image publication and runtime verification; `main` builds no longer overwrite a stable image tag.
+- Docker startup uses the bundled, locked Prisma CLI and `migrate deploy` instead of downloading Prisma and running `db push`.
+
+### Fixed
+- Health endpoint version now comes from `package.json`.
+- New PostgreSQL 18 installations mount `/var/lib/postgresql` via `.env.example`; existing mount paths stay unchanged until an explicit, backed-up storage migration.
+- Docker build context excludes local generated files and uploaded media.
+
 ## [1.11.0] - 2026-09-30
 
 ### Added

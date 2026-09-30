@@ -3,4 +3,12 @@ node_modules
 .git
 .DS_Store
 .env*
-! .env.example
+!.env.example
+.next
+.codegraph
+.codex
+.agents
+output
+uploads
+local_media
+**/__pycache__

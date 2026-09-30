@@ -202,6 +202,28 @@ npx prisma generate
 npm run dev
 ```
 
+### Manual or automatic updates (1.12.0+)
+
+Manual updates remain the default. After completing the one-time 1.12.0 database
+transition and taking a backup, update the app with:
+
+```sh
+docker compose pull app
+docker compose up -d --no-deps --wait --wait-timeout 120 app
+```
+
+The default `latest` image follows tested stable releases. Migrations run at app
+startup. No updater, Python or systemd is required for this manual path. For a
+specific version, set `SHOOT_IT_IMAGE=ghcr.io/drunkenbutgreat/shoot-it:<version>` in
+`.env`. See [manual updates and switching modes](deploy/UPDATES.md#manual-updates-without-the-updater)
+before switching back from automatic updates.
+
+Docker Compose installations can opt into automatic stable-release updates with
+backups, ordered migrations, readiness checks and compatible image rollback.
+See **[setup, existing-installation transition and recovery](deploy/UPDATES.md)**.
+Existing installations must complete that transition before using the new image
+or recreating the PostgreSQL container. The updater is not enabled by default.
+
 ### Initial Setup
 
 1. Navigate to http://localhost:3000
@@ -423,8 +445,9 @@ in all modes. No existing or newly registered account automatically becomes an a
 
 ### Upgrade without data loss
 
-Back up the database first. This repository currently uses `prisma db push` (also at
-Docker startup), rather than a migration history. Version 1.11.0 only adds tables and
+Back up the database first. Up to version 1.11.0 this repository used `prisma db push` (also at
+Docker startup), rather than a migration history. Starting with 1.12.0, follow
+[the migration-baseline transition](deploy/UPDATES.md) instead. Version 1.11.0 only adds tables and
 the `User.isAdmin` column. Either use the existing `db push` workflow or apply the
 repeatable SQL upgrade **before starting the new application**:
 

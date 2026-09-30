@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { rm } from 'fs/promises'
 import path from 'path'
+import { version } from '../../../../package.json'
 
 export async function GET() {
   // Background cleanup for old applications
@@ -41,7 +42,7 @@ export async function GET() {
   return NextResponse.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    version: '2.0.0',
+    version,
     cleanup: 'done'
   })
 }
