@@ -202,9 +202,16 @@ npx prisma generate
 npm run dev
 ```
 
-### QNAP / Container Station updates (1.15.0+)
+### QNAP / Container Station updates (1.16.0+)
 
-Use the [standalone update container](deploy/QNAP-UPDATES.md): create a separate
+For a manual update, replace **only the app container** with
+`ghcr.io/drunkenbutgreat/shoot-it:1.16.0`, retaining its existing environment,
+network and `/app/uploads` volume. Use the image's default start command (no extra
+command). It automatically backs up and migrates stock 1.8.x–1.11.x databases;
+fresh/already migrated databases apply regular migrations. Keep the existing DB
+container and storage mounts. See [startup migration and recovery](deploy/QNAP-UPDATES.md#automatic-migration-at-app-start-1160).
+
+For automatic image updates, use the [standalone update container](deploy/QNAP-UPDATES.md): create a separate
 Container Station application from [this YAML](deploy/docker-compose.updater.yml).
 It detects the installed version, backs up the live database/uploads, applies the
 necessary 1.11 schema upgrade and migration baseline, and installs the latest
@@ -213,10 +220,15 @@ required. Choose `check`, `run` (one-time) or `watch` (automatic). The existing
 database container and its volumes remain in place. Requires a published 1.15.0+
 release; read the NAS guide for supported engines and manual-update settings.
 
+With updater/release **1.16.0+**, use the extra command `migrate` (YAML:
+`command: ["migrate"]`) to upgrade only the database from stock 1.8.x/1.9.x/1.10.x.
+It takes a database-only backup and leaves the old app stopped for manual image
+replacement; uploads and the app image are not changed. See the
+[migration-only instructions](deploy/QNAP-UPDATES.md#database-migration-only-updater-and-release-1160).
+
 ### Manual or automatic updates on a Linux host (1.12.0+)
 
-Manual updates remain the default. After completing the one-time 1.12.0 database
-transition and taking a backup, update the app with:
+Manual updates remain the default. After taking a backup, update the app with:
 
 ```sh
 docker compose pull app
@@ -232,8 +244,9 @@ before switching back from automatic updates.
 Docker Compose installations can opt into automatic stable-release updates with
 backups, ordered migrations, readiness checks and compatible image rollback.
 See **[setup, existing-installation transition and recovery](deploy/UPDATES.md)**.
-Existing installations must complete that transition before using the new image
-or recreating the PostgreSQL container. The updater is not enabled by default.
+From 1.16.0 the app handles the supported legacy schema transition at startup.
+PostgreSQL storage migration is separate: preserve the existing DB container and
+mounts. The updater is not enabled by default.
 
 From version 1.13.0, manage it on the Linux host with:
 

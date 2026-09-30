@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.16.0] - 2026-09-30
+
+### Added
+- Automatic legacy migration at app startup: the stock 1.8.x–1.11.x schema is backed up in the persistent uploads volume, bridged and baselined before the web server starts. Fresh and already migrated databases apply normal migrations.
+- Shared database migration lock, durable interruption marker, bundled PostgreSQL backup tools and blocked HTTP access to migration backups. Container tests cover backup restore, repeated startup, backup failure and schema drift.
+- `migrate` command in the updater container: database-only backup and migration, without upload archiving or app image replacement. The old app remains stopped with restart disabled after success.
+- Additive bridge for stock 1.8.x/1.9.x schemas before the 1.11 baseline and current migrations; repeated runs preserve users, projects and existing registration settings.
+- Migration-only integration coverage, explicit release capability/minimum version, and Container Station instructions. Failed/interrupted migrations remain blocked for recovery.
+
 ## [1.15.0] - 2026-09-30
 
 ### Added

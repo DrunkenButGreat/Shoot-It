@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { readFile, stat, open } from "fs/promises"
+import { readFile, stat, open, realpath } from "fs/promises"
 import path from "path"
 import { auth } from "@/auth"
 import { generateResultPreview } from "@/lib/image-processing"
@@ -26,7 +26,8 @@ export async function GET(
         console.log(`[UploadServer] Requesting: ${relativePath}`)
 
         // Path traversal protection
-        if (relativePath.includes('..') || relativePath.startsWith('/') || relativePath.startsWith('\\')) {
+        if (relativePath.includes('..') || relativePath.startsWith('/') || relativePath.startsWith('\\') ||
+            relativePath.split(path.sep).some(part => part.startsWith('.'))) {
             console.error(`[UploadServer] Forbidden path: ${relativePath}`)
             return new NextResponse("Forbidden", { status: 403 })
         }
@@ -104,6 +105,11 @@ export async function GET(
 }
 
 async function serveFile(filePath: string, request: NextRequest) {
+    // Never expose startup database backups, including through a symlink alias.
+    const relative = path.relative(path.join(process.cwd(), 'uploads'), await realpath(filePath))
+    if (path.isAbsolute(relative) || relative.split(path.sep).some(part => part.startsWith('.'))) {
+        return new NextResponse("Forbidden", { status: 403 })
+    }
     const contentType = getContentType(filePath)
     const { size } = await stat(filePath)
     const rangeHeader = request.headers.get("range")
@@ -153,4 +159,3 @@ async function serveFile(filePath: string, request: NextRequest) {
         },
     })
 }
-

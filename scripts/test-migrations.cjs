@@ -49,6 +49,10 @@ async function main() {
     const fresh = database()
     fresh.command([migrate, 'deploy'])
     const user = await fresh.db.user.create({ data: { email: 'preserved@example.test', name: 'Preserved', isAdmin: true } })
+    await fresh.db.$transaction(async tx => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(1397247828, hashtext(current_schema()))`
+      fresh.command([migrate, 'deploy'], false)
+    }, { timeout: 30000 })
     fresh.command([migrate, 'deploy'])
     const ready = readiness(fresh.db)
     assert.equal((await ready()).status, 200)
@@ -74,10 +78,22 @@ async function main() {
                        'DROP TYPE "RegistrationMode"', 'ALTER TABLE "User" DROP COLUMN "isAdmin"']) {
       await before111.db.$executeRawUnsafe(sql)
     }
+    // Stock 1.8.x schema: the subsequent changes were purely additive.
+    for (const [table, fields] of [['User', ['brandingColor', 'brandingImage']],
+      ['Project', ['brandingColor', 'brandingImage', 'allowSelectionDownload', 'showSelectionFolders']],
+      ['MoodboardImage', ['isVideo', 'duration']], ['ResultFile', ['isVideo', 'duration']]]) {
+      for (const field of fields) await before111.db.$executeRawUnsafe(`ALTER TABLE "${table}" DROP COLUMN "${field}"`)
+    }
+    await before111.db.$executeRawUnsafe('INSERT INTO "Project" (id,name,"shortCode","ownerId","updatedAt") SELECT \'old-project\',\'Preserved project\',\'old\',id,NOW() FROM "User" LIMIT 1')
     before111.command([migrate, 'upgrade'])
     before111.command([migrate, 'upgrade'])
     assert.equal((await before111.db.user.findUnique({ where: { email: 'before111@example.test' } })).isAdmin, false)
     assert.equal((await before111.db.registrationSettings.findUnique({ where: { id: 'global' } })).mode, 'OPEN')
+    const oldProject = await before111.db.project.findUnique({ where: { id: 'old-project' } })
+    assert.equal(oldProject.name, 'Preserved project')
+    assert.equal(oldProject.showSelectionFolders, true)
+    assert.equal(oldProject.allowSelectionDownload, false)
+    assert.equal(oldProject.brandingColor, null)
 
     const drift = database()
     drift.command([cli, 'db', 'push', '--skip-generate'])

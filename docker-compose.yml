@@ -23,6 +23,7 @@ services:
     image: ${SHOOT_IT_IMAGE:-ghcr.io/drunkenbutgreat/shoot-it:latest}
     container_name: photoshoot-app
     restart: unless-stopped
+    stop_grace_period: 3h
     ports:
       - "3000:3000"
     environment:

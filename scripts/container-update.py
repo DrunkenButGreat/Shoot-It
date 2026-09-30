@@ -21,7 +21,7 @@ from urllib.parse import parse_qs, quote, unquote, urlsplit
 from update import atomic, eligible, latest_manifest, run, version
 
 STOP = threading.Event()
-TERMINAL = ('complete', 'backup-failed', 'rolled-back')
+TERMINAL = ('complete', 'backup-failed', 'rolled-back', 'migrated')
 
 
 class DockerConnection(http.client.HTTPConnection):
@@ -93,16 +93,22 @@ def replacement(container, image, image_config):
     return {**config, 'HostConfig': host, 'NetworkingConfig': {'EndpointsConfig': {first: networks[first]}}}
 
 
-def compatible(manifest, current, repair_legacy=False):
+def compatible(manifest, current, repair_legacy=False, migration_only=False):
     if manifest.get('containerProtocol') != 1:
         raise ValueError('This release has no compatible container upgrade. Wait for a release with containerProtocol 1.')
     minimum = manifest['minVersion']
-    if version(current) < version(minimum):
+    if migration_only:
+        minimum = manifest.get('databaseMigrationMinVersion')
+        if minimum is None:
+            raise ValueError('This release does not support the migrate command; a 1.16.0+ release is required')
+        if version(minimum) < (1, 8, 0) or version(manifest['version']) < (1, 15, 0):
+            raise ValueError('Unsupported database migration contract')
+    elif version(current) < version(minimum):
         minimum = manifest.get('legacyMinVersion', minimum)
         if version(minimum) < (1, 10, 0):
             raise ValueError('Unsupported legacy upgrade contract')
     newer = eligible({**manifest, 'minVersion': minimum}, current, 'v' + manifest['version'])
-    return newer or (repair_legacy and current == manifest['version'] and manifest.get('rollbackSafe') is True)
+    return newer or ((repair_legacy or migration_only) and current == manifest['version'] and manifest.get('rollbackSafe') is True)
 
 
 class ContainerUpdater:
@@ -140,7 +146,7 @@ class ContainerUpdater:
         return run(['docker', 'exec', self.db['Id'], 'psql', '-U', self.db_env.get('POSTGRES_USER', 'postgres'),
                     '-d', self.db_env['POSTGRES_DB'], '-Atc', query])
 
-    def requirements(self):
+    def requirements(self, migration_only=False):
         self.app, self.db = inspect(self.app_name), inspect(self.db_name)
         if self.app['Id'] == self.db['Id'] or not self.db['State']['Running']:
             raise RuntimeError('A separate running PostgreSQL container is required')
@@ -174,34 +180,39 @@ class ContainerUpdater:
         schema = parse_qs(address.query).get('schema', ['public'])[0]
         self.legacy = self.sql("SELECT COUNT(*) FROM pg_tables WHERE schemaname = '" + schema.replace("'", "''")
                                + "' AND tablename = '_prisma_migrations'") == '0'
-        host = self.app['HostConfig']
-        if host.get('AutoRemove') or host.get('VolumesFrom') or host.get('Links') or host.get('NetworkMode') in ('host', 'none'):
-            raise RuntimeError('Use persistent containers on a user-defined Docker network without legacy links/volumes-from')
-        for name, endpoint in networks.items():
-            if inspect(name).get('Driver') != 'bridge' or name == 'bridge' or endpoint.get('IPAMConfig'):
-                raise RuntimeError('Automatic replacement requires bridge networks with dynamic IP addresses')
-        original = inspect(self.app['Image'])['Config']
-        for key in ('Cmd', 'Entrypoint', 'User', 'WorkingDir'):
-            if self.app['Config'].get(key) != original.get(key):
-                raise RuntimeError(f'Custom app {key} is not supported; restore the image default first')
+        if self.app['HostConfig'].get('AutoRemove'):
+            raise RuntimeError('The app must not use --rm/AutoRemove; it must survive being stopped')
+        if not migration_only:
+            host = self.app['HostConfig']
+            if host.get('VolumesFrom') or host.get('Links') or host.get('NetworkMode') in ('host', 'none'):
+                raise RuntimeError('Use persistent containers on a user-defined Docker network without legacy links/volumes-from')
+            for name, endpoint in networks.items():
+                if inspect(name).get('Driver') != 'bridge' or name == 'bridge' or endpoint.get('IPAMConfig'):
+                    raise RuntimeError('Automatic replacement requires bridge networks with dynamic IP addresses')
+            original = inspect(self.app['Image'])['Config']
+            for key in ('Cmd', 'Entrypoint', 'User', 'WorkingDir'):
+                if self.app['Config'].get(key) != original.get(key):
+                    raise RuntimeError(f'Custom app {key} is not supported; restore the image default first')
         package = json.loads(run(['docker', 'run', '--rm', '--network', 'none', '--read-only', '--entrypoint', 'node',
                                  self.app['Image'], '-e', 'console.log(JSON.stringify(require("./package.json")))']))
         if package.get('name') != 'photoshoot-organizer':
             raise RuntimeError('Selected application is not Shoot-It')
         self.current = package['version']
-        if not (1, 10, 0) <= version(self.current) < (2, 0, 0):
-            raise RuntimeError('Supported source versions: 1.10.x and later 1.x releases')
-        if app_env.get('PORT', '3000') != '3000':
-            raise RuntimeError('The readiness check requires app PORT=3000')
-        if not any(m['Destination'] == '/app/uploads' and m['Type'] in ('bind', 'volume') and m['RW'] for m in self.app['Mounts']):
-            raise RuntimeError('Persistent writable /app/uploads mount required')
+        minimum = (1, 8, 0) if migration_only else (1, 10, 0)
+        if not minimum <= version(self.current) < (2, 0, 0):
+            raise RuntimeError('Use migrate for stock 1.8.x/1.9.x schemas; full updates require 1.10.x or later')
+        if not migration_only:
+            if app_env.get('PORT', '3000') != '3000':
+                raise RuntimeError('The readiness check requires app PORT=3000')
+            if not any(m['Destination'] == '/app/uploads' and m['Type'] in ('bind', 'volume') and m['RW'] for m in self.app['Mounts']):
+                raise RuntimeError('Persistent writable /app/uploads mount required')
         data_directory = self.sql('SHOW data_directory')
         if not any(m['Type'] in ('bind', 'volume') and (data_directory == m['Destination'] or
                    data_directory.startswith(m['Destination'].rstrip('/') + '/')) for m in self.db['Mounts']):
             raise RuntimeError('PostgreSQL data must be in a persistent mount')
         # Works from a container on NAS/Desktop: query storage through Docker,
         # rather than assuming the daemon paths exist on the updater filesystem.
-        uploads = int(run(['docker', 'run', '--rm', '--network', 'none', '--read-only', '--user', '0',
+        uploads = 0 if migration_only else int(run(['docker', 'run', '--rm', '--network', 'none', '--read-only', '--user', '0',
                            '--volumes-from', self.app['Id'] + ':ro', '--entrypoint', 'du', self.app['Image'],
                            '-sk', '/app/uploads']).split()[0]) * 1024
         if shutil.disk_usage(self.data).free < 2 * (uploads + int(self.sql('SELECT pg_database_size(current_database())'))) + 1024**3:
@@ -209,13 +220,18 @@ class ContainerUpdater:
         print(f'Checks passed: Shoot-It {self.current}; app={self.app_name}, database={self.db_name}; persistent backups at /data.')
         print('Database container and its existing mounts will be retained, including legacy PostgreSQL 18 mounts.')
 
-    def backup(self, directory):
+    def backup(self, directory, database_only=False):
         with open(directory / 'database.dump', 'wb') as file:
             run(['docker', 'exec', self.db['Id'], 'pg_dump', '-U', self.db_env.get('POSTGRES_USER', 'postgres'),
                  '-d', self.db_env['POSTGRES_DB'], '-Fc'], stdout=file, timeout=3600)
             os.fsync(file.fileno())
         with open(directory / 'database.dump', 'rb') as file:
             run(['docker', 'exec', '-i', self.db['Id'], 'pg_restore', '--list'], stdin=file)
+        if not (directory / 'database.dump').stat().st_size:
+            raise RuntimeError('Empty database dump')
+        if database_only:
+            atomic(directory / 'COMPLETE', 'Database-only backup; uploads were not modified or archived.\n')
+            return
         with open(directory / 'uploads.tar', 'wb') as file:
             run(['docker', 'run', '--rm', '--network', 'none', '--read-only', '--user', '0',
                  '--volumes-from', self.app['Id'] + ':ro', '--entrypoint', 'tar', self.app['Image'],
@@ -224,8 +240,6 @@ class ContainerUpdater:
         with tarfile.open(directory / 'uploads.tar') as archive:
             for _ in archive:
                 pass
-        if not (directory / 'database.dump').stat().st_size:
-            raise RuntimeError('Empty database dump')
         atomic(directory / 'COMPLETE', 'Database and uploads saved with application stopped.\n')
 
     def wait_ready(self, name, expected):
@@ -246,7 +260,7 @@ class ContainerUpdater:
             api('POST', self.prefix + '/networks/' + quote(name, safe='') + '/connect',
                 {'Container': container, 'EndpointConfig': endpoint})
 
-    def apply(self, manifest, history):
+    def apply(self, manifest, history, migration_only=False):
         target = manifest['image']
         print(f'Preparing {self.current} -> {manifest["version"]}', flush=True)
         run(['docker', 'pull', target], timeout=1800)
@@ -254,10 +268,11 @@ class ContainerUpdater:
                         target, '-p', 'require("./package.json").version'])
         if packaged != manifest['version']:
             raise RuntimeError('Release image version mismatch')
-        image_config = inspect(target)['Config']
-        if not image_config.get('Healthcheck') or image_config['Healthcheck']['Test'][0] == 'NONE':
-            raise RuntimeError('Target image must provide a readiness healthcheck')
-        payload = replacement(self.app, target, image_config)
+        if not migration_only:
+            image_config = inspect(target)['Config']
+            if not image_config.get('Healthcheck') or image_config['Healthcheck']['Test'][0] == 'NONE':
+                raise RuntimeError('Target image must provide a readiness healthcheck')
+            payload = replacement(self.app, target, image_config)
         if STOP.is_set():
             return
         directory = self.data / ('backup-' + dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ'))
@@ -265,7 +280,9 @@ class ContainerUpdater:
         old_name = self.app_name + '-previous-' + self.app['Id'][:12]
         transaction = {'fromVersion': self.current, 'toVersion': manifest['version'], 'previousContainer': self.app['Id'],
                        'previousName': old_name, 'appName': self.app_name, 'databaseContainer': self.db['Id'],
-                       'backup': str(directory), 'targetImage': target, 'blockedVersions': history.get('blockedVersions', [])}
+                       'backup': str(directory), 'targetImage': target, 'mode': 'migrate' if migration_only else 'run',
+                       'backupScope': 'database' if migration_only else 'database-and-uploads',
+                       'blockedVersions': history.get('blockedVersions', [])}
         atomic(directory / 'containers.json', json.dumps({'app': self.app, 'db': self.db}, indent=2) + '\n')
         atomic(directory / 'release.json', json.dumps(manifest, indent=2) + '\n')
         self.journal(transaction, 'stopping')
@@ -277,7 +294,7 @@ class ContainerUpdater:
             if inspect(self.app['Id'])['State']['Running']:
                 raise RuntimeError('Application did not stop')
             self.journal(transaction, 'backup')
-            self.backup(directory)
+            self.backup(directory, database_only=migration_only)
         except Exception:
             self.restore_restart()
             if self.app['State']['Running']:
@@ -298,6 +315,12 @@ class ContainerUpdater:
             self.journal(transaction, 'migration-failed')
             raise RuntimeError('Migration failed. App remains stopped; inspect the migration container and recovery guide.')
         run(['docker', 'rm', migration])
+        if migration_only:
+            self.journal(transaction, 'migrated')
+            print(f'Database migrated for {manifest["version"]}. Backup: {directory}/database.dump.')
+            print('App image and uploads unchanged. App remains stopped with restart disabled; install/start the target app image next.')
+            print(f'Next app image: {target}')
+            return
         self.journal(transaction, 'replacing')
         run(['docker', 'rename', self.app['Id'], old_name])
         networks = endpoints(self.app)
@@ -345,12 +368,13 @@ class ContainerUpdater:
         run(['docker', 'update', '--restart=' + value, self.app['Id']])
 
     def execute(self, mode):
+        migration_only = mode == 'migrate'
         history = self.transaction()
-        self.requirements()
+        self.requirements(migration_only=migration_only)
         manifest = latest_manifest()
         if manifest is None:
             return
-        if not compatible(manifest, self.current, repair_legacy=self.legacy):
+        if not compatible(manifest, self.current, repair_legacy=self.legacy, migration_only=migration_only):
             print('No newer compatible update. No changes made.')
             return
         if manifest['version'] in history.get('blockedVersions', []):
@@ -362,7 +386,7 @@ class ContainerUpdater:
         lock = run(['docker', 'create', '--name', self.lock_name, '--network', 'none',
                     '--entrypoint', 'true', self.app['Image']])
         try:
-            self.apply(manifest, history)
+            self.apply(manifest, history, migration_only=migration_only)
         finally:
             transaction = json.loads(self.journal_path.read_text()) if self.journal_path.exists() else {}
             if not transaction or transaction.get('phase') in TERMINAL:
@@ -371,7 +395,7 @@ class ContainerUpdater:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('mode', choices=['check', 'run', 'watch'], nargs='?', default='run')
+    parser.add_argument('mode', choices=['check', 'run', 'watch', 'migrate'], nargs='?', default='run')
     mode = parser.parse_args().mode
     os.umask(0o077)
     signal.signal(signal.SIGTERM, lambda *_: STOP.set())

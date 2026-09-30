@@ -1,7 +1,8 @@
 # Manual and automatic Docker Compose updates
 
-**QNAP / Container Station and existing installations before 1.12:** use the
-[standalone update container](QNAP-UPDATES.md), available with release 1.15.0+.
+**QNAP / Container Station:** from 1.16.0 the app automatically backs up and
+migrates supported old schemas on startup; see the [NAS instructions](QNAP-UPDATES.md#automatic-migration-at-app-start-1160).
+For automatic image updates, use the [standalone update container](QNAP-UPDATES.md), available with release 1.15.0+.
 It includes its own tools and performs the 1.11 schema transition automatically
 before installing the latest compatible stable release. No host Python, systemd,
 Compose CLI, checkout or project path is needed. Manual updates remain supported.
@@ -62,8 +63,8 @@ credentials or database connection strings are printed by this check.
 ## Manual updates without the updater
 
 Manual updates remain the default and need only Docker Compose. There is no
-requirement to install Python, systemd or the host updater. After the one-time
-1.12.0 database transition below, the familiar update path remains available:
+requirement to install Python, systemd or the host updater. With 1.16.0+, the app
+handles the supported legacy schema transition automatically. The familiar update path remains available:
 
 ```sh
 docker compose pull app
@@ -74,7 +75,8 @@ Take a database/uploads backup before updating (use the stopped-app backup proce
 in the transition section). `latest` points to the latest tested stable GitHub
 release; development builds never advance it. The container applies pending
 migrations at startup, and `--no-deps` leaves the running database container alone.
-This manual path does not create updater backups or automatically roll back failures.
+This manual path creates a startup DB backup only for the first legacy transition;
+it does not create updater backups or automatically roll back failures.
 Read the release notes first, especially for major releases or infrastructure changes.
 
 For a selected version instead of `latest`, set exactly one `SHOOT_IT_IMAGE` entry
@@ -151,6 +153,11 @@ application's environment. For manual checks, use the same credential environmen
 No token is forwarded when GitHub redirects an asset download to storage.
 
 ## Existing installations: one-time transition
+
+The explicit schema migration commands below are retained for 1.12–1.15 and for
+manual maintenance. With 1.16.0+, supported 1.8.x–1.11.x schemas migrate at app
+startup. This does **not** migrate PostgreSQL's storage location; retain the
+existing database container and actual mounts as described below.
 
 Do this during a maintenance window. Keep the existing running database container
 until its actual storage location has been checked. **Do not run a blanket Compose

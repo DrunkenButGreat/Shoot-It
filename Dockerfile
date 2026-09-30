@@ -31,6 +31,9 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
+# Offline, verified backup before automatically adopting a legacy database.
+RUN apk add --no-cache postgresql18-client
+
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
@@ -66,4 +69,4 @@ COPY --from=builder /app/scripts/migrate.cjs /app/scripts/healthcheck.cjs ./scri
 HEALTHCHECK --interval=10s --timeout=6s --start-period=30s --retries=6 CMD ["node", "scripts/healthcheck.cjs"]
 
 # Automatic updates run migrations separately before starting this command.
-CMD ["sh", "-c", "node scripts/migrate.cjs deploy && exec node server.js"]
+CMD ["sh", "-c", "node scripts/migrate.cjs start && exec node server.js"]

@@ -5,7 +5,7 @@ services:
   updater:
     image: ghcr.io/drunkenbutgreat/shoot-it-updater:latest
     container_name: shoot-it-updater
-    command: ["run"] # check = inspect; run = update once; watch = automatic updates
+    command: ["run"] # check = inspect; run = update once; watch = automatic; migrate = database only (1.16+)
     restart: "no" # For watch: unless-stopped
     stop_grace_period: 3h
     environment:

@@ -45,7 +45,7 @@ m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
 target, mode = sys.argv[1:]
 packaged = m.run(['docker','run','--rm','--network','none','--entrypoint','node',target,'-p','require("./package.json").version'])
 digest = 'ghcr.io/drunkenbutgreat/shoot-it@sha256:' + 'a' * 64
-m.latest_manifest = lambda: dict(protocol=1, containerProtocol=1, minVersion='1.12.0', legacyMinVersion='1.10.0', version=packaged, rollbackSafe=True, image=digest)
+m.latest_manifest = lambda: dict(protocol=1, containerProtocol=1, minVersion='1.12.0', legacyMinVersion='1.10.0', databaseMigrationMinVersion='1.8.0', version=packaged, rollbackSafe=True, image=digest)
 original_run, original_api = m.run, m.api
 def local_run(args, **kwargs):
     if args[:2] == ['docker', 'pull']: return ''
@@ -102,6 +102,50 @@ m.main()
             run('docker', 'network', 'connect', '--alias', 'photos', name + '-extra', name + '-app')
             run('docker', 'exec', name + '-app', 'sh', '-c', 'echo preserved > /app/uploads/preserved.txt')
             old_app, old_db = info(name + '-app'), info(name + '-db')
+            # Migration-only mode also accepts a 1.8 image, backs up no uploads and
+            # leaves the exact app container/image stopped for a manual upgrade.
+            # Derive only the package version; schema fidelity is covered below
+            # by dropping every additive 1.9 field, as in the historical 1.8 schema.
+            run('docker', 'stop', name + '-app')
+            old_package = {'name': 'photoshoot-organizer', 'version': '1.8.2'}
+            (root / 'package.json').write_text(json.dumps(old_package))
+            older = derived('COPY package.json /app/package.json\nHEALTHCHECK NONE\nCMD ["node", "-e", "setInterval(()=>{},1000)"]')
+            run('docker', 'rm', name + '-app')
+            run('docker', 'run', '-d', '--name', name + '-app', '--restart', 'unless-stopped', '--network', name,
+                '-v', name + '-uploads:/app/uploads', '-e', 'DATABASE_URL=' + address, older)
+            migration_app = info(name + '-app')
+            for table, fields in [('User', ['brandingColor', 'brandingImage']),
+                ('Project', ['brandingColor', 'brandingImage', 'allowSelectionDownload', 'showSelectionFolders']),
+                ('MoodboardImage', ['isVideo', 'duration']), ('ResultFile', ['isVideo', 'duration'])]:
+                for field in fields:
+                    sql(f'ALTER TABLE "{table}" DROP COLUMN "{field}"')
+            update('migrate')
+            migration_state = state()
+            assert migration_state['phase'] == 'migrated'
+            assert migration_state['backupScope'] == 'database'
+            assert info(name + '-app')['Id'] == migration_app['Id']
+            assert info(name + '-app')['Image'] == migration_app['Image']
+            assert not info(name + '-app')['State']['Running']
+            assert info(name + '-app')['HostConfig']['RestartPolicy']['Name'] == 'no'
+            assert info(name + '-db')['Id'] == old_db['Id']
+            assert 'uploads.tar' not in run('docker', 'run', '--rm', '-v', name + '-state:/data', '--entrypoint', 'ls',
+                                          updater_image, migration_state['backup'])
+            assert sql('SELECT email FROM "User"') == 'preserved@example.test'
+            assert sql('SELECT "isAdmin" FROM "User"') == 'f'
+            update('migrate') # repeatable without starting/replacing the old app
+            assert info(name + '-app')['Id'] == migration_app['Id']
+            # Return to the original legacy fixture to test the full update path.
+            run('docker', 'rm', name + '-app')
+            sql('DROP TABLE "_prisma_migrations"; DROP TABLE "RegistrationInvite"; DROP TABLE "RegistrationSettings"; '
+                'DROP TYPE "RegistrationMode"; ALTER TABLE "User" DROP COLUMN "isAdmin";')
+            run('docker', 'run', '-d', '--name', name + '-app', '--restart', 'unless-stopped', '--network', name,
+                '--label', 'com.docker.compose.project=' + name, '--label', 'com.docker.compose.service=app',
+                '--label', 'com.docker.compose.container-number=1', '--label', 'com.docker.compose.config-hash=legacy',
+                '--network-alias', 'app', '-p', '127.0.0.1::3000', '--memory', '1g', '-v', name + '-uploads:/app/uploads',
+                '-e', 'DATABASE_URL=' + address, '-e', 'AUTH_SECRET=synthetic-only secret $ with spaces',
+                '-e', 'AUTH_URL=http://localhost:3000', legacy)
+            run('docker', 'network', 'connect', '--alias', 'photos', name + '-extra', name + '-app')
+            old_app = info(name + '-app')
             update('check')
             assert info(name + '-app')['Id'] == old_app['Id']
             assert sql('SELECT COUNT(*) FROM "User"') == '1'

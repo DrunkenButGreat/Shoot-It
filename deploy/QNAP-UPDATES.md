@@ -73,6 +73,88 @@ parent volume. The updater backs up that live database. Repairing that old stora
 declaration before a future database recreation remains a separate operation;
 do not recreate the DB, delete volumes or use volume prune during the transition.
 
+## Automatic migration at app start (1.16.0+)
+
+For a manual update in Container Station, use app image
+**`ghcr.io/drunkenbutgreat/shoot-it:1.16.0`** (or the published `latest`) and the
+image's default command. Clear any old extra command such as `prisma db push`.
+Replace **only the app** while preserving its environment, network and existing
+`/app/uploads` volume. Keep the running database container and its actual storage
+mounts unchanged. Stop the old app before starting its replacement; this workflow
+assumes a single app instance. If an updater transaction is unfinished, resolve it
+using the recovery section first instead of starting a competing migration.
+
+The app starts its web server only after successful database initialization:
+
+- Empty database: apply all migrations.
+- Database with migration history: apply pending migrations.
+- Stock legacy schema from 1.8.x–1.11.x: create and verify a database dump, add the
+  known fields, validate the complete baseline, register it and apply migrations.
+- Unknown/incompatible schema, failed migration or backup: stop with a log message.
+
+The one-time legacy backup is stored at
+`/app/uploads/.shoot-it-migrations/legacy-*/database.dump`, in the existing
+persistent uploads volume. The image includes PostgreSQL 18 client tools; no
+Docker socket, host commands or internet download is needed for migration. That
+volume must be writable by the app user (UID 1001) and have room for the dump.
+It is a database backup only, not an upload archive or an off-NAS backup.
+The uploads HTTP endpoint blocks this private directory and symlink aliases.
+Successful restarts do not repeat the legacy backup. Regular future migrations
+still need your usual backup process or the updater's full backup.
+
+Database locking prevents cooperating migration processes from running together.
+If the app reports `Interrupted startup migration`, stop its restart loop and
+inspect `/app/uploads/.shoot-it-migrations/pending.json`; it records the original
+dump and target version. Preserve that dump and inspect the logs/schema. Resolve
+the failed migration or restore the dump into a separate empty database and
+verify it before switching the app's connection. Remove `pending.json` **only
+after that recovery**, then start the target app. Do not run an old `db push`
+image against the upgraded database or expose the backup through an old image.
+Backup failures before schema changes can be retried after fixing storage/access.
+Leave the container running during the transition; allow a long stop timeout
+(`stop_grace_period: 3h` in Compose) if it must be shut down.
+
+## Database migration only (updater and release 1.16.0+)
+
+In Container Station's extra command field enter **`migrate`**, or change the
+updater application's YAML to:
+
+```yaml
+command: ["migrate"]
+restart: "no"
+```
+
+This mode is for migrating a stock **1.8.x, 1.9.x or 1.10.x** database to the schema
+required by the latest compatible 1.15+ application. The first release providing
+this command and the older schema bridge is **1.16.0**; both its updater image and
+a published release with `databaseMigrationMinVersion` are required. Older than
+1.8 or custom schemas are not assumed compatible and need a reviewed migration.
+
+The updater reads database access from the existing app container, checks the live
+DB mount and backup directory, downloads the tested migration image, stops the app
+and creates/verifies **only `database.dump`**. It adds the known 1.9/1.11 fields,
+checks the complete frozen baseline, records it, and applies current migrations.
+Already migrated databases run only pending migrations. No `db push`, resets or
+data deletion are performed. Repeating the command is safe after a successful run.
+
+The existing app container/image and uploads are kept; uploads are **not archived**
+in this mode, so it does not depend on upload size, upload mounts or archive tools.
+After success the journal says `migrated`, and the app stays stopped with restart
+disabled to prevent an old image from changing the new schema. Install the target
+app image printed in the journal (`targetImage`) using app-only recreation in your
+existing deployment, preserving its environment, mounts and normal restart policy.
+On a 1.10+ installation you can also use `run` afterwards for the full update,
+including an uploads backup. Restore your desired app restart policy in its saved
+configuration when recreating it.
+
+This command **does not bypass a failed database backup or an unfinished update**.
+A previous `backup-failed` transaction can be retried because no migration ran.
+An unresolved `backup`, `migrating`, `migration-failed` or other interrupted phase
+still needs the recovery procedure below; do not erase its journal/lock merely to
+start `migrate`. In migration-only backups, `COMPLETE` and `backupScope: database`
+explicitly identify the database-only archive; restore uploads from an independent
+backup if they were changed outside this command.
+
 ## Automatic updates or manual updates
 
 - **Automatic:** after a successful first run, set `command: ["watch"]` and
