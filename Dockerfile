@@ -53,6 +53,7 @@ ENV HOSTNAME="0.0.0.0"
 
 # Copy prisma schema for migrations
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/scripts/admin.cjs ./scripts/admin.cjs
 
 # Run migrations and start
 CMD ["sh", "-c", "npx prisma@^6.2.0 db push && node server.js"]

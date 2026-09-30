@@ -5,6 +5,7 @@ import Credentials from "next-auth/providers/credentials"
 import Google from "next-auth/providers/google"
 import bcrypt from "bcryptjs"
 import { z } from "zod"
+import { createRegisteredUser, getRegistrationMode } from "@/lib/registration"
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -12,7 +13,11 @@ const loginSchema = z.object({
 })
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  adapter: {
+    ...PrismaAdapter(prisma),
+    // Enforce the policy at the OAuth creation boundary as well as the form API.
+    createUser: ({ id, ...data }) => createRegisteredUser(data),
+  },
   session: {
     strategy: "jwt",
   },
@@ -61,6 +66,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
+    async signIn({ account }) {
+      if (!account || account.type === "credentials") return true
+      const linked = await prisma.account.findUnique({
+        where: { provider_providerAccountId: { provider: account.provider, providerAccountId: account.providerAccountId } },
+        select: { id: true },
+      })
+      if (linked) return true
+      const mode = await getRegistrationMode()
+      if (mode !== "OPEN") return `/login?error=${mode === "CLOSED" ? "registrationClosed" : "oauthInviteRequired"}`
+      return true
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id

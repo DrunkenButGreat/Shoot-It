@@ -18,6 +18,7 @@ model User {
   updatedAt            DateTime              @updatedAt
   phone                String?
   role                 String?
+  isAdmin              Boolean               @default(false)
   bio                  String?
   brandingColor        String?
   brandingImage        String?
@@ -32,6 +33,26 @@ model User {
   applications         ProjectApplication[]
   sessions             Session[]
   imageRatings         ImageRating[]
+}
+
+enum RegistrationMode {
+  OPEN
+  CLOSED
+  INVITE_ONLY
+}
+
+model RegistrationSettings {
+  id   String           @id @default("global")
+  mode RegistrationMode @default(OPEN)
+}
+
+model RegistrationInvite {
+  id        String    @id @default(cuid())
+  codeHash  String    @unique
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  usedAt    DateTime?
+  revokedAt DateTime?
 }
 
 model Account {

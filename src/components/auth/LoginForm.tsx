@@ -5,7 +5,9 @@ import { useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { useI18n } from "@/components/I18nProvider"
 
-export default function LoginForm() {
+import type { RegistrationMode } from "@prisma/client"
+
+export default function LoginForm({ mode }: { mode: RegistrationMode }) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -38,10 +40,8 @@ export default function LoginForm() {
     }
   }
 
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true)
-    await signIn("google", { callbackUrl })
-  }
+  const authError = searchParams.get("error")
+  const message = error || (authError ? t(`auth.${["registrationClosed", "oauthInviteRequired"].includes(authError) ? authError : "errorOccurred"}`) : "")
 
   return (
     <div className="w-full max-w-md space-y-6">
@@ -50,9 +50,9 @@ export default function LoginForm() {
         <p className="mt-2 text-gray-600">{t("auth.signInToAccount")}</p>
       </div>
 
-      {error && (
-        <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-          {error}
+      {message && (
+        <div role="alert" className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+          {message}
         </div>
       )}
 
@@ -96,12 +96,12 @@ export default function LoginForm() {
         </button>
       </form>
 
-      <div className="text-center text-sm text-gray-600 mt-4">
+      {mode !== "CLOSED" && <div className="text-center text-sm text-gray-600 mt-4">
         {t("auth.noAccount")}{" "}
         <a href="/signup" className="text-blue-600 hover:underline">
-          {t("auth.signup")}
+          {t(mode === "INVITE_ONLY" ? "auth.signupWithInvite" : "auth.signup")}
         </a>
-      </div>
+      </div>}
     </div>
   )
 }

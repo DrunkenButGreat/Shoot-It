@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0] - 2026-09-30
+
+### Added
+- Admin dashboard with user/project counts, recent users, and registration modes: open, closed, or invitation only.
+- Single-use invitation codes with expiry, revocation, and hashed storage; invitation redemption and account creation are atomic.
+- Dedicated admin permission, server-side authorization, and explicit grant/revoke commands for existing accounts.
+- German and English UI, additive database upgrade script, and registration regression checks.
+
+### Changed
+- Signup pages reflect the registration policy; both password and Google OAuth account creation enforce it. Existing accounts can still sign in.
+
 ## [1.10.1] - 2026-06-18
 
 ### Fixed

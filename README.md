@@ -413,3 +413,57 @@ For support, please open an issue in the GitHub repository.
 ---
 
 **Made with ❤️ for photographers and creative teams**
+
+## Administration (1.11.0)
+
+The admin dashboard is available at `/admin`, with a link on the project dashboard
+for administrators. It includes user/project counts, the latest 20 users, registration
+settings and the latest 50 invitation codes. Existing user accounts retain login access
+in all modes. No existing or newly registered account automatically becomes an admin.
+
+### Upgrade without data loss
+
+Back up the database first. This repository currently uses `prisma db push` (also at
+Docker startup), rather than a migration history. Version 1.11.0 only adds tables and
+the `User.isAdmin` column. Either use the existing `db push` workflow or apply the
+repeatable SQL upgrade **before starting the new application**:
+
+```bash
+npx prisma db execute --file prisma/upgrades/1.11.0.sql --schema prisma/schema.prisma
+npm run db:generate
+```
+
+Grant access to a specific existing account from the trusted server environment:
+
+```bash
+npm run admin:grant -- admin@example.com
+# Revoke access immediately (also affects existing sessions):
+npm run admin:revoke -- admin@example.com
+```
+
+These commands load `.env` with Node.js 22+; when environment variables are already
+injected (for example Docker), use `node scripts/admin.cjs grant admin@example.com`.
+For the application container: `docker compose exec app node scripts/admin.cjs grant admin@example.com`.
+Use an existing account you control. The editable profile occupation (`role`) is
+unrelated to admin privileges. Granting rights does not create an account.
+
+Registration modes:
+- **Open** (default): new accounts can register normally.
+- **Invitation only**: one code per email/password signup; codes expire after 1–90
+  days and can be revoked. Copy each code when created; only its hash is stored.
+  New Google OAuth accounts must register through the invitation form instead.
+- **Closed**: all new accounts are blocked, including registrations with a code
+  or Google OAuth. Existing password and linked Google accounts still work.
+
+Pending codes keep their original expiry when the mode changes. They are only
+consumed by successful registrations in invitation-only mode. A failed signup does
+not consume its code. No invitation emails are sent automatically.
+
+Run the integration regression check against a **dedicated disposable database**:
+
+```bash
+TEST_DATABASE_URL=postgresql://.../shootit_registration_test npm run test:registration
+```
+
+The check refuses the regular `DATABASE_URL`, creates synthetic users, and clears
+only its isolated test schema when done.

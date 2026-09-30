@@ -5,8 +5,11 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useI18n } from "@/components/I18nProvider"
 
-export default function SignupForm() {
+import type { RegistrationMode } from "@prisma/client"
+
+export default function SignupForm({ mode }: { mode: RegistrationMode }) {
     const { t } = useI18n()
+    const [inviteCode, setInviteCode] = useState("")
     const [name, setName] = useState("")
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
@@ -29,18 +32,19 @@ export default function SignupForm() {
                     name,
                     email,
                     password,
+                    inviteCode,
                 }),
             })
 
             if (!response.ok) {
                 const data = await response.json()
-                throw new Error(data.error || "Failed to register")
+                throw new Error(t(`auth.${data.error || "errorOccurred"}`))
             }
 
             // Redirect to login page on success
             router.push("/login?registered=true")
         } catch (error) {
-            setError(error instanceof Error ? error.message : "An error occurred")
+            setError(error instanceof Error ? error.message : t("auth.errorOccurred"))
         } finally {
             setIsLoading(false)
         }
@@ -50,16 +54,16 @@ export default function SignupForm() {
         <div className="w-full max-w-md space-y-6">
             <div className="text-center">
                 <h1 className="text-3xl font-bold text-gray-900">{t('auth.createAccount')}</h1>
-                <p className="mt-2 text-gray-600">{t('auth.signUpToGetStarted')}</p>
+                <p className="mt-2 text-gray-600">{t(mode === 'CLOSED' ? 'auth.registrationClosed' : mode === 'INVITE_ONLY' ? 'auth.inviteRequired' : 'auth.signUpToGetStarted')}</p>
             </div>
 
             {error && (
-                <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+                <div role="alert" className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
                     {error}
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {mode !== "CLOSED" && <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                         {t('auth.name')}
@@ -106,6 +110,11 @@ export default function SignupForm() {
                     />
                 </div>
 
+                {mode === "INVITE_ONLY" && <div>
+                    <label htmlFor="inviteCode" className="block text-sm font-medium text-gray-700 mb-1">{t("auth.inviteCode")}</label>
+                    <input id="inviteCode" type="text" value={inviteCode} onChange={e => setInviteCode(e.target.value)} required maxLength={128} autoComplete="off" spellCheck={false} disabled={isLoading} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+                </div>}
+
                 <button
                     type="submit"
                     disabled={isLoading}
@@ -113,7 +122,7 @@ export default function SignupForm() {
                 >
                     {isLoading ? t('auth.registering') : t('auth.signup')}
                 </button>
-            </form>
+            </form>}
 
             <div className="text-center text-sm text-gray-600">
                 {t('auth.alreadyHaveAccount')}{" "}
