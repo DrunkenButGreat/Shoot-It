@@ -51,7 +51,7 @@ tar -xf "$work/uploads.tar" -C "$work/restored"
 [ "$(cat "$work/restored/smoke.txt")" = synthetic-upload ]
 # Recreate the stock 1.8 schema, retaining the existing user and uploads.
 sql 'DROP TABLE "_prisma_migrations"; DROP TABLE "RegistrationInvite"; DROP TABLE "RegistrationSettings";
-DROP TYPE "RegistrationMode"; ALTER TABLE "User" DROP COLUMN "isAdmin", DROP COLUMN "brandingColor", DROP COLUMN "brandingImage";
+DROP TYPE "RegistrationMode"; ALTER TABLE "User" DROP COLUMN "isAdmin", DROP COLUMN "isOwner", DROP COLUMN "brandingColor", DROP COLUMN "brandingImage";
 ALTER TABLE "Project" DROP COLUMN "brandingColor", DROP COLUMN "brandingImage", DROP COLUMN "allowSelectionDownload", DROP COLUMN "showSelectionFolders";
 ALTER TABLE "MoodboardImage" DROP COLUMN "isVideo", DROP COLUMN "duration";
 ALTER TABLE "ResultFile" DROP COLUMN "isVideo", DROP COLUMN "duration";' >/dev/null
@@ -62,7 +62,7 @@ if docker start -a "$name-app"; then echo 'Startup ignored backup failure' >&2; 
 docker run --rm --network none --user 0 -v "$name-uploads:/app/uploads" --entrypoint chmod "$image" 0755 /app/uploads
 docker start "$name-app" >/dev/null
 wait_ready
-[ "$(sql 'SELECT COUNT(*) FROM "User" WHERE email = '\''preserved@example.test'\'' AND "isAdmin" = false')" = 1 ]
+[ "$(sql 'SELECT COUNT(*) FROM "User" WHERE email = '\''preserved@example.test'\'' AND "isAdmin" = true AND "isOwner" = true')" = 1 ]
 backup=$(docker exec "$name-app" node -e 'const fs=require("fs"),d="/app/uploads/.shoot-it-migrations";const a=fs.readdirSync(d);if(a.length!==1||!a[0].startsWith("legacy-"))throw Error("Unexpected backup/journal");console.log(d+"/"+a[0]+"/database.dump")')
 docker cp "$name-app:$backup" "$work/startup.dump"
 docker exec "$name-db" createdb -U postgres shootit_legacy_restore_test

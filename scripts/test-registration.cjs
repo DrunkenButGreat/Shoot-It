@@ -42,6 +42,28 @@ async function main() {
   }
   try {
     execFileSync(process.execPath, ['node_modules/prisma/build/index.js', 'db', 'push', '--skip-generate'], { env: { ...process.env, DATABASE_URL: databaseUrl }, stdio: 'pipe' })
+    const { createRegisteredUser, getRegistrationMode, hashInvite } = load('src/lib/registration.ts')
+    // Two simultaneous first signups must yield one owner, without trusting input roles.
+    const firstUsers = await Promise.all(['first-a', 'first-b'].map(name =>
+      createRegisteredUser({ email: `${name}@example.test`, isAdmin: true, isOwner: true })))
+    assert.equal(firstUsers.filter(user => user.isOwner && user.isAdmin).length, 1)
+    assert.equal(firstUsers.filter(user => !user.isOwner && !user.isAdmin).length, 1)
+    const owner = firstUsers.find(user => user.isOwner)
+    const member = firstUsers.find(user => !user.isOwner)
+    session = { user: { id: owner.id } }
+    assert.equal((await load('src/lib/admin.ts').getAdmin()).id, owner.id)
+    session = null
+    const adminCommand = action => execFileSync(process.execPath, ['scripts/admin.cjs', action, member.email],
+      { env: { ...process.env, DATABASE_URL: databaseUrl }, stdio: 'pipe' })
+    adminCommand('grant')
+    assert.equal((await db.user.findUnique({ where: { id: member.id } })).isAdmin, true)
+    adminCommand('revoke')
+    assert.equal((await db.user.findUnique({ where: { id: member.id } })).isAdmin, false)
+    assert.throws(() => execFileSync(process.execPath, ['scripts/admin.cjs', 'revoke', owner.email],
+      { env: { ...process.env, DATABASE_URL: databaseUrl }, stdio: 'pipe' }), error =>
+      error.stderr.toString().includes('instance owner must retain admin access'))
+    assert.equal((await db.user.findUnique({ where: { id: owner.id } })).isAdmin, true)
+    await db.user.deleteMany({ where: { id: { in: firstUsers.map(user => user.id) } } })
     const existing = await db.user.create({ data: { email: 'existing@example.test', name: 'Existing User', password: await require('bcryptjs').hash('test-password', 4) } })
     // Exercise the upgrade from the old schema, then repeat it after a policy change.
     await db.$executeRawUnsafe('DROP TABLE "RegistrationInvite", "RegistrationSettings"')
@@ -50,7 +72,6 @@ async function main() {
     const upgrade = () => execFileSync(process.execPath, ['node_modules/prisma/build/index.js', 'db', 'execute', '--file', 'prisma/upgrades/1.11.0.sql', '--schema', 'prisma/schema.prisma'], { env: { ...process.env, DATABASE_URL: databaseUrl }, stdio: 'pipe' })
     upgrade()
     assert.equal((await db.user.findUnique({ where: { id: existing.id } })).isAdmin, false)
-    const { createRegisteredUser, getRegistrationMode, hashInvite } = load('src/lib/registration.ts')
     const mode = value => db.registrationSettings.upsert({ where: { id: 'global' }, create: { id: 'global', mode: value }, update: { mode: value } })
     const invite = (code, extra = {}) => db.registrationInvite.create({ data: { codeHash: hashInvite(code), expiresAt: new Date(Date.now() + 86400000), ...extra } })
     const user = email => ({ email: `${email}@example.test`, name: 'Synthetic User' })
@@ -88,9 +109,10 @@ async function main() {
 
     const { POST: register } = load('src/app/api/auth/register/route.ts')
     const request = body => new Request('http://localhost/api/admin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-    const registerBody = { name: 'API User', email: 'api@example.test', password: 'test-password', isAdmin: true, role: 'ADMIN' }
+    const registerBody = { name: 'API User', email: 'api@example.test', password: 'test-password', isAdmin: true, isOwner: true, role: 'ADMIN' }
     assert.equal((await register(request(registerBody))).status, 201)
     assert.equal((await db.user.findUnique({ where: { email: registerBody.email } })).isAdmin, false)
+    assert.equal((await db.user.findUnique({ where: { email: registerBody.email } })).isOwner, false)
     assert.equal((await register(request(registerBody))).status, 409)
     assert.equal((await register(request({}))).status, 400)
     await mode('CLOSED')
@@ -101,7 +123,7 @@ async function main() {
     session = { user: { id: existing.id } }
     assert.equal((await admin(request({ action: 'invite', days: 7 }))).status, 403)
     const { PUT: profile } = load('src/app/api/user/profile/route.ts')
-    assert.equal((await profile(request({ name: 'Existing User', role: 'ADMIN', isAdmin: true }))).status, 200)
+    assert.equal((await profile(request({ name: 'Existing User', role: 'ADMIN', isAdmin: true, isOwner: true }))).status, 200)
     assert.equal((await admin(request({ action: 'mode', mode: 'OPEN' }))).status, 403)
     await db.user.update({ where: { id: existing.id }, data: { isAdmin: true } })
     assert.equal((await admin(request({ action: 'mode', mode: 'INVALID' }))).status, 400)
@@ -143,7 +165,15 @@ async function main() {
     await mode('OPEN')
     assert.equal(await config.callbacks.signIn({ account: { ...account, providerAccountId: 'new-google' } }), true)
     assert.ok((await config.adapter.createUser(user('oauth-open'))).id)
-    console.log('PASS: additive/repeatable upgrade; all registration modes; invite expiry, revocation, rollback and concurrency; API validation; admin/profile isolation; immediate admin revocation; OAuth creation guard and existing-account login.')
+    // A Google-created first account follows the same owner bootstrap.
+    await db.user.deleteMany()
+    const googleOwner = await config.adapter.createUser(user('google-owner'))
+    assert.equal(googleOwner.isAdmin, true)
+    assert.equal(googleOwner.isOwner, true)
+    const googleMember = await config.adapter.createUser({ ...user('google-member'), isAdmin: true, isOwner: true })
+    assert.equal(googleMember.isAdmin, false)
+    assert.equal(googleMember.isOwner, false)
+    console.log('PASS: first-user owner concurrency, OAuth bootstrap, admin grant/revoke and owner protection; additive/repeatable upgrade; all registration modes; invite expiry, revocation, rollback and concurrency; API validation; admin/profile isolation; immediate admin revocation; OAuth creation guard and existing-account login.')
   } finally {
     await db.$executeRawUnsafe(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`)
     await db.$disconnect()

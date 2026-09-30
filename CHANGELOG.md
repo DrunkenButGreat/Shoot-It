@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.0] - 2026-09-30
+
+### Added
+- The first successful registration becomes the instance owner and administrator, including Google OAuth registrations. Concurrent first signups elect exactly one owner.
+- Existing installations promote their oldest account through a data-preserving migration. Other admin grants and project ownership remain unchanged.
+- Owner label in the admin dashboard and protection against revoking the owner's admin access with the administration command.
+
 ## [1.16.0] - 2026-09-30
 
 ### Added

@@ -471,12 +471,33 @@ For support, please open an issue in the GitHub repository.
 
 **Made with ❤️ for photographers and creative teams**
 
-## Administration (1.11.0)
+## Administration (1.17.0)
 
 The admin dashboard is available at `/admin`, with a link on the project dashboard
 for administrators. It includes user/project counts, the latest 20 users, registration
 settings and the latest 50 invitation codes. Existing user accounts retain login access
-in all modes. No existing or newly registered account automatically becomes an admin.
+in all modes. The first successfully created account becomes the **instance owner
+and administrator** automatically, for both email/password and Google signups.
+Later users start without administrative rights. Concurrent first registrations
+produce exactly one owner. Instance ownership does not grant ownership of other
+users' projects.
+
+Version 1.17.0 promotes the oldest existing account (`createdAt`, then `id` for ties)
+to owner/admin during the normal startup migration, preserving all other admin
+grants and project ownership. The owner's admin access cannot be revoked with
+`admin:revoke`. Existing installations therefore gain an owner when this update
+is deployed; no manual account selection is needed.
+
+For local checkouts using an existing `.env`, apply pending migrations before
+starting the updated app:
+
+```bash
+node --env-file=.env scripts/migrate.cjs deploy
+npm run db:generate
+```
+
+For legacy databases without migration history, use the supported startup/updater
+upgrade described below instead of `db push`.
 
 ### Upgrade without data loss
 
@@ -495,7 +516,7 @@ Grant access to a specific existing account from the trusted server environment:
 
 ```bash
 npm run admin:grant -- admin@example.com
-# Revoke access immediately (also affects existing sessions):
+# Revoke a non-owner admin immediately (also affects existing sessions):
 npm run admin:revoke -- admin@example.com
 ```
 

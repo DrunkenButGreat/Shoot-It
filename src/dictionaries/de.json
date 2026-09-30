@@ -554,6 +554,7 @@
     "revoke": "Widerrufen",
     "latestUsers": "Die 20 neuesten Nutzer",
     "administrator": "Admin",
+    "owner": "Instanz-Owner · Admin",
     "forbidden": "Keine Berechtigung. Bitte mit einem Admin-Konto anmelden.",
     "invalidInput": "Bitte die Eingaben prüfen.",
     "errorOccurred": "Die Änderung konnte nicht gespeichert werden. Bitte erneut versuchen."

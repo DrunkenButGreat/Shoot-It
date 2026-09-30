@@ -89,7 +89,7 @@ m.main()
                 '--entrypoint', 'node', app_image, 'scripts/migrate.cjs', 'deploy')
             sql('INSERT INTO "User" (id,email,"updatedAt") VALUES (\'preserve\',\'preserved@example.test\',NOW());')
             sql('DROP TABLE "_prisma_migrations"; DROP TABLE "RegistrationInvite"; DROP TABLE "RegistrationSettings"; '
-                'DROP TYPE "RegistrationMode"; ALTER TABLE "User" DROP COLUMN "isAdmin";')
+                'DROP TYPE "RegistrationMode"; ALTER TABLE "User" DROP COLUMN "isAdmin", DROP COLUMN "isOwner";')
             legacy = derived('USER root\nRUN node -e "let p=require(\'./package.json\');p.version=\'1.10.1\';require(\'fs\').writeFileSync(\'package.json\',JSON.stringify(p))"\n'
                              'USER nextjs\nHEALTHCHECK NONE\nCMD ["node", "-e", "setInterval(()=>{},1000)"]')
             containers.append(name + '-app')
@@ -131,13 +131,13 @@ m.main()
             assert 'uploads.tar' not in run('docker', 'run', '--rm', '-v', name + '-state:/data', '--entrypoint', 'ls',
                                           updater_image, migration_state['backup'])
             assert sql('SELECT email FROM "User"') == 'preserved@example.test'
-            assert sql('SELECT "isAdmin" FROM "User"') == 'f'
+            assert sql('SELECT "isAdmin" AND "isOwner" FROM "User"') == 't'
             update('migrate') # repeatable without starting/replacing the old app
             assert info(name + '-app')['Id'] == migration_app['Id']
             # Return to the original legacy fixture to test the full update path.
             run('docker', 'rm', name + '-app')
             sql('DROP TABLE "_prisma_migrations"; DROP TABLE "RegistrationInvite"; DROP TABLE "RegistrationSettings"; '
-                'DROP TYPE "RegistrationMode"; ALTER TABLE "User" DROP COLUMN "isAdmin";')
+                'DROP TYPE "RegistrationMode"; ALTER TABLE "User" DROP COLUMN "isAdmin", DROP COLUMN "isOwner";')
             run('docker', 'run', '-d', '--name', name + '-app', '--restart', 'unless-stopped', '--network', name,
                 '--label', 'com.docker.compose.project=' + name, '--label', 'com.docker.compose.service=app',
                 '--label', 'com.docker.compose.container-number=1', '--label', 'com.docker.compose.config-hash=legacy',
@@ -162,7 +162,7 @@ m.main()
             assert info(name + '-db')['Id'] == old_db['Id']
             assert info(name + '-db')['Mounts'] == old_db['Mounts']
             assert sql('SELECT email FROM "User"') == 'preserved@example.test'
-            assert sql('SELECT "isAdmin" FROM "User"') == 'f'
+            assert sql('SELECT "isAdmin" AND "isOwner" FROM "User"') == 't'
             assert sql('SELECT mode FROM "RegistrationSettings"') == 'OPEN'
             assert run('docker', 'exec', name + '-app', 'cat', '/app/uploads/preserved.txt') == 'preserved'
             # Verify backup restore (the backed-up legacy schema has no isAdmin).
@@ -181,7 +181,7 @@ m.main()
             # A failed manual upgrade can already have the latest image, but still
             # lack a baseline. Repair without requiring another release.
             run('docker', 'stop', name + '-app')
-            sql('DROP TABLE "_prisma_migrations"; UPDATE "RegistrationSettings" SET mode=\'CLOSED\'; UPDATE "User" SET "isAdmin"=true;')
+            sql('DROP TABLE "_prisma_migrations"; ALTER TABLE "User" DROP COLUMN "isOwner"; UPDATE "RegistrationSettings" SET mode=\'CLOSED\'; UPDATE "User" SET "isAdmin"=true;')
             update()
             assert state()['phase'] == 'complete'
             assert sql('SELECT mode FROM "RegistrationSettings"') == 'CLOSED'

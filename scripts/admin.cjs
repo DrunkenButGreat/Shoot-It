@@ -6,8 +6,9 @@ async function main() {
   if (!['grant', 'revoke'].includes(action) || !email) {
     throw new Error('Usage: node --env-file=.env scripts/admin.cjs <grant|revoke> <existing-account-email>')
   }
-  const user = await prisma.user.findUnique({ where: { email }, select: { id: true } })
+  const user = await prisma.user.findUnique({ where: { email }, select: { id: true, isOwner: true } })
   if (!user) throw new Error('No existing account with this exact email address.')
+  if (action === 'revoke' && user.isOwner) throw new Error('The instance owner must retain admin access.')
   await prisma.user.update({ where: { id: user.id }, data: { isAdmin: action === 'grant' } })
   console.log(`Admin access ${action === 'grant' ? 'granted' : 'revoked'} for ${email}.`)
 }

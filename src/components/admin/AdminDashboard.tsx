@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
 type Invite = { id: string; createdAt: string; expiresAt: string; usedAt: string | null; revokedAt: string | null }
-type User = { id: string; name: string | null; email: string; createdAt: string; isAdmin: boolean }
+type User = { id: string; name: string | null; email: string; createdAt: string; isAdmin: boolean; isOwner: boolean }
 
 export default function AdminDashboard({ mode, invites, users }: { mode: RegistrationMode; invites: Invite[]; users: User[] }) {
   const { t, locale } = useI18n()
@@ -109,7 +109,7 @@ export default function AdminDashboard({ mode, invites, users }: { mode: Registr
         <ul className="mt-4 divide-y">
           {users.map(user => <li key={user.id} className="py-4 flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-0"><p className="font-medium break-words">{user.name || user.email}</p><p className="text-sm text-gray-600 break-all">{user.email}</p></div>
-            <div className="text-sm text-gray-600">{user.isAdmin && <span className="mr-3 rounded-full bg-blue-50 text-blue-700 px-3 py-1">{t("admin.administrator")}</span>}<span>{date(user.createdAt)}</span></div>
+            <div className="text-sm text-gray-600">{user.isAdmin && <span className="mr-3 rounded-full bg-blue-50 text-blue-700 px-3 py-1">{t(user.isOwner ? "admin.owner" : "admin.administrator")}</span>}<span>{date(user.createdAt)}</span></div>
           </li>)}
         </ul>
       </section>

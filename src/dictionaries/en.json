@@ -553,6 +553,7 @@
     "revoke": "Revoke",
     "latestUsers": "The 20 newest users",
     "administrator": "Admin",
+    "owner": "Instance owner · Admin",
     "forbidden": "Access denied. Please sign in with an admin account.",
     "invalidInput": "Please check your input.",
     "errorOccurred": "Could not save the change. Please try again."

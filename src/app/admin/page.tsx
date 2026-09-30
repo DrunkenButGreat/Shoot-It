@@ -22,7 +22,7 @@ export default async function AdminPage() {
     }),
     prisma.user.findMany({
       orderBy: { createdAt: "desc" }, take: 20,
-      select: { id: true, name: true, email: true, createdAt: true, isAdmin: true },
+      select: { id: true, name: true, email: true, createdAt: true, isAdmin: true, isOwner: true },
     }),
   ])
 

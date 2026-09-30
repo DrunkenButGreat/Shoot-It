@@ -62,20 +62,26 @@ async function main() {
     legacy.command([cli, 'db', 'push', '--skip-generate'])
     const old = await legacy.db.user.create({ data: { email: 'legacy@example.test', isAdmin: true } })
     await legacy.db.registrationSettings.create({ data: { id: 'global', mode: 'CLOSED' } })
+    const later = await legacy.db.user.create({ data: { email: 'later-admin@example.test', isAdmin: true, createdAt: new Date('2099-01-01') } })
+    await legacy.db.$executeRawUnsafe('ALTER TABLE "User" DROP COLUMN "isOwner"')
     legacy.command([migrate, 'deploy'], false) // never silently baseline
     legacy.command([migrate, 'baseline'])
     legacy.command([migrate, 'deploy'])
     assert.equal((await legacy.db.user.findUnique({ where: { id: old.id } })).isAdmin, true)
+    assert.equal((await legacy.db.user.findUnique({ where: { id: old.id } })).isOwner, true)
+    assert.equal((await legacy.db.user.findUnique({ where: { id: later.id } })).isAdmin, true)
+    assert.equal((await legacy.db.user.findUnique({ where: { id: later.id } })).isOwner, false)
     assert.equal((await legacy.db.registrationSettings.findUnique({ where: { id: 'global' } })).mode, 'CLOSED')
     legacy.command([migrate, 'baseline'], false)
     legacy.command([migrate, 'upgrade']) // already-baselined installations skip legacy SQL
     assert.equal((await legacy.db.registrationSettings.findUnique({ where: { id: 'global' } })).mode, 'CLOSED')
+    assert.equal(await legacy.db.user.count({ where: { isOwner: true } }), 1)
 
     const before111 = database()
     before111.command([cli, 'db', 'push', '--skip-generate'])
     await before111.db.user.create({ data: { email: 'before111@example.test' } })
     for (const sql of ['DROP TABLE "RegistrationInvite"', 'DROP TABLE "RegistrationSettings"',
-                       'DROP TYPE "RegistrationMode"', 'ALTER TABLE "User" DROP COLUMN "isAdmin"']) {
+                       'DROP TYPE "RegistrationMode"', 'ALTER TABLE "User" DROP COLUMN "isAdmin", DROP COLUMN "isOwner"']) {
       await before111.db.$executeRawUnsafe(sql)
     }
     // Stock 1.8.x schema: the subsequent changes were purely additive.
@@ -87,7 +93,8 @@ async function main() {
     await before111.db.$executeRawUnsafe('INSERT INTO "Project" (id,name,"shortCode","ownerId","updatedAt") SELECT \'old-project\',\'Preserved project\',\'old\',id,NOW() FROM "User" LIMIT 1')
     before111.command([migrate, 'upgrade'])
     before111.command([migrate, 'upgrade'])
-    assert.equal((await before111.db.user.findUnique({ where: { email: 'before111@example.test' } })).isAdmin, false)
+    assert.equal((await before111.db.user.findUnique({ where: { email: 'before111@example.test' } })).isAdmin, true)
+    assert.equal((await before111.db.user.findUnique({ where: { email: 'before111@example.test' } })).isOwner, true)
     assert.equal((await before111.db.registrationSettings.findUnique({ where: { id: 'global' } })).mode, 'OPEN')
     const oldProject = await before111.db.project.findUnique({ where: { id: 'old-project' } })
     assert.equal(oldProject.name, 'Preserved project')
@@ -97,7 +104,7 @@ async function main() {
 
     const drift = database()
     drift.command([cli, 'db', 'push', '--skip-generate'])
-    await drift.db.$executeRawUnsafe('ALTER TABLE "User" DROP COLUMN "isAdmin"')
+    await drift.db.$executeRawUnsafe('ALTER TABLE "User" DROP COLUMN "isAdmin", DROP COLUMN "isOwner"')
     drift.command([migrate, 'baseline'], false)
     const tables = await drift.db.$queryRaw`SELECT tablename FROM pg_tables WHERE schemaname = current_schema() AND tablename = '_prisma_migrations'`
     assert.equal(tables.length, 0)

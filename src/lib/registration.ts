@@ -40,7 +40,9 @@ export async function createRegisteredUser(data: Prisma.UserCreateInput, inviteC
       })
       if (claimed.count !== 1) throw new RegistrationError("invalidInvite")
     }
+    // The settings lock also makes concurrent first signups elect exactly one owner.
+    const isOwner = !await tx.user.findFirst({ select: { id: true } })
     // The invite claim rolls back if user creation fails.
-    return tx.user.create({ data })
+    return tx.user.create({ data: { ...data, isAdmin: isOwner, isOwner } })
   })
 }

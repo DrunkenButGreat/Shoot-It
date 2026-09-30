@@ -19,6 +19,7 @@ model User {
   phone                String?
   role                 String?
   isAdmin              Boolean               @default(false)
+  isOwner              Boolean               @default(false)
   bio                  String?
   brandingColor        String?
   brandingImage        String?
