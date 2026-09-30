@@ -1,6 +1,6 @@
 {
   "name": "photoshoot-organizer",
-  "version": "1.18.2-rc.9",
+  "version": "1.18.2",
   "private": true,
   "scripts": {
     "devdb": "docker compose up -d db && next dev --turbopack",
@@ -47,7 +47,7 @@
     "lucide-react": "^0.468.0",
     "nanoid": "^5.0.9",
     "next": "16.2.3",
-    "next-auth": "^5.0.0-beta.25",
+    "next-auth": "^5.0.0-beta.32",
     "nodemailer": "^8.0.5",
     "prisma": "6.19.2",
     "react": "^19.2.3",

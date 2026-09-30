@@ -146,7 +146,7 @@ export function ImageCard({
               muted
               loop
               playsInline
-              preload="metadata"
+              preload="none"
               className={`w-full ${justified || !masonry ? "h-full object-cover" : "h-auto"}`}
               draggable={false}
             />
@@ -167,6 +167,8 @@ export function ImageCard({
           <img
             src={image.thumbnail || image.path}
             alt={image.filename}
+            loading="lazy"
+            decoding="async"
             className={`w-full ${justified || !masonry ? "h-full object-cover" : "h-auto"} group-hover:scale-105 transition-transform duration-300`}
             draggable={false}
           />

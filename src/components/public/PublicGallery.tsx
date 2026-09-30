@@ -36,7 +36,7 @@ function PublicMedia({ image, className }: { image: Image; className: string }) 
                     muted
                     loop
                     playsInline
-                    preload="metadata"
+                    preload="none"
                     className={className}
                     draggable={false}
                     onMouseEnter={() => videoRef.current?.play().catch(() => {})}
@@ -61,8 +61,10 @@ function PublicMedia({ image, className }: { image: Image; className: string }) 
 
     return (
         <img
-            src={image.path}
+            src={image.thumbnail || image.path}
             alt={image.filename}
+            loading="lazy"
+            decoding="async"
             className={className}
             onError={(e) => {
                 (e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=Error+Loading+Image'

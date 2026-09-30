@@ -5,18 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.18.2-rc.9] - 2026-09-30
+## [1.18.2] - 2026-09-30
+
+### Fixed
+- Gallery thumbnails load lazily and decode asynchronously; videos no longer preload metadata. Public moodboards use generated thumbnails while the lightbox retains full-resolution media (#22).
 
 ### Changed
-- Updated minimatch to the patched versions from PR #9.
-- Updated flatted from PR #12.
-- Updated picomatch from PR #14.
-- Updated brace-expansion from PR #16.
-- Updated defu from PR #17.
-- Updated Nodemailer 8.0.5 from PR #18.
-- Updated fast-xml-parser 5.5.8 and AWS SES SDK 3.1027.0 from PR #19.
-- Updated lodash 4.18.1 from PR #20.
-- Updated Next.js 16.2.3 from PR #21.
+- Updated Next.js to 16.2.3 and Nodemailer to 8.0.5 (#18, #21).
+- Updated Auth.js to 5.0.0-beta.32 for Nodemailer 8 compatibility so clean installs and Docker builds continue to work without peer-dependency bypasses.
+- Updated transitive dependencies: minimatch, flatted, picomatch, brace-expansion, defu, lodash, fast-xml-parser and the AWS SES SDK (#9, #12, #14, #16, #17, #19, #20).
 
 ## [1.18.1] - 2026-09-30
 
