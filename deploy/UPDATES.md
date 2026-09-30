@@ -1,383 +1,121 @@
-# Manual and automatic Docker Compose updates
+# Docker updates
 
-**QNAP / Container Station:** from 1.16.0 the app automatically backs up and
-migrates supported old schemas on startup; see the [NAS instructions](QNAP-UPDATES.md#automatic-migration-at-app-start-1160).
-For automatic image updates, use the [standalone update container](QNAP-UPDATES.md), available with release 1.15.0+.
-It includes its own tools and performs the 1.11 schema transition automatically
-before installing the latest compatible stable release. No host Python, systemd,
-Compose CLI, checkout or project path is needed. Manual updates remain supported.
+There are two update paths: manual app-image replacement and the optional
+[Docker autoupdate container](docker-compose.updater.yml). The app migrates its
+database before starting the web server. The separate Linux host/systemd updater
+has been retired.
 
-The host commands below are an alternative for conventional Linux/systemd hosts;
-they are **not QNAP installation instructions**.
-
-Version 1.12.0 introduces an **opt-in Linux host updater**. After the one-time
-setup, operators no longer need to pull or replace app images themselves.
-Default: check every 15 minutes, install between **03:00 and 05:00 host local time**.
-The app is unavailable during the consistent backup, migration and restart.
-Backup duration depends on the amount of media; this is not zero-downtime deployment.
-
-## Manage automatic updates (1.13.0+)
-
-Run from the checkout on the **Linux Docker host**:
-
-```sh
-sudo python3 scripts/autoupdate.py check
-sudo python3 scripts/autoupdate.py enable
-sudo python3 scripts/autoupdate.py disable
-```
-
-- `check` is read-only. It validates Linux/systemd/root access, Python (including
-  `/usr/bin/python3` used by the service), Docker with `docker.service`, Compose 2.20+, the local Docker
-  context, project and Compose paths, `.env`, state/backup locations, the running
-  app version, migration status, persistent DB/uploads mounts, image override support,
-  available disk space and unfinished transactions. It reports the first blocking
-  requirement with a nonzero exit code. It does not install units, pull images,
-  create backup directories or change the image pin.
-- `enable` runs those checks first, preserves existing configuration, pins the running
-  image, installs/refreshes the host updater and units, and activates the timer.
-  It refuses to overwrite a running updater or ignore an unresolved migration.
-- `disable` disables future timer runs even if Docker or the installation paths
-  are broken. It never stops an active update or changes the image pin, database,
-  configuration or backups. See the manual-mode transition below for removing a pin.
-
-For a different installation path or backup disk, pass explicit paths on first setup:
-
-```sh
-sudo python3 scripts/autoupdate.py check --project-dir /opt/shoot-it --backup-dir /mnt/backups/shoot-it
-sudo python3 scripts/autoupdate.py enable --project-dir /opt/shoot-it --backup-dir /mnt/backups/shoot-it
-```
-
-`--compose-file docker-compose.yml --compose-file production.override.yml` selects
-an explicit file list. Without this option the standard Compose file and an existing
-`docker-compose.override.yml` are included. Existing `/etc/shoot-it-updater.json`
-takes precedence; conflicting path/file arguments fail instead of silently switching
-installations. Edit that configuration deliberately to change an existing setup.
-Paths with spaces are supported. Backup/state directories inside live uploads are
-rejected. The old `sudo sh scripts/install-updater.sh` entry point remains an alias
-for `enable` and accepts the same path options.
-
-These are **local** prerequisites. Network availability, GitHub visibility and GHCR
-pull permissions are checked by the updater when fetching a release. No GitHub
-credentials or database connection strings are printed by this check.
+For QNAP / Container Station, use the [container instructions](QNAP-UPDATES.md).
+They cover app-start migration, the updater's `check`, `run`, `watch` and `migrate`
+commands, backup locations and recovery without host Python or systemd.
 
 ## Manual updates without the updater
 
-Manual updates remain the default and need only Docker Compose. There is no
-requirement to install Python, systemd or the host updater. With 1.16.0+, the app
-handles the supported legacy schema transition automatically. The familiar update path remains available:
+Keep a current database/uploads backup, then replace only the app:
 
 ```sh
 docker compose pull app
 docker compose up -d --no-deps --wait --wait-timeout 120 app
 ```
 
-Take a database/uploads backup before updating (use the stopped-app backup procedure
-in the transition section). `latest` points to the latest tested stable GitHub
-release; development builds never advance it. The container applies pending
-migrations at startup, and `--no-deps` leaves the running database container alone.
-This manual path creates a startup DB backup only for the first legacy transition;
-it does not create updater backups or automatically roll back failures.
-Read the release notes first, especially for major releases or infrastructure changes.
+Use the image's default command. `latest` follows tested stable GitHub releases;
+for a fixed version set `SHOOT_IT_IMAGE=ghcr.io/drunkenbutgreat/shoot-it:<version>`
+in `.env`. A fixed digest does not change when pulled.
 
-For a selected version instead of `latest`, set exactly one `SHOOT_IT_IMAGE` entry
-in `.env`, for example `SHOOT_IT_IMAGE=ghcr.io/drunkenbutgreat/shoot-it:1.12.0`,
-then run the same commands. Change that value when choosing the next version.
-A fixed digest intentionally keeps the same image even after `pull`.
+From 1.16.0, stock 1.8.x–1.11.x databases receive a verified database backup and
+migration baseline automatically at app startup. Fresh and already migrated
+installations apply their pending migrations. The web server starts only after
+success. Large first-time backups can outlast the Compose wait timeout; inspect
+the app logs and let the migration finish instead of interrupting it.
 
-### Switch from automatic back to manual updates
+This path creates a database backup only for the initial legacy transition. It
+does not archive uploads or automatically roll back subsequent manual updates.
+See [startup backup and recovery](QNAP-UPDATES.md#automatic-migration-at-app-start-1160).
 
-1. Disable future runs: `sudo python3 scripts/autoupdate.py disable` (or
-   `sudo systemctl disable --now shoot-it-updater.timer` on older checkouts).
-2. Let an already running update finish; disabling the timer does not stop its
-   service. Check `systemctl is-active shoot-it-updater.service` and the journal.
-   Do not interrupt migrations. If `transaction.json` reports an unfinished or
-   failed migration, complete the recovery procedure below before continuing.
-3. Remove the updater's `SHOOT_IT_IMAGE` line from `.env` to return to `latest`,
-   or replace it with the explicit version you intend to install. Also remove
-   any shell override for this variable. Keep all other settings and volumes.
-4. Back up, then use the manual Compose commands above. Review any release that
-   previously rolled back before explicitly retrying it manually.
+## Automatic updates with the Docker container
 
-The installed script and backups can remain on the host; nothing runs automatically
-while the timer is disabled. To opt in again after a successful manual update,
-rerun `sudo python3 scripts/autoupdate.py enable`; it validates and pins the running image
-and re-enables the timer. Unresolved transactions must be recovered first.
+Create a separate updater application from [docker-compose.updater.yml](docker-compose.updater.yml).
+Set `APP_CONTAINER` and `DB_CONTAINER` to the existing container names and keep a
+persistent `/data` volume for state and backups. On Linux the same YAML can be
+started with `docker compose -f deploy/docker-compose.updater.yml up -d`.
 
-## Requirements for automatic updates
+- `check`: validate the installation and inspect the available release.
+- `run`: back up and update once; the supplied YAML uses this mode by default.
+- `watch`: check every 15 minutes within `UPDATE_WINDOW`; set `restart: unless-stopped`.
+- `migrate`: back up and migrate only the database; leave the old app stopped.
 
-- Linux with systemd, Python 3.9+, a **local** Docker engine and Compose v2 supporting
-  `up --wait` (2.20+ recommended). The current release workflow builds linux/amd64.
-- A single Shoot-It Compose installation with services named `app` and `db`,
-  PostgreSQL, persistent `/app/uploads`, and the stock image command/healthcheck.
-- A running, baselined version **1.12.0 or newer**. Older installations follow the
-  transition below first. The first updater release does not update itself from 1.11.0.
-- The installation directory, Compose files and `.env` must only be writable by
-  trusted administrators: the updater runs with host Docker privileges.
-- Backups on durable storage, capacity monitoring, and an independently retained
-  off-host backup. Update backups are never automatically deleted.
-- Registry pull access. Public GHCR images need no login; private packages require
-  a read-only registry login for the root account used by the service.
+For settings, prerequisites, time windows and failure handling, use the
+[Docker updater guide](QNAP-UPDATES.md). The updater replaces only the app; it
+keeps the database container, PostgreSQL version, mounts and existing data.
 
-The application does not receive a Docker socket or host credentials. The installed
-host script is not downloaded or replaced automatically by releases. Protocol changes
-require an explicit host-updater upgrade.
+To return to manual updates, stop scheduled checks after any active update has
+finished and disable the updater's restart policy. Retain its `/data` volume.
+Resolve unfinished transactions before proceeding. In your saved app YAML or
+`.env`, select `latest` or the successfully installed target image before a manual
+recreation: the Docker updater does not rewrite those files or Container Station's
+saved configuration. A stale tag/digest could otherwise reinstall an older image.
 
-## New installations
+## Preserve existing PostgreSQL storage
 
-After **v1.12.0 has been published successfully**, follow the normal Compose setup
-with the files from that release. `docker compose up -d` creates the empty database,
-executes the migration history and starts the app. To opt into automatic updates:
+Schema migration does not move PostgreSQL data. Keep the existing DB container and
+actual mounts, including legacy anonymous volumes. Do not recreate the database,
+use `down -v`, prune volumes or change the mount destination during an app update.
+
+New PostgreSQL 18 installations use `POSTGRES_VOLUME_TARGET=/var/lib/postgresql`.
+Existing installations preserve their old setting until storage is deliberately
+migrated. If necessary, restore a verified dump into a separate new named volume
+with the correct PostgreSQL layout, verify records and the actual data directory,
+and only then switch the app. Retain the original volume for recovery.
+
+## Retire an existing host updater
+
+Removing the old files from this checkout does not disable an already installed
+systemd service. On a host that previously used it, disable future timer runs:
 
 ```sh
-sudo python3 scripts/autoupdate.py check
-sudo python3 scripts/autoupdate.py enable
-systemctl status shoot-it-updater.timer
-sudo python3 /usr/local/lib/shoot-it/update.py check
+sudo systemctl disable --now shoot-it-updater.timer
+systemctl is-active shoot-it-updater.service
 ```
 
-The installer validates readiness and persistent database storage, pins the current
-image in `.env` (`SHOOT_IT_IMAGE`), installs the script and enables the timer. Ordinary
-`docker compose up` commands continue to use that pin. Do not override this variable
-in the shell or hardcode `app.image` in a Compose override.
+Let an active service finish; do not stop it during backup or migration. Check its
+existing transaction journal (default `/var/lib/shoot-it-updater/transaction.json`)
+before enabling the Docker updater. An unfinished migration still needs recovery.
+Keep the old configuration and backups; the [1.16 host recovery guide](https://github.com/DrunkenButGreat/Shoot-It/blob/v1.16.0/deploy/UPDATES.md#logs-backups-and-recovery)
+remains available for those transactions. Do not copy the host journal into the
+Docker updater's `/data`: they use different transaction formats.
 
-Configuration: `/etc/shoot-it-updater.json`. It contains the installation directory,
-explicit Compose files, state directory, backup directory and maintenance hours.
-The installer includes `docker-compose.override.yml` if present. Add other required
-Compose files with `--compose-file` on first setup if you use a customized installation.
-Existing configuration is preserved when the installer is run again.
-
-Change `windowHours` to e.g. `[1, 3]`; equal hours allow updates at any time.
-For a private repository, create `/etc/shoot-it-updater.env`, mode `0600`, containing
-`GITHUB_TOKEN=...` with read-only repository contents access. Never put it into the
-application's environment. For manual checks, use the same credential environment.
-No token is forwarded when GitHub redirects an asset download to storage.
-
-## Existing installations: one-time transition
-
-The explicit schema migration commands below are retained for 1.12–1.15 and for
-manual maintenance. With 1.16.0+, supported 1.8.x–1.11.x schemas migrate at app
-startup. This does **not** migrate PostgreSQL's storage location; retain the
-existing database container and actual mounts as described below.
-
-Do this during a maintenance window. Keep the existing running database container
-until its actual storage location has been checked. **Do not run a blanket Compose
-`up`, `down -v`, volume prune or database recreation during this transition.**
-New installations set `POSTGRES_VOLUME_TARGET=/var/lib/postgresql` in `.env`.
-Existing installations without that variable retain the previous mount path.
-Changing it from `/var/lib/postgresql/data` before moving the actual data could
-otherwise expose an empty database. Do not replace your existing `.env` with the example.
-
-### Compact local Docker upgrade
-
-Use this sequence for an existing local installation that predates the 1.11.0
-administration schema. The longer production procedure below additionally covers
-storage migration, upload backups and rollback preparation.
-
-Stop application writes, start PostgreSQL and create a restricted database dump:
-
-```sh
-docker compose up -d db
-docker compose stop app
-
-umask 077
-mkdir -p ../shoot-it-backups
-BACKUP="../shoot-it-backups/shoot-it-before-migration-$(date +%Y%m%d-%H%M%S).dump"
-
-docker compose exec -T db sh -c \
-  'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' > "$BACKUP"
-
-test -s "$BACKUP"
-docker compose exec -T db pg_restore --list < "$BACKUP" > /dev/null
-echo "Backup verified: $BACKUP"
-```
-
-Apply the additive, repeatable 1.11.0 upgrade before recording the migration
-baseline. Then deploy the migration history and regenerate Prisma Client:
-
-```sh
-npx prisma db execute \
-  --file prisma/upgrades/1.11.0.sql \
-  --schema prisma/schema.prisma
-
-node --env-file=.env scripts/migrate.cjs baseline
-node --env-file=.env scripts/migrate.cjs deploy
-
-npx prisma generate
-npx prisma migrate status --schema prisma/schema.prisma
-```
-
-Restart the application and verify readiness:
-
-```sh
-docker compose up -d app
-docker compose ps
-curl -fsS http://127.0.0.1:3000/api/ready
-```
-
-If `baseline` reports a schema mismatch, do not force or resolve the migration
-manually. It intentionally leaves the database unchanged so the difference can be
-investigated first. The dump can contain personal data; keep it outside version
-control and retain it until login, projects, media access and readiness have been
-verified after the upgrade.
-
-1. Start from a working **1.11.0** schema. Earlier versions first follow the existing
-   1.11.0 upgrade instructions. Record the running app image ID and database mounts:
-
-   ```sh
-   docker inspect photoshoot-app --format '{{.Image}}'
-   docker inspect photoshoot-db --format '{{json .Mounts}}'
-   docker compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "SHOW data_directory"'
-   ```
-
-2. Stop only the app and make a consistent backup using the currently working
-   Compose configuration. Keep `.env` and the original Compose files alongside it
-   with restrictive permissions. Example for the standard service/container names:
-
-   ```sh
-   umask 077
-   mkdir -p transition-backup
-   docker compose stop app
-   docker compose exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' > transition-backup/database.dump
-   docker compose exec -T db pg_restore --list < transition-backup/database.dump
-   old_image=$(docker inspect photoshoot-app --format '{{.Image}}')
-   docker run --rm --network none --user 0 --volumes-from photoshoot-app:ro --entrypoint tar "$old_image" -C /app/uploads -cf - . > transition-backup/uploads.tar
-   tar -tf transition-backup/uploads.tar > /dev/null
-   ```
-
-   Verify command success and rehearse restoring the database into a separate
-   disposable database before proceeding. These archives contain personal data.
-
-3. If `SHOW data_directory` is not inside the expected **named** volume, migrate
-   storage first. Use a **new named volume**, mount it at `/var/lib/postgresql`,
-   initialize PostgreSQL 18 there, then restore the dump with `pg_restore
-   --exit-on-error --no-owner --no-acl`. Set `volumes.db_data.name` in your local
-   Compose override to that new volume, set `POSTGRES_VOLUME_TARGET=/var/lib/postgresql`
-   in `.env`, and preserve the original volumes for recovery.
-   Also migrate deliberately if the old volume layout does not match PostgreSQL 18.
-   Never just rename the mount and assume the files moved. Recheck table counts,
-   representative records and `SHOW data_directory` before using the new database.
-   The updater refuses storage that does not match the declared persistent mount.
-
-4. Use the 1.12.0 Compose file and app image, retaining your local settings and
-   verified volume configuration. Set `SHOOT_IT_IMAGE=ghcr.io/drunkenbutgreat/shoot-it:1.12.0`
-   in `.env` to explicitly select the transition release, even if `latest` has
-   advanced. Pull only the app,
-   explicitly baseline the existing schema, then deploy the migration history:
-
-   ```sh
-   docker compose pull app
-   docker compose run --rm --no-deps -T app node scripts/migrate.cjs baseline
-   docker compose run --rm --no-deps -T app node scripts/migrate.cjs deploy
-   docker compose up -d --no-deps --wait --wait-timeout 120 app
-   ```
-
-   Baseline compares the existing schema against the frozen 1.11.0 schema and only
-   records `0_init` when they match. It neither recreates tables nor resets data.
-   A mismatch must be investigated; **never force a baseline to hide it**. Normal
-   startup deliberately fails for an unbaselined, nonempty database.
-
-5. Check login, existing projects, image access, and `/api/ready`. For manual updates,
-   retain the version pin or remove it to follow `latest`. For automatic updates,
-   run the installer above. Keep the transition backup and previous image until verified.
-
-## What happens on an update
-
-1. Fetch the latest published stable GitHub release and its `shoot-it-update.json`.
-   Missing assets, drafts, prereleases, older/equal versions, major changes,
-   incompatible minimum versions and unknown updater protocols do not install.
-2. Require the official GHCR repository and an exact SHA-256 image digest. A release
-   is eligible only when `rollbackSafe` is explicitly true. Semantic versions are
-   compared numerically. The latest release is checked; there is no older-major
-   maintenance-channel search when GitHub marks a new major as latest.
-3. Lock the updater, check actual storage and available space, pull the image and
-   compare its packaged version. Save the previous local image ID and pin it.
-4. Stop the app, dump PostgreSQL and archive uploads. Verify dump readability and
-   archive structure. Record backup completion. No migration starts after a failed
-   backup; the previous app is restarted instead.
-5. Run all pending migrations with the CLI bundled in the target image. There is
-   no `db push`, destructive schema synchronization or runtime npm download.
-6. Start only the app with the new digest. Docker healthchecks call `/api/ready`,
-   which reads the database and returns the packaged version. The legacy
-   `/api/health` cleanup behavior remains separate and is not used by the updater.
-7. On readiness failure after successful migration, restart the previous image.
-   The release version is blocked from automatic retry; a new fixed release can
-   proceed. This relies on the release's explicit backward-compatibility contract.
-
-The database container, secrets, Compose files and imported local-media directory
-are not automatically upgraded. Releases requiring changes there must disable
-automatic eligibility until operators have completed the prerequisite upgrade.
-The read-only `local_media` source needs its own backup; managed uploads are archived.
-
-## Logs, backups and recovery
-
-```sh
-journalctl -u shoot-it-updater.service
-sudo cat /var/lib/shoot-it-updater/transaction.json
-sudo systemctl stop shoot-it-updater.timer
-sudo systemctl disable shoot-it-updater.timer  # keep automatic updates disabled
-```
-
-Backups are under `/var/backups/shoot-it/<timestamp>-<version>/`:
-`database.dump`, `uploads.tar`, `previous.env`, `release.json`, and `COMPLETE`.
-A `COMPLETE` marker means both archives passed structural checks, not that every
-possible restore has been rehearsed. The image ID is in `transaction.json`.
-Do not prune the previous image until the release and recovery have been verified.
-Backups accumulate intentionally; move/delete old archives under your retention
-policy. Low space stops the updater before application downtime.
-
-A migration failure or interrupted transaction **blocks further updates**. A timed-out
-Docker migration container might still exist as `shoot-it-update-migration`;
-stop the timer, inspect that container and ensure it has stopped before recovery.
-Do not automatically start an older image against an unknown schema.
-
-Preferred recovery: investigate the migration, repair it using Prisma's documented
-`migrate resolve` workflow, and validate the chosen app version. Alternatively, while
-all writers remain stopped, restore the backup into a **new** database volume and
-restore uploads into a **new** uploads volume, verify both, then point Compose at
-those volumes and pin the previous image from the journal. Keep failed-state volumes
-for diagnosis. A restore after accepting new writes would discard those later writes;
-reconcile them before deciding to restore.
-
-After readiness and data checks pass, archive (do not blindly delete) the transaction
-file outside its active path, then re-enable the timer. A rolled-back release should
-remain blocked until a new release is published. Ordinary network failures before
-stopping the app can simply retry on the next timer tick.
+The old host updater may have pinned `SHOOT_IT_IMAGE` in `.env`. After completing
+recovery or a successful update, deliberately select the installed version/digest
+or remove that pin to follow `latest` before any manual app recreation. Never run
+the host timer and Docker updater against the same installation simultaneously.
 
 ## Release maintainer contract
 
-- Bump `package.json`/lockfile with SemVer, update `CHANGELOG.md`, and publish the
-  exact stable tag `v<package version>`. `main` images are not automatic releases.
-- Keep `prisma/baseline.prisma` and `prisma/migrations/0_init` immutable. Add ordered
-  migrations for subsequent schema changes; use transactions for PostgreSQL DDL.
-- `deploy/auto-update.json` declares updater protocol, minimum compatible version
-  and whether **every** supported previous version can still operate after all
-  intervening migrations. Test skipped releases as well as adjacent versions.
-- Additive nullable fields/tables are usually compatible. Dropping/renaming fields,
-  changing stored semantics or requiring new environment variables is not automatically
-  safe. Use expand/contract changes, raise `minVersion`, or set `rollbackSafe: false`.
-- CI runs updater, migration, registration and TypeScript checks, builds/pushes the
-  image, then starts it against disposable PostgreSQL and rehearses backup restoration.
-  Only then does it upload the manifest and promote the image to `latest` for manual
-  installations, provided GitHub still marks that release as latest. Release runs
-  are serialized so an older build cannot overwrite a newer tested `latest` image.
-  A failed build/test has no eligible manifest and does not advance `latest`.
-- The publication workflow uploads an asset after the `release.published` event;
-  repository release immutability must allow this. If immutable releases are enabled,
-  build/test and attach assets to a draft before publication instead. Existing assets
-  are never overwritten; publish a new version to correct a failed release contract.
-- A release needing host-updater or Compose changes requires a documented manual
-  step. Do not mark it compatible just to bypass the protocol/minimum gate.
+- Update `package.json`/lockfile with SemVer and `CHANGELOG.md`. Publish the exact
+  stable tag `v<package version>`; `main` images are development builds.
+- Keep `prisma/baseline.prisma`, `prisma/migrations/0_init` and historical upgrade
+  SQL. Add ordered migrations for later schema changes and use PostgreSQL DDL
+  transactions. Never replace the startup migration with `db push` or a reset.
+- `deploy/auto-update.json` controls protocol, supported versions and rollback
+  compatibility. Dropped/renamed fields, changed semantics or new required
+  configuration need a reviewed compatibility gate, not an unconditional update.
+- CI verifies updater policy, migrations, registration and types, then builds and
+  tests the app/updater images with disposable PostgreSQL and backup restoration.
+  Only after success does it attach `shoot-it-update.json` and promote both images
+  to `latest`, provided the release is still GitHub's latest. Stable release runs
+  are serialized. Missing manifests and failed tests never advance `latest`.
+- Release assets are attached after publication and are never overwritten. If
+  repository release immutability is enabled, attach tested assets to a draft
+  before publication instead. Correct an invalid contract with a new release.
+- Container protocol or infrastructure changes require documented operator steps.
+  The updater does not replace itself or recreate the database.
 
 Checks:
 
 ```sh
 npm run test:updater
+node scripts/test-release-workflow.cjs
 TEST_DATABASE_URL=postgresql://.../shootit_update_test npm run test:migrations
-sh scripts/test-image.sh ghcr.io/drunkenbutgreat/shoot-it:1.12.0
-python3 scripts/test-compose-updater.py ghcr.io/drunkenbutgreat/shoot-it:1.12.0
+sh scripts/test-image.sh <app-image>
+python3 scripts/test-container-updater.py <app-image> <updater-image>
 ```
-
-References: [GitHub releases](https://docs.github.com/en/rest/releases/releases),
-[Compose readiness](https://docs.docker.com/reference/cli/docker/compose/up/),
-[Prisma baseline](https://www.prisma.io/docs/orm/v6/prisma-migrate/workflows/baselining),
-[PostgreSQL 18 storage layout](https://hub.docker.com/_/postgres).

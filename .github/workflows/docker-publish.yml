@@ -95,7 +95,6 @@ jobs:
           TEST_UPDATER: ghcr.io/drunkenbutgreat/shoot-it-updater@${{ steps.build-updater.outputs.digest }}
         run: |
           sh scripts/test-image.sh "$TEST_IMAGE"
-          python3 scripts/test-compose-updater.py "$TEST_IMAGE"
           python3 scripts/test-container-updater.py "$TEST_IMAGE" "$TEST_UPDATER"
       - name: Publish automatic-update manifest
         if: github.event_name == 'release'

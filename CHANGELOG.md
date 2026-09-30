@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.1] - 2026-09-30
+
+### Removed
+- Retired the separate Linux host/systemd updater, installer, management commands and their dedicated tests. The Docker updater remains the automatic-update path on Linux and QNAP.
+- Obsolete manual 1.11/1.12 transition instructions; current guidance uses app-start migration or the Docker updater. Historical migration SQL and recovery support remain available.
+
+### Changed
+- Consolidated update documentation and retained shared release validation, safe downloads, journal helpers and manual Compose coverage for the Docker updater. Existing host installations have explicit timer-retirement instructions; saved backups and journals are not removed.
+
 ## [1.18.0] - 2026-09-30
 
 ### Changed

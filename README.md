@@ -226,7 +226,7 @@ It takes a database-only backup and leaves the old app stopped for manual image
 replacement; uploads and the app image are not changed. See the
 [migration-only instructions](deploy/QNAP-UPDATES.md#database-migration-only-updater-and-release-1160).
 
-### Manual or automatic updates on a Linux host (1.12.0+)
+### Manual Docker Compose updates
 
 Manual updates remain the default. After taking a backup, update the app with:
 
@@ -241,23 +241,10 @@ specific version, set `SHOOT_IT_IMAGE=ghcr.io/drunkenbutgreat/shoot-it:<version>
 `.env`. See [manual updates and switching modes](deploy/UPDATES.md#manual-updates-without-the-updater)
 before switching back from automatic updates.
 
-Docker Compose installations can opt into automatic stable-release updates with
-backups, ordered migrations, readiness checks and compatible image rollback.
-See **[setup, existing-installation transition and recovery](deploy/UPDATES.md)**.
-From 1.16.0 the app handles the supported legacy schema transition at startup.
-PostgreSQL storage migration is separate: preserve the existing DB container and
-mounts. The updater is not enabled by default.
-
-From version 1.13.0, manage it on the Linux host with:
-
-```sh
-sudo python3 scripts/autoupdate.py check    # Check requirements and paths without changes
-sudo python3 scripts/autoupdate.py enable   # Check, install and enable the timer
-sudo python3 scripts/autoupdate.py disable  # Disable future runs; let an active update finish
-```
-
-Use `--project-dir /opt/shoot-it` and `--backup-dir /mnt/backups/shoot-it` for explicit
-paths on first setup. Existing configuration is preserved.
+For automatic updates, use the same [Docker updater](deploy/docker-compose.updater.yml)
+on Linux and QNAP: `watch` enables scheduled checks, `run` performs a single update.
+Manual updates and app-start migrations remain available without it. If the old
+host/systemd updater was installed, [disable its timer before switching](deploy/UPDATES.md#retire-an-existing-host-updater).
 
 ### Initial Setup
 
@@ -501,16 +488,9 @@ upgrade described below instead of `db push`.
 
 ### Upgrade without data loss
 
-Back up the database first. Up to version 1.11.0 this repository used `prisma db push` (also at
-Docker startup), rather than a migration history. Starting with 1.12.0, follow
-[the migration-baseline transition](deploy/UPDATES.md) instead. Version 1.11.0 only adds tables and
-the `User.isAdmin` column. Either use the existing `db push` workflow or apply the
-repeatable SQL upgrade **before starting the new application**:
-
-```bash
-npx prisma db execute --file prisma/upgrades/1.11.0.sql --schema prisma/schema.prisma
-npm run db:generate
-```
+The app automatically backs up and migrates supported legacy databases at startup.
+Existing accounts retain their data.
+See [updates and recovery](deploy/UPDATES.md) for the current Docker workflow.
 
 Grant access to a specific existing account from the trusted server environment:
 
