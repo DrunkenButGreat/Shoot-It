@@ -207,7 +207,7 @@ export function SelectionContent({
     <div className="flex flex-col h-full gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl font-bold text-slate-950">
             {t('selection.title')} ({initialImages.length})
           </h2>
           <div className="flex items-center gap-2">
@@ -294,7 +294,7 @@ export function SelectionContent({
         activeColors={searchParams.getAll('color')}
       />
 
-      <div className="flex flex-col md:flex-row gap-8 min-h-[600px]">
+      <div className="flex min-h-[600px] flex-col gap-6 md:flex-row">
         {showFolders && (
           <aside className="w-full md:w-64 flex-shrink-0">
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden sticky top-24">
@@ -344,7 +344,7 @@ export function SelectionContent({
           </aside>
         )}
 
-        <main className="flex-1 space-y-8">
+        <main className="flex-1 space-y-8 rounded-xl border border-slate-200 bg-white p-6">
           {filteredImages.length === 0 ? (
             <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
               <p className="text-gray-500 text-lg">{t('common.noImages')}</p>
@@ -399,7 +399,7 @@ export function SelectionContent({
               uploadUrl={`/api/projects/${projectId}/selection/images`}
               onSuccess={() => router.refresh()}
               label={t('selection.dragDrop')}
-              className="w-full min-h-[160px] border-dashed bg-gray-50/50 hover:bg-gray-100/30 transition-all rounded-2xl flex flex-col items-center justify-center border-gray-200"
+              className="flex min-h-[160px] w-full flex-col items-center justify-center rounded-lg border-slate-200 bg-slate-50 transition-colors hover:bg-slate-100"
               folderId={selectedFolderId || undefined}
             />
           </div>

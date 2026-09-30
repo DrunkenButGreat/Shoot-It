@@ -143,7 +143,7 @@ export function PublicResults({ projectId }: { projectId: string }) {
 
   if (folders.length === 0 && rootImages.length === 0) {
     return (
-      <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 italic text-gray-400">
+      <div className="rounded-xl border border-slate-200 bg-white py-12 text-center text-slate-500">
         {t('results.noFolders')}
       </div>
     );
@@ -234,7 +234,7 @@ export function PublicResults({ projectId }: { projectId: string }) {
         </aside>
 
         {/* Main Content */}
-        <div className="flex-1 space-y-8 bg-white/50 rounded-2xl p-6 border border-gray-100">
+        <div className="flex-1 space-y-8 rounded-xl border border-slate-200 bg-white p-6">
            {selectedFolderId && selectedFolderId !== 'unassigned' && (
               <div className="flex items-center gap-2 text-sm text-gray-500 pb-2 border-b border-gray-100">
                   <FolderOpen className="h-4 w-4" />

@@ -65,7 +65,7 @@
 }
 
 @layer components {
-  .studio-shell { @apply min-h-screen bg-[#f5f6f8] text-[#20252c]; }
+  .studio-shell { @apply flex min-h-screen items-start bg-[#f5f6f8] text-[#20252c]; }
   .studio-sidebar { @apply w-[232px] flex-col overflow-y-auto bg-[#202328] text-slate-300; }
   .studio-topbar { @apply sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-[#e2e5ea] bg-white px-4 sm:px-7; }
   .studio-nav-link { @apply flex min-h-10 items-center gap-3 rounded-md px-3 text-sm text-slate-300 transition-colors hover:bg-white/5 hover:text-white; }

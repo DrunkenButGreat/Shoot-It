@@ -208,7 +208,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
                 onClick={() => setActiveTab('details')}
                 className={cn(
                   "flex-1 px-3 py-1.5 text-xs font-semibold rounded-md transition-all",
-                  activeTab === 'details' ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                  activeTab === 'details' ? "bg-blue-600 text-white" : "text-gray-500 hover:text-gray-700"
                 )}
               >
                 {t('projectForm.tabDetails')}
@@ -218,7 +218,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
                 onClick={() => setActiveTab('settings')}
                 className={cn(
                   "flex-1 px-3 py-1.5 text-xs font-semibold rounded-md transition-all",
-                  activeTab === 'settings' ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                  activeTab === 'settings' ? "bg-blue-600 text-white" : "text-gray-500 hover:text-gray-700"
                 )}
               >
                 {t('projectForm.tabSettings')}
@@ -229,7 +229,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
                 onClick={() => setActiveTab('visibility')}
                 className={cn(
                   "flex-1 px-3 py-1.5 text-xs font-semibold rounded-md transition-all",
-                  activeTab === 'visibility' ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700",
+                  activeTab === 'visibility' ? "bg-blue-600 text-white" : "text-gray-500 hover:text-gray-700",
                   !formData.isPublic && "opacity-50 cursor-not-allowed"
                 )}
               >
@@ -450,7 +450,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
                       onChange={(checked) => setFormData({ ...formData, showSelectionPublicly: checked })}
                     />
                     {formData.showSelectionPublicly && (
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200 sm:col-span-2 shadow-sm">
+                      <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 sm:col-span-2">
                         <div className="space-y-0.5">
                           <Label htmlFor="showSelectionFolders" className="text-sm font-medium">{t('projectForm.useFolders')}</Label>
                           <p className="text-[10px] text-gray-500">{t('projectForm.useFoldersDescription')}</p>
@@ -463,7 +463,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
                       </div>
                     )}
                     {formData.showSelectionPublicly && (
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200 sm:col-span-2 shadow-sm">
+                      <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 sm:col-span-2">
                         <div className="space-y-0.5">
                           <Label htmlFor="allowSelectionDownload" className="text-sm font-medium">{t('projectForm.allowSelectionDownload')}</Label>
                           <p className="text-[10px] text-gray-500">{t('projectForm.allowSelectionDownloadDescription')}</p>
@@ -519,7 +519,7 @@ export function ProjectForm({ onSuccess, initialData }: ProjectFormProps) {
 
 function ModuleToggle({ label, value, onChange }: { label: string, value: boolean, onChange: (checked: boolean) => void }) {
   return (
-    <div className="flex items-center justify-between p-2 rounded-md border border-gray-100 bg-white shadow-sm">
+    <div className="flex items-center justify-between rounded-md border border-gray-200 bg-white p-2">
       <span className="text-[10px] font-bold uppercase text-gray-500">{label}</span>
       <Switch
         checked={value}

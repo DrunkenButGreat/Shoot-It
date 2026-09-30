@@ -46,9 +46,9 @@ export function ContractsContent({
   };
 
   return (
-    <div>
-      <div className="mb-6 flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-2xl font-bold text-slate-950">
           {t('contracts.title')} ({contracts.length})
         </h2>
         <Button onClick={() => setIsFormOpen(true)} className="gap-2">
@@ -57,9 +57,9 @@ export function ContractsContent({
       </div>
 
       {contracts.length === 0 ? (
-        <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-          <p className="text-gray-500 text-lg">{t('contracts.noContracts')}</p>
-          <p className="text-sm text-gray-400 mt-2">{t('contracts.contractsPrompt')}</p>
+        <div className="studio-panel p-12 text-center">
+          <p className="text-lg text-slate-600">{t('contracts.noContracts')}</p>
+          <p className="mt-2 text-sm text-slate-400">{t('contracts.contractsPrompt')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

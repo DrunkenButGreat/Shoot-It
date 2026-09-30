@@ -56,7 +56,7 @@ export function ParticipantCard({ participant, projectId, onDelete }: Participan
   }
 
   return (
-    <Card className="overflow-hidden border-none shadow-md hover:shadow-xl transition-all bg-white/90 backdrop-blur-sm group">
+    <Card className="group overflow-hidden bg-white transition-colors hover:border-slate-300">
       <CardHeader className="pb-4">
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-4">
@@ -64,7 +64,7 @@ export function ParticipantCard({ participant, projectId, onDelete }: Participan
               <img
                 src={participant.user.image}
                 alt={participant.user.name || participant.name}
-                className="w-14 h-14 rounded-full object-cover ring-2 ring-blue-50/50 shadow-sm"
+                className="h-14 w-14 rounded-lg object-cover"
               />
             ) : (
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-200">
@@ -119,9 +119,9 @@ export function ParticipantCard({ participant, projectId, onDelete }: Participan
         </div>
 
         {participant.notes && (
-          <div className="mt-4 p-3 rounded-xl bg-gray-50/80 border border-gray-100/50">
-            <p className="text-gray-600 text-sm italic leading-relaxed line-clamp-3">
-              "{participant.notes}"
+          <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="line-clamp-3 text-sm leading-relaxed text-slate-600">
+              {participant.notes}
             </p>
           </div>
         )}

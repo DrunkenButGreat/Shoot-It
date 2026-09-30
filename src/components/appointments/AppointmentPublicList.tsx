@@ -22,7 +22,7 @@ export function AppointmentPublicList({ slots, locale }: AppointmentPublicListPr
 
     if (slots.length === 0) {
         return (
-            <div className="text-center py-12 bg-white/50 backdrop-blur-sm rounded-3xl border-2 border-dashed border-gray-200">
+            <div className="rounded-xl border border-dashed border-slate-200 bg-white py-12 text-center">
                 <CalendarIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 font-medium">{dict.project.noAppointmentsSet || 'Noch keine Terminvorschläge vorhanden.'}</p>
             </div>
@@ -49,7 +49,7 @@ export function AppointmentPublicList({ slots, locale }: AppointmentPublicListPr
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         {groupedSlots[dateStr].sort((a: Slot, b: Slot) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()).map((slot: any) => (
-                            <Card key={slot.id} className="border-none shadow-md bg-white/80 backdrop-blur-sm overflow-hidden hover:shadow-lg transition-all group">
+                            <Card key={slot.id} className="group overflow-hidden bg-white transition-colors hover:border-slate-300">
                                 <CardContent className="p-4 flex items-center gap-4">
                                     <div className="shrink-0 flex flex-col items-center gap-1">
                                         <div className="flex items-center gap-1 bg-green-500/10 text-green-700 px-2 py-0.5 rounded-full border border-green-500/20 text-[10px] font-bold">
@@ -62,7 +62,7 @@ export function AppointmentPublicList({ slots, locale }: AppointmentPublicListPr
                                         </div>
                                     </div>
                                     <div className="w-px h-10 bg-gray-100 mx-2" />
-                                    <div className="p-3 rounded-2xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                    <div className="rounded-lg bg-blue-50 p-3 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white">
                                         <Clock className="h-5 w-5" />
                                     </div>
                                     <div>

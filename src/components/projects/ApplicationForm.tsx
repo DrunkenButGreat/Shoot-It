@@ -179,7 +179,7 @@ export function ApplicationForm({ projectId, projectName, initialData }: Applica
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-6 h-auto transition-all shadow-lg hover:shadow-blue-600/20 gap-2">
+        <Button className="h-auto w-full gap-2 bg-blue-600 py-5 text-white hover:bg-blue-700">
           <Send className="h-4 w-4" />
           {t('applications.applyNow')}
         </Button>

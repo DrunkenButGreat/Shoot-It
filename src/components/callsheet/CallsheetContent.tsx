@@ -79,14 +79,14 @@ export function CallsheetContent({
 
   return (
     <div className="space-y-6">
-      <div className="mb-8 flex justify-between items-center">
+      <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl font-bold text-slate-950">
             {t('callsheet.title')}
           </h2>
-          <p className="text-sm text-gray-500 mt-1 italic">{t('callsheet.subtitle')}</p>
+          <p className="mt-1 text-sm text-slate-500">{t('callsheet.subtitle')}</p>
         </div>
-        <Button onClick={handleSave} disabled={isSaving} className="gap-2 shadow-sm">
+        <Button onClick={handleSave} disabled={isSaving} className="gap-2">
           <Save className="h-4 w-4" />
           {isSaving ? t('common.saving') : t('common.saveChanges')}
         </Button>
@@ -95,8 +95,8 @@ export function CallsheetContent({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Details */}
         <div className="lg:col-span-1 space-y-6">
-          <Card className="border-none shadow-md bg-white/90 backdrop-blur-sm overflow-hidden">
-            <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
+          <Card className="overflow-hidden bg-white">
+            <CardHeader className="border-b border-slate-200 bg-slate-50 pb-4">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Info className="h-4 w-4 text-blue-600" />
                 {t('callsheet.details')}
@@ -161,14 +161,14 @@ export function CallsheetContent({
 
         {/* Right Column: Schedule */}
         <div className="lg:col-span-2">
-          <Card className="border-none shadow-md bg-white/90 backdrop-blur-sm h-full overflow-hidden">
-            <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
+          <Card className="h-full overflow-hidden bg-white">
+            <CardHeader className="border-b border-slate-200 bg-slate-50 pb-4">
               <div className="flex justify-between items-center">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Clock className="h-4 w-4 text-blue-600" />
                   {t('callsheet.schedule')}
                 </CardTitle>
-                <Button onClick={() => setIsScheduleFormOpen(true)} size="sm" variant="outline" className="gap-2 rounded-xl">
+                <Button onClick={() => setIsScheduleFormOpen(true)} size="sm" variant="outline" className="gap-2">
                   <Plus className="h-3 w-3" />
                   {t('callsheet.addItem')}
                 </Button>
@@ -178,7 +178,7 @@ export function CallsheetContent({
               {callsheet?.scheduleItems && callsheet.scheduleItems.length > 0 ? (
                 <div className="space-y-3">
                   {callsheet.scheduleItems.map((item) => (
-                    <div key={item.id} className="p-4 bg-slate-50/50 border border-slate-100 rounded-2xl hover:border-blue-100 hover:bg-white transition-all group">
+                    <div key={item.id} className="group rounded-lg border border-slate-200 bg-slate-50 p-4 transition-colors hover:border-blue-200 hover:bg-white">
                       <div className="flex items-center gap-4">
                         <div className="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
                           {item.time}
@@ -191,8 +191,8 @@ export function CallsheetContent({
                   ))}
                 </div>
               ) : (
-                <div className="py-12 text-center bg-slate-50/30 rounded-2xl border-2 border-dashed border-slate-200">
-                  <p className="text-slate-400 font-medium italic">{t('callsheet.noItems')}</p>
+                <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 py-12 text-center">
+                  <p className="font-medium text-slate-500">{t('callsheet.noItems')}</p>
                   <Button onClick={() => setIsScheduleFormOpen(true)} variant="link" className="mt-2 text-blue-600 font-bold">
                     {t('callsheet.createFirst')}
                   </Button>

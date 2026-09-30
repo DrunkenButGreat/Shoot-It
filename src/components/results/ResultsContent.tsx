@@ -162,10 +162,10 @@ export function ResultsContent({
     <div className="flex flex-col h-full gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl font-bold text-slate-950">
             {t('results.title')}
           </h2>
-          <p className="text-sm text-gray-500 mt-1 italic">{t('results.subtitle')}</p>
+          <p className="mt-1 text-sm text-slate-500">{t('results.subtitle')}</p>
         </div>
         <div className="flex gap-2">
            <Button onClick={() => setIsFolderFormOpen(true)} className="gap-2" size="sm" variant="outline">
@@ -208,7 +208,7 @@ export function ResultsContent({
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-8 min-h-[600px]">
+      <div className="flex min-h-[600px] flex-col gap-6 md:flex-row">
         {/* Sidebar */}
         <aside className="w-full md:w-64 flex-shrink-0">
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden sticky top-24">
@@ -252,7 +252,7 @@ export function ResultsContent({
         </aside>
 
         {/* Main Content */}
-        <div className="flex-1 space-y-8 bg-white/50 rounded-2xl p-6 border border-gray-100">
+        <div className="flex-1 space-y-8 rounded-xl border border-slate-200 bg-white p-6">
            {selectedFolderId && selectedFolderId !== 'unassigned' && (
               <div className="flex items-center gap-2 text-sm text-gray-500 pb-2 border-b border-gray-100">
                   <FolderOpen className="h-4 w-4" />
@@ -306,7 +306,7 @@ export function ResultsContent({
                 onSuccess={() => refreshFolders()}
                 maxSize={appConfig.limits.maxResultsUploadSize}
                 enableFolderUpload
-                className="w-full min-h-[160px] border-dashed bg-gray-50/50 hover:bg-gray-100/30 transition-all rounded-2xl flex flex-col items-center justify-center border-gray-200"
+                className="flex min-h-[160px] w-full flex-col items-center justify-center rounded-lg border-slate-200 bg-slate-50 transition-colors hover:bg-slate-100"
               />
            </div>
         </div>

@@ -103,13 +103,13 @@ export function WorkspaceShell({
 
   return (
     <div className="studio-shell">
-      <aside className="studio-sidebar hidden lg:flex">{nav}</aside>
+      <aside className="studio-sidebar hidden lg:sticky lg:top-0 lg:flex lg:h-screen lg:shrink-0">{nav}</aside>
       {open && <button className="fixed inset-0 z-40 bg-slate-950/40 lg:hidden" aria-label={t("common.close")} onClick={() => setOpen(false)} />}
       <aside className={`studio-sidebar fixed inset-y-0 left-0 z-50 flex transition-transform lg:hidden ${open ? "translate-x-0" : "-translate-x-full"}`}>
         <button onClick={() => setOpen(false)} className="absolute right-3 top-3 rounded-md p-2 text-slate-300 hover:bg-white/10" aria-label={t("common.close")}><X className="h-5 w-5" /></button>
         {nav}
       </aside>
-      <div className="min-w-0 flex-1 lg:pl-[232px]">
+      <div className="min-w-0 flex-1">
         <header className="studio-topbar">
           <button className="rounded-md p-2 text-slate-700 lg:hidden" onClick={() => setOpen(true)} aria-label={t("nav.openNavigation")}><Menu className="h-5 w-5" /></button>
           <p className="hidden truncate text-sm text-slate-500 sm:block">{project ? `${t("nav.myStudio")} / ${project.name}` : `${t("nav.myStudio")} / ${t("nav.overview")}`}</p>

@@ -83,7 +83,7 @@ export function MoodboardCollection({ initialGroups, showFavorites = true }: Moo
             <button
               onClick={() => setCurrentTab('active')}
               className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${currentTab === 'active'
-                ? 'bg-white text-blue-600 shadow-sm'
+                ? 'bg-blue-600 text-white'
                 : 'text-gray-500 hover:text-gray-700'
                 }`}
             >
@@ -92,7 +92,7 @@ export function MoodboardCollection({ initialGroups, showFavorites = true }: Moo
             <button
               onClick={() => setCurrentTab('archived')}
               className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${currentTab === 'archived'
-                ? 'bg-white text-blue-600 shadow-sm'
+                ? 'bg-blue-600 text-white'
                 : 'text-gray-500 hover:text-gray-700'
                 }`}
             >

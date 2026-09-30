@@ -34,7 +34,7 @@ export function PublicLinkCard({ project }: PublicLinkCardProps) {
     }
 
     return (
-        <Card className="border-none shadow-lg bg-white overflow-hidden">
+        <Card className="overflow-hidden bg-white">
             <CardHeader className="bg-slate-50/50 pb-4">
                 <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">{t('projectForm.projectAccess')}</CardTitle>
@@ -69,14 +69,14 @@ export function PublicLinkCard({ project }: PublicLinkCardProps) {
                         </Link>
                     </div>
                     <div className="flex items-center gap-2 group">
-                        <code className="flex-1 text-[11px] bg-gray-50 border border-gray-100 px-3 py-2.5 rounded-xl text-blue-600 font-mono truncate transition-colors group-hover:bg-blue-50/30 group-hover:border-blue-100">
+                        <code className="flex-1 truncate rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 font-mono text-[11px] text-blue-600 transition-colors group-hover:border-blue-200">
                             {publicUrl}
                         </code>
                         <Button
                             variant="outline"
                             size="icon"
                             onClick={copyToClipboard}
-                            className="h-10 w-10 shrink-0 rounded-xl transition-all active:scale-95"
+                            className="h-10 w-10 shrink-0"
                         >
                             {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                         </Button>

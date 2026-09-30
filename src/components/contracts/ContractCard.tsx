@@ -60,12 +60,12 @@ export function ContractCard({
 
   return (
     <>
-      <Card className="overflow-hidden border-none shadow-md hover:shadow-xl transition-all bg-white/90 backdrop-blur-sm group">
+      <Card className="group overflow-hidden bg-white transition-colors hover:border-slate-300">
         <CardHeader className="pb-4">
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-slate-500 to-slate-700 flex items-center justify-center shadow-sm">
-                <FileText className="h-6 w-6 text-white" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-100">
+                <FileText className="h-6 w-6 text-slate-600" />
               </div>
               <div>
                 <CardTitle className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
@@ -97,13 +97,13 @@ export function ContractCard({
         </CardHeader>
         <CardContent className="space-y-4 pt-0">
           <div className="prose max-w-none pt-2 border-t border-gray-50">
-            <p className="whitespace-pre-wrap text-sm text-gray-600 leading-relaxed italic">
-              "{contract.content.substring(0, 140)}
-              {contract.content.length > 140 && '...'}"
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
+              {contract.content.substring(0, 140)}
+              {contract.content.length > 140 && '...'}
             </p>
           </div>
           {isSigned && (
-            <div className="mt-2 text-[11px] font-medium text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-100 italic">
+            <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px] font-medium text-slate-500">
               {t('contracts.lastSigned')} {new Date(contract.signatures[0].signedAt).toLocaleString()}
             </div>
           )}

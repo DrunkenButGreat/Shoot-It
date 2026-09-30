@@ -381,7 +381,7 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
         disabled={isLibrary && !isOwner}
       >
         <Card className={isLibrary && !isOwner ? "rounded-t-none" : ""}>
-          <CardHeader className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b rounded-t-xl transition-all">
+          <CardHeader className="sticky top-0 z-20 rounded-t-xl border-b bg-white transition-colors">
             <div className="flex justify-between items-center gap-4">
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 <Button 
@@ -754,7 +754,7 @@ export function MoodboardGroup({ group, projectId, galleryLayout, hasLocalMedia,
                     : `/api/user/moodboards/${group.id}/images`
                   }
                   onSuccess={() => onUpdate?.()}
-                  className="w-full min-h-[120px] border-dashed bg-gray-50/50 hover:bg-gray-100/30 transition-all rounded-2xl flex flex-col items-center justify-center border-gray-200"
+                  className="flex min-h-[120px] w-full flex-col items-center justify-center rounded-lg border-slate-200 bg-slate-50 transition-colors hover:bg-slate-100"
                   label={t('selection.dragDrop')}
                 />
               </div>

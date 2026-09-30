@@ -218,7 +218,7 @@ export function ProfileForm() {
                     <Button
                         type="submit"
                         disabled={isSaving}
-                        className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
+                        className="bg-blue-600 text-white hover:bg-blue-700"
                     >
                         {isSaving ? t('auth.savingProfile') : t('auth.saveProfile')}
                     </Button>

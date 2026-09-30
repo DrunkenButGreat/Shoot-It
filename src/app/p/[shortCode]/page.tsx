@@ -337,7 +337,7 @@ export default async function PublicProjectPage({
                                             <div className="p-4 flex items-center gap-4">
                                                 <div className="relative">
                                                     {participant.user?.image ? (
-                                                        <img src={participant.user.image} alt={participant.name} className="w-16 h-16 rounded-2xl object-cover ring-2 ring-white" />
+                                                        <img src={participant.user.image} alt={participant.name} className="h-16 w-16 rounded-lg object-cover" />
                                                     ) : (
                                                         <div 
                                                             className="flex h-16 w-16 items-center justify-center rounded-lg bg-slate-100 text-xl font-bold text-slate-500"
@@ -537,7 +537,7 @@ function TimeItem({ label, time, color }: { label: string, time: any, color: str
     }
 
     return (
-        <div className={`p-3 rounded-2xl border ${colors[color]} flex flex-col justify-center`}>
+        <div className={`flex flex-col justify-center rounded-lg border p-3 ${colors[color]}`}>
             <span className="text-[10px] font-bold uppercase tracking-widest opacity-70">{label}</span>
             <span className="text-lg font-black">{new Date(time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
         </div>

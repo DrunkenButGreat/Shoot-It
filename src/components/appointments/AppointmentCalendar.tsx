@@ -270,10 +270,10 @@ export function AppointmentCalendar({ projectId, isOwner, currentUserId }: Appoi
 
     return (
         <div className="space-y-6">
-            <Card className="border-none shadow-xl bg-white/80 backdrop-blur-md overflow-hidden">
+            <Card className="overflow-hidden bg-white">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-7">
                     <div>
-                        <CardTitle className="text-2xl font-bold">{dict.project.appointments || 'Terminfindung'}</CardTitle>
+                        <CardTitle className="text-2xl font-bold text-slate-950">{dict.project.appointments || 'Terminfindung'}</CardTitle>
                         <CardDescription>{dict.project.appointmentsDescription || 'Findet gemeinsam den passenden Termin für das Projekt.'}</CardDescription>
                     </div>
                 </CardHeader>
