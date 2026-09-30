@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.0] - 2026-09-30
+
+### Added
+- A consistent studio workspace with dark project navigation, compact top bar, responsive mobile drawer and image-led project cards.
+- Dedicated public landing, authentication and project showcase layouts in the new Shoot-It visual system.
+
+### Changed
+- Redesigned dashboard, project overview, moodboard entry, profile, admin and project modules around the new cobalt, graphite and cool-gray interface.
+- Standardized cards, buttons, form fields, spacing, navigation states and German/English interface copy.
+
 ## [1.13.0] - 2026-09-30
 
 ### Added

@@ -52,7 +52,7 @@ export default function SignupForm({ mode }: { mode: RegistrationMode }) {
 
     return (
         <div className="w-full max-w-md space-y-6">
-            <div className="text-center">
+            <div>
                 <h1 className="text-3xl font-bold text-gray-900">{t('auth.createAccount')}</h1>
                 <p className="mt-2 text-gray-600">{t(mode === 'CLOSED' ? 'auth.registrationClosed' : mode === 'INVITE_ONLY' ? 'auth.inviteRequired' : 'auth.signUpToGetStarted')}</p>
             </div>
@@ -73,7 +73,7 @@ export default function SignupForm({ mode }: { mode: RegistrationMode }) {
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="h-11 w-full rounded-lg border border-gray-300 px-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                         required
                         disabled={isLoading}
                     />
@@ -88,7 +88,7 @@ export default function SignupForm({ mode }: { mode: RegistrationMode }) {
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="h-11 w-full rounded-lg border border-gray-300 px-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                         required
                         disabled={isLoading}
                     />
@@ -103,7 +103,7 @@ export default function SignupForm({ mode }: { mode: RegistrationMode }) {
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="h-11 w-full rounded-lg border border-gray-300 px-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                         required
                         minLength={6}
                         disabled={isLoading}
@@ -112,13 +112,13 @@ export default function SignupForm({ mode }: { mode: RegistrationMode }) {
 
                 {mode === "INVITE_ONLY" && <div>
                     <label htmlFor="inviteCode" className="block text-sm font-medium text-gray-700 mb-1">{t("auth.inviteCode")}</label>
-                    <input id="inviteCode" type="text" value={inviteCode} onChange={e => setInviteCode(e.target.value)} required maxLength={128} autoComplete="off" spellCheck={false} disabled={isLoading} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+                    <input id="inviteCode" type="text" value={inviteCode} onChange={e => setInviteCode(e.target.value)} required maxLength={128} autoComplete="off" spellCheck={false} disabled={isLoading} className="h-11 w-full rounded-lg border border-gray-300 px-3 focus:ring-2 focus:ring-blue-500" />
                 </div>}
 
                 <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                    className="h-11 w-full rounded-lg bg-blue-600 px-4 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
                 >
                     {isLoading ? t('auth.registering') : t('auth.signup')}
                 </button>

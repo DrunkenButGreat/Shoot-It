@@ -4,26 +4,26 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 220 14% 97%;
+    --foreground: 215 18% 15%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
+    --primary: 222 73% 51%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
+    --secondary: 220 16% 96%;
     --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
+    --muted: 220 16% 96%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
+    --accent: 220 16% 96%;
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    --border: 218 14% 89%;
+    --input: 218 14% 86%;
+    --ring: 222 73% 51%;
+    --radius: 0.625rem;
   }
  
   .dark {
@@ -55,5 +55,43 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: Arial, Helvetica, sans-serif;
+    text-rendering: optimizeLegibility;
   }
+
+  h1, h2, h3 { @apply tracking-tight; }
+
+  :focus-visible { @apply outline-none ring-2 ring-blue-600 ring-offset-2; }
+}
+
+@layer components {
+  .studio-shell { @apply min-h-screen bg-[#f5f6f8] text-[#20252c]; }
+  .studio-sidebar { @apply w-[232px] flex-col overflow-y-auto bg-[#202328] text-slate-300; }
+  .studio-topbar { @apply sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-[#e2e5ea] bg-white px-4 sm:px-7; }
+  .studio-nav-link { @apply flex min-h-10 items-center gap-3 rounded-md px-3 text-sm text-slate-300 transition-colors hover:bg-white/5 hover:text-white; }
+  .studio-nav-link-active { @apply bg-blue-600 text-white hover:bg-blue-600; }
+  .workspace-page { @apply min-h-[calc(100vh-4rem)] bg-[#f5f6f8] p-4 sm:p-6 xl:p-8; }
+  .workspace-page > .flex-1,
+  .workspace-page > .min-h-screen { @apply min-h-0 bg-transparent; }
+  .workspace-page > .flex-1 > header,
+  .workspace-page > .min-h-screen > header { @apply hidden; }
+  .workspace-page > .flex-1 > main,
+  .workspace-page > .min-h-screen > main { @apply mx-0 max-w-none p-0; }
+  .workspace-page .shadow-md,
+  .workspace-page .shadow-lg,
+  .workspace-page .shadow-xl,
+  .workspace-page .shadow-premium { box-shadow: none !important; }
+  .workspace-page .backdrop-blur-sm,
+  .workspace-page .backdrop-blur-md { backdrop-filter: none !important; }
+  .workspace-page [class*="bg-gradient-to-br"] { background-image: none; }
+  .workspace-page input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+  .workspace-page textarea,
+  .workspace-page select { @apply border-[#d8dde5] bg-white; }
+  .studio-page-title { @apply text-3xl font-bold text-slate-950 sm:text-[32px]; }
+  .studio-page-subtitle { @apply mt-1 text-sm text-slate-500 sm:text-base; }
+  .studio-panel { @apply rounded-xl border border-[#e2e5ea] bg-white; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
 }

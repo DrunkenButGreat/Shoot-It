@@ -82,9 +82,9 @@ export function ProfileForm() {
     }
 
     return (
-        <Card className="max-w-2xl mx-auto border-none shadow-premium bg-white/80 backdrop-blur-sm">
+        <Card className="mx-auto max-w-5xl bg-white">
             <CardHeader>
-                <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                <CardTitle className="text-xl font-bold text-slate-950">
                     {t('auth.profileTitle')}
                 </CardTitle>
                 <CardDescription>

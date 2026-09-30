@@ -15,23 +15,23 @@ export default function UserMenu() {
   }
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-2">
       <LanguageSwitcher />
       
       <div className="relative group">
-        <button className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+        <button className="flex min-h-11 items-center gap-2 rounded-lg px-1.5 py-1.5 transition-colors hover:bg-gray-100">
           {session.user.image ? (
             <img
               src={session.user.image}
               alt={session.user.name || "User"}
-              className="w-8 h-8 rounded-full"
+              className="h-8 w-8 rounded-full object-cover"
             />
           ) : (
-            <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-medium">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700">
               {session.user.name?.[0]?.toUpperCase() || session.user.email?.[0]?.toUpperCase() || "U"}
             </div>
           )}
-          <span className="text-sm font-medium text-gray-700">
+          <span className="hidden text-sm font-medium text-gray-700 xl:block">
             {session.user.name || session.user.email}
           </span>
         </button>

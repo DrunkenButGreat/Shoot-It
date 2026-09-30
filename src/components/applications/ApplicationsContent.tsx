@@ -104,6 +104,7 @@ export function ApplicationsContent({ projectId, applications: initialApplicatio
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
+          <h1 className="mb-2 text-2xl font-bold tracking-tight text-slate-950">{dict.applications.manageApplications}</h1>
           <p className="text-sm text-gray-500">{dict.applications.retentionNote}</p>
         </div>
 

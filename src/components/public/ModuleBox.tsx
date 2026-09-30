@@ -16,14 +16,14 @@ interface ModuleBoxProps {
 export function ModuleBox({ title, icon, count, label, href, disabled, dict, brandColor }: ModuleBoxProps) {
     const content = (
         <div 
-            className={`p-4 rounded-2xl border transition-all ${disabled ? 'bg-gray-50 border-gray-100 opacity-60' : 'bg-white border-gray-100 hover:shadow-lg hover:-translate-y-1'}`}
+            className={`rounded-lg border p-4 transition-colors ${disabled ? 'border-slate-200 bg-slate-50 opacity-60' : 'border-slate-200 bg-white hover:border-slate-300'}`}
             style={!disabled && brandColor ? { '--hover-border-color': brandColor, transition: 'all 0.2s' } as React.CSSProperties : undefined}
              onMouseEnter={(e) => { if(!disabled && brandColor) e.currentTarget.style.borderColor = brandColor }}
              onMouseLeave={(e) => { if(!disabled && brandColor) e.currentTarget.style.borderColor = '#f3f4f6' }} // gray-100
         >
             <div className="flex items-start justify-between mb-4">
                 <div 
-                    className={`p-2 rounded-xl ${disabled ? 'bg-gray-200 text-gray-400' : 'bg-blue-50 text-blue-600'}`}
+                    className={`rounded-lg p-2 ${disabled ? 'bg-slate-200 text-slate-400' : 'bg-blue-50 text-blue-600'}`}
                     style={!disabled && brandColor ? { 
                         backgroundColor: `${brandColor}1A`, // 10% opacity
                         color: brandColor 

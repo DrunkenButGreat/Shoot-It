@@ -1,12 +1,12 @@
 import SignupForm from "@/components/auth/SignupForm"
-
 import { getRegistrationMode } from "@/lib/registration"
+import { BrandMark } from "@/components/layout/BrandMark"
+import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 
 export default async function SignupPage() {
-    const mode = await getRegistrationMode()
-    return (
-        <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-blue-50 to-violet-50 px-4 py-8">
-            <SignupForm mode={mode} />
-        </div>
-    )
+  const mode = await getRegistrationMode()
+  return <main className="grid min-h-screen bg-white lg:grid-cols-[46%_54%]">
+    <section className="relative hidden overflow-hidden bg-[#9b7e68] lg:block"><img src="https://images.unsplash.com/photo-1452780212940-6f5c0d14d848?q=85&w=1600" alt="" className="absolute inset-0 h-full w-full object-cover opacity-90" /><div className="absolute inset-0 bg-black/20" /><div className="absolute left-10 top-9"><BrandMark inverse /></div></section>
+    <section className="relative flex items-center justify-center px-5 py-16"><div className="absolute right-6 top-5"><LanguageSwitcher /></div><SignupForm mode={mode} /></section>
+  </main>
 }

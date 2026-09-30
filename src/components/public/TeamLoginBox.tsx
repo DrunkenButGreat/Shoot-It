@@ -12,9 +12,8 @@ interface TeamLoginBoxProps {
 export function TeamLoginBox({ shortCode, dict, brandColor }: TeamLoginBoxProps) {
     return (
         <div 
-            className="mt-8 p-6 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 flex flex-col md:flex-row items-center justify-between gap-4"
+            className="mt-8 flex flex-col items-center justify-between gap-4 rounded-lg border border-slate-200 bg-slate-50 p-6 md:flex-row"
             style={brandColor ? { 
-                backgroundImage: `linear-gradient(to right, ${brandColor}1A, ${brandColor}0D)`, 
                 borderColor: `${brandColor}33` 
             } : undefined}
         >

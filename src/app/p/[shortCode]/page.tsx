@@ -15,6 +15,7 @@ import { ModuleBox } from "@/components/public/ModuleBox"
 import { TeamLoginBox } from "@/components/public/TeamLoginBox"
 import { getLocale, getDictionary } from "@/lib/i18n"
 import { cookies } from "next/headers"
+import { BrandMark } from "@/components/layout/BrandMark"
 
 export default async function PublicProjectPage({
     params,
@@ -131,10 +132,10 @@ export default async function PublicProjectPage({
             return (
                 <div className="flex-1 flex items-center justify-center bg-gray-50 px-4">
                     <Card className="max-w-md w-full text-center p-8">
-                        <h1 className="text-2xl font-bold text-gray-900 mb-2">Private Project</h1>
-                        <p className="text-gray-600 mb-6">You do not have permission to view this project. Please contact the owner for access.</p>
+                        <h1 className="text-2xl font-bold text-gray-900 mb-2">{dict.publicProject.privateProject}</h1>
+                        <p className="text-gray-600 mb-6">{dict.publicProject.noProjectAccess}</p>
                         <Link href="/dashboard">
-                            <Button className="w-full">Go to Dashboard</Button>
+                            <Button className="w-full">{dict.publicProject.goToDashboard}</Button>
                         </Link>
                     </Card>
                 </div>
@@ -143,70 +144,67 @@ export default async function PublicProjectPage({
     }
 
     const projectDate = project.date ? new Date(project.date) : null
-    const brandingImage = project.brandingImage || project.owner.brandingImage || 'https://images.unsplash.com/photo-1492691523567-617025285ede?q=80&w=2070'
+    const brandingImage = project.brandingImage || project.owner.brandingImage || 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=85&w=2200'
     const brandColor = project.brandingColor || project.owner.brandingColor
 
     return (
-        <div className="flex-1 bg-gray-50 pb-12" style={brandColor ? { '--brand-color': brandColor } as React.CSSProperties : undefined}>
-            {/* Premium Public Header */}
-            <div className="relative h-64 bg-slate-900 overflow-hidden" 
-                 style={brandColor ? { backgroundColor: brandColor } : undefined}>
-                <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-black/60 z-10" />
-                <div className="absolute inset-0 bg-cover bg-center opacity-30 transition-opacity" 
-                     style={{ backgroundImage: `url('${brandingImage}')` }} />
+        <div className="flex-1 bg-[#f5f6f8] pb-12" style={brandColor ? { '--brand-color': brandColor } as React.CSSProperties : undefined}>
+            <header className="border-b border-slate-200 bg-white">
+                <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+                    <BrandMark />
+                    {!session && (
+                        <Link href={`/login?callbackUrl=/p/${shortCode}`} className="text-sm font-semibold text-slate-600 hover:text-slate-950">
+                            {dict.publicProject.areYouTeam}
+                        </Link>
+                    )}
+                </div>
+            </header>
 
-                <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col justify-end pb-8">
-                    <div className="flex flex-wrap items-end justify-between gap-6">
-                        <div className="space-y-4">
-                            <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/20 text-white border border-white/30 backdrop-blur-md">
-                                {project.isPublic ? dict.projectForm.public : dict.projectForm.private} {dict.publicProject.showcase}
-                            </div>
-                            <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight">
-                                {project.name}
-                            </h1>
-                            <div className="flex flex-wrap gap-6 text-slate-300">
-                                {projectDate && (
-                                    <div className="flex items-center gap-2">
-                                        <Calendar className="h-5 w-5 text-white/80" />
-                                        <span className="font-medium text-white/90">{projectDate.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                                    </div>
-                                )}
-                                {project.location && (
-                                    <div className="flex items-center gap-2">
-                                        <MapPin className="h-5 w-5 text-white/80" />
-                                        <span className="font-medium text-white/90">{project.location}</span>
-                                    </div>
-                                )}
-                            </div>
+            <div className="mx-auto max-w-7xl px-4 pb-8 pt-6 sm:px-6 lg:px-8">
+                <div className="h-64 overflow-hidden rounded-xl bg-slate-200 sm:h-80">
+                    <img src={brandingImage} alt="" className="h-full w-full object-cover" />
+                </div>
+                <div className="flex flex-col gap-6 border-b border-slate-200 bg-white px-5 py-6 sm:flex-row sm:items-end sm:justify-between sm:px-8">
+                    <div>
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-blue-600">
+                            {project.isPublic ? dict.projectForm.public : dict.projectForm.private} · {dict.publicProject.showcase}
+                        </p>
+                        <h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">{project.name}</h1>
+                        <div className="mt-3 flex flex-wrap gap-5 text-sm text-slate-600">
+                            {projectDate && <span className="flex items-center gap-2"><Calendar className="h-4 w-4" />{projectDate.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}</span>}
+                            {project.location && <span className="flex items-center gap-2"><MapPin className="h-4 w-4" />{project.location}</span>}
                         </div>
-
-                        <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/10">
-                            {project.owner.image ? (
-                                <img src={project.owner.image} alt={project.owner.name || ''} className="w-12 h-12 rounded-full border-2 border-white/20" />
-                            ) : (
-                                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white font-bold backdrop-blur-sm"
-                                     style={brandColor ? { backgroundColor: brandColor, opacity: 1 } : undefined}>
-                                    {project.owner.name?.[0] || 'O'}
-                                </div>
-                            )}
-                            <div>
-                                <p className="text-xs text-slate-400 font-medium">{dict.publicProject.projectOwner}</p>
-                                <p className="text-sm text-white font-bold">{project.owner.name || project.owner.email}</p>
-                            </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        {project.owner.image ? (
+                            <img src={project.owner.image} alt={project.owner.name || ''} className="h-10 w-10 rounded-full object-cover" />
+                        ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 font-bold text-slate-600">{project.owner.name?.[0] || 'O'}</div>
+                        )}
+                        <div>
+                            <p className="text-xs text-slate-500">{dict.publicProject.organizedBy}</p>
+                            <p className="text-sm font-semibold text-slate-900">{project.owner.name || project.owner.email}</p>
                         </div>
                     </div>
                 </div>
+                <nav className="flex gap-6 overflow-x-auto border-b border-slate-200 bg-white px-5 sm:px-8" aria-label={dict.publicProject.overview}>
+                    <a href="#overview" className="border-b-2 border-blue-600 py-4 text-sm font-semibold text-blue-600">{dict.publicProject.overview}</a>
+                    {project.showMoodboardPublicly && <a href="#moodboard" className="py-4 text-sm font-medium text-slate-600">{dict.project.moodboard}</a>}
+                    {project.showParticipantsPublicly && <a href="#participants" className="py-4 text-sm font-medium text-slate-600">{dict.project.participants}</a>}
+                    {project.showSelectionPublicly && <a href="#selection" className="py-4 text-sm font-medium text-slate-600">{dict.project.selection}</a>}
+                    {project.showResultsPublicly && <a href="#results" className="py-4 text-sm font-medium text-slate-600">{dict.project.results}</a>}
+                </nav>
             </div>
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-30">
+            <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Left Column: Modules */}
                     <div className="lg:col-span-2 space-y-8">
-                        <Card className="border-none shadow-xl shadow-blue-900/5 overflow-hidden bg-white/80 backdrop-blur-md">
+                        <Card id="overview" className="overflow-hidden bg-white">
                             <CardHeader className="pb-0">
                                 <CardTitle className="text-2xl">{dict.publicProject.overview}</CardTitle>
                                 {project.description && (
-                                    <CardDescription className="text-base text-gray-600 mt-4 leading-relaxed">
+                                    <CardDescription className="mt-4 text-base leading-relaxed text-slate-600">
                                         {project.description}
                                     </CardDescription>
                                 )}
@@ -289,14 +287,14 @@ export default async function PublicProjectPage({
                         {project.showMoodboardPublicly && moodboardGroups.length > 0 && (
                             <section id="moodboard" className="space-y-6 scroll-mt-20">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20" style={brandColor ? { backgroundColor: brandColor, boxShadow: `0 10px 15px -3px ${brandColor}33` } : undefined}>
+                                    <div className="rounded-lg bg-slate-100 p-2 text-slate-600" style={brandColor ? { color: brandColor } : undefined}>
                                         <ImageIcon className="h-5 w-5" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.project.moodboard}</h2>
                                 </div>
                                 <div className="space-y-8">
                                     {moodboardGroups.map((group: any) => (
-                                        <Card key={group.id} className="border-none shadow-lg overflow-hidden bg-white/60 backdrop-blur-md">
+                                        <Card key={group.id} className="overflow-hidden bg-white">
                                             <CardHeader>
                                                 <CardTitle className="text-xl">{group.name}</CardTitle>
                                                 {group.description && <CardDescription>{group.description}</CardDescription>}
@@ -316,7 +314,7 @@ export default async function PublicProjectPage({
                         {project.showResultsPublicly && (
                             <section id="results" className="space-y-6 scroll-mt-20">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-xl bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" style={brandColor ? { backgroundColor: brandColor, boxShadow: `0 10px 15px -3px ${brandColor}33` } : undefined}>
+                                    <div className="rounded-lg bg-slate-100 p-2 text-slate-600" style={brandColor ? { color: brandColor } : undefined}>
                                         <ImageIcon className="h-5 w-5" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.project.results}</h2>
@@ -328,22 +326,22 @@ export default async function PublicProjectPage({
                         {project.showParticipantsPublicly && project.participants.length > 0 && (
                             <section id="participants" className="space-y-6 scroll-mt-20">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-xl bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" style={brandColor ? { backgroundColor: brandColor, boxShadow: `0 10px 15px -3px ${brandColor}33` } : undefined}>
+                                    <div className="rounded-lg bg-slate-100 p-2 text-slate-600" style={brandColor ? { color: brandColor } : undefined}>
                                         <Users className="h-5 w-5" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.project.participants}</h2>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     {project.participants.map((participant: any) => (
-                                        <Card key={participant.id} className="border-none shadow-md bg-white/80 backdrop-blur-sm overflow-hidden hover:shadow-lg transition-all group">
+                                        <Card key={participant.id} className="group overflow-hidden bg-white">
                                             <div className="p-4 flex items-center gap-4">
                                                 <div className="relative">
                                                     {participant.user?.image ? (
                                                         <img src={participant.user.image} alt={participant.name} className="w-16 h-16 rounded-2xl object-cover ring-2 ring-white" />
                                                     ) : (
                                                         <div 
-                                                            className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-100 to-blue-50 flex items-center justify-center text-indigo-400 font-bold text-xl"
-                                                            style={brandColor ? { backgroundImage: `linear-gradient(135deg, ${brandColor}1a, ${brandColor}0d)`, color: brandColor } : undefined}
+                                                            className="flex h-16 w-16 items-center justify-center rounded-lg bg-slate-100 text-xl font-bold text-slate-500"
+                                                            style={brandColor ? { color: brandColor } : undefined}
                                                         >
                                                             {participant.name[0]}
                                                         </div>
@@ -369,12 +367,12 @@ export default async function PublicProjectPage({
                         {project.showSelectionPublicly && project.selectionImages.length > 0 && (
                             <section id="selection" className="space-y-6 scroll-mt-20">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-xl bg-amber-500 text-white shadow-lg shadow-amber-500/20" style={brandColor ? { backgroundColor: brandColor, boxShadow: `0 10px 15px -3px ${brandColor}33` } : undefined}>
+                                    <div className="rounded-lg bg-slate-100 p-2 text-slate-600" style={brandColor ? { color: brandColor } : undefined}>
                                         <ImageIcon className="h-5 w-5" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.project.selection}</h2>
                                 </div>
-                                <Card className="border-none shadow-xl overflow-hidden bg-white/60 backdrop-blur-md">
+                                <Card className="overflow-hidden bg-white">
                                     <CardContent className="pt-6">
                                         <PublicSelection
                                             projectId={project.id}
@@ -396,12 +394,12 @@ export default async function PublicProjectPage({
                         {project.showCallsheetPublicly && project.callsheet && (
                             <section id="callsheet" className="space-y-6 scroll-mt-20">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-xl bg-rose-500 text-white shadow-lg shadow-rose-500/20" style={brandColor ? { backgroundColor: brandColor, boxShadow: `0 10px 15px -3px ${brandColor}33` } : undefined}>
+                                    <div className="rounded-lg bg-slate-100 p-2 text-slate-600" style={brandColor ? { color: brandColor } : undefined}>
                                         <Clock className="h-5 w-5" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.project.callsheet}</h2>
                                 </div>
-                                <Card className="border-none shadow-xl overflow-hidden bg-white/80 backdrop-blur-sm">
+                                <Card className="overflow-hidden bg-white">
                                     <CardContent className="p-0">
                                         <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100">
                                             <div className="p-6 space-y-4">
@@ -453,7 +451,7 @@ export default async function PublicProjectPage({
                         {project.showAppointmentsPublicly && project.appointmentSlots?.length > 0 && (
                             <section id="appointments" className="space-y-6 scroll-mt-20">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20" style={brandColor ? { backgroundColor: brandColor, boxShadow: `0 10px 15px -3px ${brandColor}33` } : undefined}>
+                                    <div className="rounded-lg bg-slate-100 p-2 text-slate-600" style={brandColor ? { color: brandColor } : undefined}>
                                         <Calendar className="h-5 w-5" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.project.appointments || 'Terminfindung'}</h2>
@@ -469,10 +467,10 @@ export default async function PublicProjectPage({
                     {/* Right Column: Info & Actions */}
                     <div className="space-y-6">
                         {project.allowApplications && (
-                            <Card className="border-none shadow-lg bg-gradient-to-br from-blue-600 to-indigo-700 text-white overflow-hidden" style={brandColor ? { backgroundImage: `linear-gradient(135deg, ${brandColor}, color-mix(in srgb, ${brandColor}, black 20%))` } : undefined}>
+                            <Card className="overflow-hidden bg-white">
                                 <CardHeader>
-                                    <CardTitle className="text-xl text-white">{dict.applications.sectionTitle}</CardTitle>
-                                    <CardDescription className="text-blue-100 italic" style={brandColor ? { color: 'rgba(255,255,255,0.9)' } : undefined}>
+                                    <CardTitle className="text-xl text-slate-950">{dict.applications.sectionTitle}</CardTitle>
+                                    <CardDescription className="text-slate-600">
                                         {dict.applications.sectionDescription}
                                     </CardDescription>
                                 </CardHeader>
@@ -489,7 +487,7 @@ export default async function PublicProjectPage({
                             </Card>
                         )}
 
-                        <Card className="border-none shadow-lg bg-white/90 backdrop-blur-sm">
+                        <Card className="bg-white">
                             <CardHeader>
                                 <CardTitle className="text-lg">{dict.publicProject.projectInfo}</CardTitle>
                             </CardHeader>
@@ -516,7 +514,7 @@ export default async function PublicProjectPage({
 
                         {session?.user?.id === project.ownerId && (
                             <Link href={`/project/${project.id}`} className="block">
-                                <Button className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl py-6 h-auto transition-all shadow-lg hover:shadow-slate-900/20">
+                                <Button className="h-auto w-full bg-slate-900 py-5 text-white hover:bg-slate-800">
                                     {dict.publicProject.goToDashboard}
                                 </Button>
                             </Link>

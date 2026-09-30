@@ -67,8 +67,8 @@ export function ParticipantCard({ participant, projectId, onDelete }: Participan
                 className="w-14 h-14 rounded-full object-cover ring-2 ring-blue-50/50 shadow-sm"
               />
             ) : (
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-sm">
-                <User className="h-7 w-7 text-white" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-200">
+                <User className="h-7 w-7 text-slate-500" />
               </div>
             )}
             <div>

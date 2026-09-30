@@ -1,12 +1,7 @@
-import Link from "next/link"
-import { getAdmin } from "@/lib/admin"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
-import UserMenu from "@/components/auth/UserMenu"
 import { DashboardContent } from "@/components/projects/DashboardContent"
 import prisma from "@/lib/prisma"
-import { getLocale, getDictionary } from "@/lib/i18n"
-import { cookies } from "next/headers"
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -15,13 +10,6 @@ export default async function DashboardPage() {
     redirect("/login")
   }
 
-  const cookieStore = await cookies()
-  const locale = getLocale(cookieStore)
-  const dict = await getDictionary(locale)
-
-  const admin = await getAdmin()
-
-  // Fetch user's projects
   const projects = await prisma.project.findMany({
     where: {
       OR: [
@@ -38,31 +26,31 @@ export default async function DashboardPage() {
         },
       ],
     },
+    include: {
+      _count: { select: { participants: true, selectionImages: true, resultFolders: true } },
+      moodboardLinks: {
+        take: 1,
+        orderBy: { order: "asc" },
+        include: { group: { include: { images: { take: 1, orderBy: { order: "asc" } } } } },
+      },
+    },
     orderBy: { createdAt: 'desc' },
     take: 20,
   })
 
   return (
-    <div className="flex-1 bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap justify-between items-center min-h-16 py-3 gap-3">
-            <div className="flex items-center gap-3">
-              <h1 className="text-xl font-bold text-gray-900">{dict.dashboard.title}</h1>
-            </div>
-            <div className="flex items-center gap-3">
-              {admin && <Link href="/admin" className="text-sm font-medium text-blue-600 hover:underline">{dict.admin.navigation}</Link>}
-              <UserMenu />
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <DashboardContent projects={projects} />
-      </main>
-    </div>
+    <main><DashboardContent projects={projects.map(project => ({
+      id: project.id,
+      name: project.name,
+      description: project.description,
+      date: project.date?.toISOString() ?? null,
+      location: project.location,
+      shortCode: project.shortCode,
+      isArchived: project.isArchived,
+      previewImage: project.brandingImage || project.moodboardLinks[0]?.group.images[0]?.thumbnail || project.moodboardLinks[0]?.group.images[0]?.path || null,
+      participantCount: project._count.participants,
+      selectionCount: project._count.selectionImages,
+      resultCount: project._count.resultFolders,
+    }))} /></main>
   )
 }

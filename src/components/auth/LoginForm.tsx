@@ -45,7 +45,7 @@ export default function LoginForm({ mode }: { mode: RegistrationMode }) {
 
   return (
     <div className="w-full max-w-md space-y-6">
-      <div className="text-center">
+      <div>
         <h1 className="text-3xl font-bold text-gray-900">{t("auth.welcomeBack")}</h1>
         <p className="mt-2 text-gray-600">{t("auth.signInToAccount")}</p>
       </div>
@@ -66,7 +66,7 @@ export default function LoginForm({ mode }: { mode: RegistrationMode }) {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="h-11 w-full rounded-lg border border-gray-300 px-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             required
             disabled={isLoading}
           />
@@ -81,7 +81,7 @@ export default function LoginForm({ mode }: { mode: RegistrationMode }) {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="h-11 w-full rounded-lg border border-gray-300 px-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             required
             disabled={isLoading}
           />
@@ -90,11 +90,14 @@ export default function LoginForm({ mode }: { mode: RegistrationMode }) {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+          className="h-11 w-full rounded-lg bg-blue-600 px-4 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
         >
           {isLoading ? t("auth.signingIn") : t("auth.signIn")}
         </button>
       </form>
+
+      <div className="flex items-center gap-4 text-xs text-slate-400"><span className="h-px flex-1 bg-slate-200" /><span>{t("auth.or")}</span><span className="h-px flex-1 bg-slate-200" /></div>
+      <button type="button" onClick={() => signIn("google", { callbackUrl })} className="flex h-11 w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50"><span className="font-bold text-blue-600">G</span>{t("auth.signInWithGoogle")}</button>
 
       {mode !== "CLOSED" && <div className="text-center text-sm text-gray-600 mt-4">
         {t("auth.noAccount")}{" "}

@@ -66,8 +66,11 @@ export default async function MoodboardDashboardPage() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-7">
+          <h1 className="studio-page-title">{dict.moodboard.privateCollection || "Meine Moodboards"}</h1>
+          <p className="studio-page-subtitle">{dict.moodboard.collectionDescription}</p>
+        </div>
         <MoodboardCollection initialGroups={formattedGroups as any} />
       </main>
     </div>

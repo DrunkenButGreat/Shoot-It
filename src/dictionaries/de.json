@@ -51,12 +51,40 @@
     "favorite": "Favorit",
     "unfavorite": "Favorit entfernen"
   },
+  "nav": {
+    "overview": "Übersicht",
+    "projects": "Projekte",
+    "moodboards": "Moodboards",
+    "myStudio": "Mein Studio",
+    "currentProject": "Aktuelles Projekt",
+    "recentlyOpened": "Zuletzt geöffnet",
+    "settings": "Einstellungen",
+    "mainNavigation": "Hauptnavigation",
+    "projectNavigation": "Projektnavigation",
+    "openNavigation": "Navigation öffnen"
+  },
   "dashboard": {
     "title": "Dashboard",
     "welcome": "Willkommen zurück",
     "newProject": "Neues Projekt",
     "noProjects": "Noch keine Projekte vorhanden",
-    "createFirst": "Erstelle dein erstes Projekt"
+    "createFirst": "Erstelle dein erstes Projekt",
+    "studioOverview": "Dein Studio im Überblick",
+    "studioOverviewDescription": "Alle Shootings, Ideen und nächsten Schritte an einem Ort.",
+    "activeProjects": "Aktive Projekte",
+    "upcomingShoots": "Anstehende Shootings",
+    "openSelections": "Offene Auswahlen",
+    "yourProjects": "Deine Projekte",
+    "searchProjects": "Projekte suchen",
+    "upNext": "Als Nächstes",
+    "noUpcomingShoots": "Keine anstehenden Shootings.",
+    "nextSteps": "Deine nächsten Schritte",
+    "reviewSelections": "Bildauswahl prüfen",
+    "prepareProjects": "Shootings vorbereiten",
+    "projects": "Projekte",
+    "planning": "In Planung",
+    "inSelection": "Bildauswahl",
+    "resultsReady": "Ergebnisse"
   },
   "project": {
     "selection": "Auswahl",
@@ -67,6 +95,8 @@
     "results": "Ergebnisse",
     "publicLink": "Öffentlicher Link",
     "settings": "Einstellungen",
+    "projectModules": "Projektbereiche",
+    "shootingDetails": "Shooting-Details",
     "manage": "Verwalten",
     "view": "Ansehen",
     "groups": "{count} Gruppen",
@@ -157,6 +187,7 @@
   "moodboard": {
     "title": "Moodboard Gruppen",
     "privateCollection": "Meine Sammlung",
+    "collectionDescription": "Deine Ideen für kommende Shootings.",
     "noGroups": "Noch keine Moodboard-Gruppen vorhanden",
     "groupsPrompt": "Erstelle Gruppen, um deine Inspirationsbilder zu organisieren",
     "newGroup": "Neue Gruppe",
@@ -313,10 +344,13 @@
     "invalidEmail": "Ungültige E-Mail oder Passwort",
     "errorOccurred": "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",
     "welcomeBack": "Willkommen zurück",
+    "creativityCaption": "Mehr Raum für deine Kreativität.",
     "signInToAccount": "Melde dich bei deinem Konto an",
     "noAccount": "Hast du noch kein Konto?",
     "signingIn": "Wird angemeldet...",
     "signIn": "Anmelden",
+    "or": "oder",
+    "signInWithGoogle": "Mit Google anmelden",
     "createAccount": "Konto erstellen",
     "signUpToGetStarted": "Registriere dich, um loszulegen",
     "alreadyHaveAccount": "Hast du bereits ein Konto?",
@@ -454,7 +488,15 @@
   "home": {
     "title": "Shoot-It Organizer",
     "subtitle": "Professionelle Organisation von Fotoshootings leicht gemacht",
-    "getStarted": "Jetzt starten"
+    "getStarted": "Jetzt starten",
+    "heroTitle": "Dein Shooting. Alles an einem Ort.",
+    "heroDescription": "Plane Projekte, sammle Ideen und teile deine Ergebnisse.",
+    "plan": "Planen",
+    "planDescription": "Organisiere Shootings, Termine und alle wichtigen Details an einem Ort.",
+    "collaborate": "Zusammenarbeiten",
+    "collaborateDescription": "Lade dein Team ein und behalte den Überblick über jede Aufgabe.",
+    "share": "Bilder teilen",
+    "shareDescription": "Sammle, wähle aus und präsentiere Ergebnisse gemeinsam."
   },
   "publicProject": {
     "showcase": "Showcase",
@@ -471,7 +513,9 @@
     "loginToRate": "Melde dich an, um Bilder zu bewerten",
     "noPermissionToRate": "Du hast keine Berechtigung, Bilder in diesem Projekt zu bewerten",
     "loginNow": "Jetzt anmelden",
-    "projectOwner": "Projekt-Besitzer"
+    "projectOwner": "Projekt-Besitzer",
+    "privateProject": "Privates Projekt",
+    "noProjectAccess": "Du hast keine Berechtigung, dieses Projekt anzusehen. Bitte wende dich an die Projektleitung."
   },
   "admin": {
     "title": "Administration",

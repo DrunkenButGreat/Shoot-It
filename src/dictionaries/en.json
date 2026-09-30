@@ -51,12 +51,40 @@
     "favorite": "Favorite",
     "unfavorite": "Remove favorite"
   },
+  "nav": {
+    "overview": "Overview",
+    "projects": "Projects",
+    "moodboards": "Moodboards",
+    "myStudio": "My Studio",
+    "currentProject": "Current project",
+    "recentlyOpened": "Recently opened",
+    "settings": "Settings",
+    "mainNavigation": "Main navigation",
+    "projectNavigation": "Project navigation",
+    "openNavigation": "Open navigation"
+  },
   "dashboard": {
     "title": "Dashboard",
     "welcome": "Welcome back",
     "newProject": "New Project",
     "noProjects": "No projects yet",
-    "createFirst": "Create your first project"
+    "createFirst": "Create your first project",
+    "studioOverview": "Your studio at a glance",
+    "studioOverviewDescription": "Every shoot, idea and next step in one place.",
+    "activeProjects": "Active projects",
+    "upcomingShoots": "Upcoming shoots",
+    "openSelections": "Open selections",
+    "yourProjects": "Your projects",
+    "searchProjects": "Search projects",
+    "upNext": "Up next",
+    "noUpcomingShoots": "No upcoming shoots.",
+    "nextSteps": "Your next steps",
+    "reviewSelections": "Review selections",
+    "prepareProjects": "Prepare shoots",
+    "projects": "projects",
+    "planning": "Planning",
+    "inSelection": "Image selection",
+    "resultsReady": "Results"
   },
   "project": {
     "selection": "Selection",
@@ -67,6 +95,8 @@
     "results": "Results",
     "publicLink": "Public Link",
     "settings": "Settings",
+    "projectModules": "Project areas",
+    "shootingDetails": "Shoot details",
     "manage": "Manage",
     "view": "View",
     "groups": "{count} groups",
@@ -156,6 +186,7 @@
   "moodboard": {
     "title": "Moodboard Groups",
     "privateCollection": "My Collection",
+    "collectionDescription": "Your ideas for upcoming shoots.",
     "noGroups": "No moodboard groups yet",
     "groupsPrompt": "Create groups to organize your inspiration images",
     "newGroup": "New Group",
@@ -312,10 +343,13 @@
     "invalidEmail": "Invalid email or password",
     "errorOccurred": "An error occurred. Please try again.",
     "welcomeBack": "Welcome back",
+    "creativityCaption": "More room for your creativity.",
     "signInToAccount": "Sign in to your account",
     "noAccount": "Don't have an account?",
     "signingIn": "Signing in...",
     "signIn": "Sign in",
+    "or": "or",
+    "signInWithGoogle": "Sign in with Google",
     "createAccount": "Create Account",
     "signUpToGetStarted": "Sign up to get started",
     "alreadyHaveAccount": "Already have an account?",
@@ -453,7 +487,15 @@
   "home": {
     "title": "Shoot-It Organizer",
     "subtitle": "Professional photoshoot organization made easy",
-    "getStarted": "Get Started"
+    "getStarted": "Get started",
+    "heroTitle": "Your shoot. All in one place.",
+    "heroDescription": "Plan projects, collect ideas and share your results.",
+    "plan": "Plan",
+    "planDescription": "Organize shoots, schedules and every important detail in one place.",
+    "collaborate": "Collaborate",
+    "collaborateDescription": "Invite your team and keep every task in view.",
+    "share": "Share images",
+    "shareDescription": "Collect, select and present results together."
   },
   "publicProject": {
     "showcase": "Showcase",
@@ -470,7 +512,9 @@
     "loginToRate": "Login to rate images",
     "noPermissionToRate": "You don't have permission to rate images in this project",
     "loginNow": "Login now",
-    "projectOwner": "Project Owner"
+    "projectOwner": "Project Owner",
+    "privateProject": "Private project",
+    "noProjectAccess": "You do not have permission to view this project. Please contact the project owner."
   },
   "admin": {
     "title": "Administration",

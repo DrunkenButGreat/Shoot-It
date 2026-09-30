@@ -1,294 +1,64 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Calendar, MapPin } from "lucide-react"
+import { Calendar, CalendarDays, ClipboardList, FileSignature, FolderKanban, Images, MapPin, UserRoundSearch, Users } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import prisma from "@/lib/prisma"
 import { canAccessProject } from "@/lib/permissions"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ProjectActions } from "@/components/projects/ProjectActions"
 import { PublicLinkCard } from "@/components/projects/PublicLinkCard"
 import { getLocale, getDictionary } from "@/lib/i18n"
 import { cookies } from "next/headers"
 
-export default async function ProjectPage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
+export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
-
-  if (!session?.user?.id) {
-    redirect("/login")
-  }
-
+  if (!session?.user?.id) redirect("/login")
   const { id } = await params
+  if (!await canAccessProject(session.user.id, id)) redirect("/dashboard")
   const cookieStore = await cookies()
   const locale = getLocale(cookieStore)
-  const dict = await getDictionary(locale)
-
-  // Check access
-  const hasAccess = await canAccessProject(session.user.id, id)
-  if (!hasAccess) {
-    redirect("/dashboard")
-  }
-
-  // Fetch project with counts
-  const project = await prisma.project.findUnique({
-    where: { id },
-    include: {
-      owner: {
-        select: {
-          name: true,
-          email: true,
-        },
+  const [dict, project] = await Promise.all([
+    getDictionary(locale),
+    prisma.project.findUnique({
+      where: { id },
+      include: {
+        owner: { select: { name: true, email: true } },
+        _count: { select: { moodboardLinks: true, participants: true, contracts: true, selectionImages: true, resultFolders: true, applications: true, appointmentSlots: true } },
+        participants: { where: { email: session.user.email || undefined }, select: { id: true, role: true } },
+        moodboardLinks: { take: 1, orderBy: { order: "asc" }, include: { group: { include: { images: { take: 3, orderBy: { order: "asc" } } } } } },
       },
-      _count: {
-        select: {
-          moodboardLinks: true,
-          participants: true,
-          contracts: true,
-          selectionImages: true,
-          resultFolders: true,
-          applications: true,
-          appointmentSlots: true,
-        },
-      },
-      participants: {
-        where: { email: session.user.email || undefined },
-        select: { id: true, role: true }
-      },
-    },
-  })
-
-  const isParticipant = (project?.participants?.length ?? 0) > 0
-  const participantRole = project?.participants?.[0]?.role
-
-  if (!project) {
-    redirect("/dashboard")
-  }
-
-  const isOwner = project.ownerId === session.user.id
+    }),
+  ])
+  if (!project) redirect("/dashboard")
   const projectDate = project.date ? new Date(project.date) : null
+  const isOwner = project.ownerId === session.user.id
+  const hero = project.brandingImage || project.moodboardLinks[0]?.group.images[0]?.thumbnail || project.moodboardLinks[0]?.group.images[0]?.path
+  const modules: Array<[string, string, string, LucideIcon]> = [
+    [dict.project.moodboard, dict.project.groups.replace("{count}", String(project._count.moodboardLinks)), `/project/${id}/moodboard`, Images],
+    [dict.project.participants, dict.project.people.replace("{count}", String(project._count.participants)), `/project/${id}/participants`, Users],
+    [dict.project.selection, dict.project.imagesCount.replace("{count}", String(project._count.selectionImages)), `/project/${id}/selection`, UserRoundSearch],
+    [dict.project.contracts, dict.project.contractsCount.replace("{count}", String(project._count.contracts)), `/project/${id}/contracts`, FileSignature],
+    [dict.project.callsheet, dict.callsheet.subtitle, `/project/${id}/callsheet`, ClipboardList],
+    [dict.project.results, dict.project.foldersCount.replace("{count}", String(project._count.resultFolders)), `/project/${id}/results`, FolderKanban],
+  ]
+  if (project.allowAppointments) modules.push([dict.project.appointments, `${project._count.appointmentSlots} ${dict.project.appointmentSuggestions}`, `/project/${id}/appointments`, CalendarDays])
+  if (isOwner && (project.allowApplications || project._count.applications > 0)) modules.push([dict.applications.manageApplications, `${project._count.applications} ${dict.applications.pending}`, `/project/${id}/applications`, Users])
 
-  return (
-    <div className="flex-1 bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/dashboard">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                {dict.common.backToProjects}
-              </Button>
-            </Link>
-            {isOwner && (
-              <ProjectActions project={project} />
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Project Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-3xl font-bold text-gray-900">{project.name}</h1>
-            {project.isArchived && (
-              <span className="bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded border border-amber-200 uppercase tracking-wider">
-                {dict.common.archived}
-              </span>
-            )}
-            {isParticipant && (
-              <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded border border-blue-200 uppercase tracking-wider">
-                {participantRole || dict.common.participant}
-              </span>
-            )}
-          </div>
-          {project.description && (
-            <p className="text-gray-600">{project.description}</p>
-          )}
-          <div className="flex gap-4 mt-4 text-sm text-gray-600">
-            {projectDate && (
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                <span>{projectDate.toLocaleDateString(locale)}</span>
-              </div>
-            )}
-            {project.location && (
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                <span>{project.location}</span>
-              </div>
-            )}
-          </div>
-          {project.address && (
-            <p className="text-sm text-gray-500 mt-2">{project.address}</p>
-          )}
-        </div>
-
-        {/* Module Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">{dict.project.moodboard}</CardTitle>
-              <CardDescription>{dict.project.groups.replace('{count}', project._count.moodboardLinks.toString())}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link href={`/project/${id}/moodboard`}>
-                <Button variant="outline" className="w-full">
-                  {dict.project.manage} {dict.project.moodboard}
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">{dict.project.participants}</CardTitle>
-              <CardDescription>{dict.project.people.replace('{count}', project._count.participants.toString())}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link href={`/project/${id}/participants`}>
-                <Button variant="outline" className="w-full">
-                  {dict.project.manage} {dict.project.participants}
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">{dict.project.contracts}</CardTitle>
-              <CardDescription>{dict.project.contractsCount.replace('{count}', project._count.contracts.toString())}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link href={`/project/${id}/contracts`}>
-                <Button variant="outline" className="w-full">
-                  {dict.project.manage} {dict.project.contracts}
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">{dict.project.selection}</CardTitle>
-              <CardDescription>{dict.project.imagesCount.replace('{count}', project._count.selectionImages.toString())}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link href={`/project/${id}/selection`}>
-                <Button variant="outline" className="w-full">
-                  {dict.selection.title}
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Project Info & Public Link */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          <Card className="border-none shadow-lg bg-white">
-            <CardHeader>
-              <CardTitle className="text-lg">{dict.project.databaseInfo}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div>
-                <span className="text-sm font-medium">{dict.common.owner}:</span>{" "}
-                <span className="text-sm text-gray-600">{project.owner.name || project.owner.email}</span>
-              </div>
-              <div>
-                <span className="text-sm font-medium">{dict.project.internalId}:</span>{" "}
-                <code className="text-[10px] bg-gray-100 px-2 py-1 rounded font-mono">{project.id}</code>
-              </div>
-              <div>
-                <span className="text-sm font-medium">{dict.project.shortCode}:</span>{" "}
-                <code className="text-sm bg-gray-100 px-2 py-1 rounded">{project.shortCode}</code>
-              </div>
-            </CardContent>
-          </Card>
-
-          <PublicLinkCard project={project as any} />
-        </div>
-
-        {/* Additional Modules */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">{dict.project.callsheet}</CardTitle>
-              <CardDescription>{dict.callsheet.subtitle}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link href={`/project/${id}/callsheet`}>
-                <Button variant="outline" className="w-full">
-                  {dict.project.manage} {dict.project.callsheet}
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">{dict.project.results}</CardTitle>
-              <CardDescription>{dict.project.foldersCount.replace('{count}', project._count.resultFolders.toString())}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link href={`/project/${id}/results`}>
-                <Button variant="outline" className="w-full">
-                  {dict.project.manage} {dict.project.results}
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          {project.allowAppointments && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">{dict.project.appointments || 'Terminfindung'}</CardTitle>
-                <CardDescription>
-                  {project._count.appointmentSlots > 0 
-                    ? `${project._count.appointmentSlots} ${dict.project.appointmentSuggestions || 'Terminvorschläge'}` 
-                    : (dict.project.appointmentsDescription || 'Findet gemeinsam einen Termin')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link href={`/project/${id}/appointments`}>
-                  <Button variant="outline" className="w-full">
-                    {dict.project.manage} {dict.project.appointments || 'Termine'}
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          )}
-
-          {isOwner && (project.allowApplications || project._count.applications > 0) && (
-            <Card className={project._count.applications > 0 ? "border-blue-200 bg-blue-50/20" : ""}>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center justify-between">
-                  {dict.applications.manageApplications}
-                  {project._count.applications > 0 && (
-                    <span className="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
-                      {project._count.applications}
-                    </span>
-                  )}
-                </CardTitle>
-                <CardDescription>
-                  {dict.applications.sectionDescription}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link href={`/project/${id}/applications`}>
-                  <Button variant={project._count.applications > 0 ? "default" : "outline"} className="w-full">
-                    {dict.project.manage}
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </main>
+  return <main className="mx-auto max-w-[1500px]">
+    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div><h1 className="studio-page-title">{project.name}</h1>{project.description && <p className="studio-page-subtitle">{project.description}</p>}<div className="mt-3 flex flex-wrap gap-5 text-sm text-slate-500">{projectDate && <span className="flex items-center gap-2"><Calendar className="h-4 w-4" />{projectDate.toLocaleDateString(locale)}</span>}{project.location && <span className="flex items-center gap-2"><MapPin className="h-4 w-4" />{project.location}</span>}</div></div>
+      {isOwner && <ProjectActions project={project} />}
     </div>
-  )
+
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_330px]">
+      <div className="space-y-6">
+        <div className="relative aspect-[16/5] min-h-52 overflow-hidden rounded-xl bg-slate-200">{hero ? <img src={hero} alt="" className="h-full w-full object-cover" /> : <div className="h-full w-full bg-[linear-gradient(135deg,#cbd2db,#eef0f3_55%,#bbc4cf)]" />}<div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 to-transparent p-5 pt-16"><p className="text-sm font-medium text-white">{projectDate ? projectDate.toLocaleDateString(locale, { weekday: "long", day: "2-digit", month: "long", year: "numeric" }) : dict.common.tbd}</p></div></div>
+        <section><h2 className="mb-4 text-xl font-bold text-slate-950">{dict.project.projectModules}</h2><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{modules.map(([title, subtitle, href, Icon]) => <Link href={href} key={href} className="studio-panel group flex min-h-32 flex-col p-4 transition-colors hover:border-slate-300"><div className="mb-5 flex items-center justify-between"><span className="rounded-lg bg-slate-100 p-2 text-slate-600"><Icon className="h-5 w-5" /></span><span className="text-blue-600">→</span></div><h3 className="font-semibold text-slate-950">{title}</h3><p className="mt-1 text-xs text-slate-500">{subtitle}</p></Link>)}</div></section>
+      </div>
+      <aside className="space-y-5">
+        <section className="studio-panel p-5"><h2 className="mb-4 text-lg font-bold text-slate-950">{dict.project.shootingDetails}</h2><dl className="space-y-4 text-sm"><div><dt className="text-xs text-slate-500">{dict.projectForm.date}</dt><dd className="mt-1 font-medium">{projectDate ? projectDate.toLocaleDateString(locale) : dict.common.tbd}</dd></div><div><dt className="text-xs text-slate-500">{dict.projectForm.location}</dt><dd className="mt-1 font-medium">{project.location || dict.common.tbd}</dd>{project.address && <dd className="text-xs text-slate-500">{project.address}</dd>}</div><div><dt className="text-xs text-slate-500">{dict.common.owner}</dt><dd className="mt-1 font-medium">{project.owner.name || project.owner.email}</dd></div></dl></section>
+        <PublicLinkCard project={project as any} />
+      </aside>
+    </div>
+  </main>
 }

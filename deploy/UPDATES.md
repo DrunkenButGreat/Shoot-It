@@ -151,6 +151,59 @@ Existing installations without that variable retain the previous mount path.
 Changing it from `/var/lib/postgresql/data` before moving the actual data could
 otherwise expose an empty database. Do not replace your existing `.env` with the example.
 
+### Compact local Docker upgrade
+
+Use this sequence for an existing local installation that predates the 1.11.0
+administration schema. The longer production procedure below additionally covers
+storage migration, upload backups and rollback preparation.
+
+Stop application writes, start PostgreSQL and create a restricted database dump:
+
+```sh
+docker compose up -d db
+docker compose stop app
+
+umask 077
+mkdir -p ../shoot-it-backups
+BACKUP="../shoot-it-backups/shoot-it-before-migration-$(date +%Y%m%d-%H%M%S).dump"
+
+docker compose exec -T db sh -c \
+  'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' > "$BACKUP"
+
+test -s "$BACKUP"
+docker compose exec -T db pg_restore --list < "$BACKUP" > /dev/null
+echo "Backup verified: $BACKUP"
+```
+
+Apply the additive, repeatable 1.11.0 upgrade before recording the migration
+baseline. Then deploy the migration history and regenerate Prisma Client:
+
+```sh
+npx prisma db execute \
+  --file prisma/upgrades/1.11.0.sql \
+  --schema prisma/schema.prisma
+
+node --env-file=.env scripts/migrate.cjs baseline
+node --env-file=.env scripts/migrate.cjs deploy
+
+npx prisma generate
+npx prisma migrate status --schema prisma/schema.prisma
+```
+
+Restart the application and verify readiness:
+
+```sh
+docker compose up -d app
+docker compose ps
+curl -fsS http://127.0.0.1:3000/api/ready
+```
+
+If `baseline` reports a schema mismatch, do not force or resolve the migration
+manually. It intentionally leaves the database unchanged so the difference can be
+investigated first. The dump can contain personal data; keep it outside version
+control and retain it until login, projects, media access and readiness have been
+verified after the upgrade.
+
 1. Start from a working **1.11.0** schema. Earlier versions first follow the existing
    1.11.0 upgrade instructions. Record the running app image ID and database mounts:
 
