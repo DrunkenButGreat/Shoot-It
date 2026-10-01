@@ -120,7 +120,7 @@
     "noResponsesYet": "Noch keine Antworten."
   },
   "selection": {
-    "title": "Auswahl Galerie",
+    "title": "Bildauswahl",
     "images": "Bilder",
     "stars": "Sterne",
     "color": "Farbe",
@@ -181,11 +181,12 @@
     "folderDeleted": "Ordner gelöscht",
     "moveToRoot": "In Hauptverzeichnis verschieben",
     "moveTo": "Verschieben nach",
+    "folderDescription": "Erstelle oder bearbeite einen Ordner für deine Bildauswahl.",
     "folderName": "Ordnername",
     "importToGroup": "Verzeichnis in Gruppe importieren"
   },
   "moodboard": {
-    "title": "Moodboard Gruppen",
+    "title": "Moodboard",
     "privateCollection": "Meine Sammlung",
     "collectionDescription": "Deine Ideen für kommende Shootings.",
     "noGroups": "Noch keine Moodboard-Gruppen vorhanden",
@@ -263,9 +264,12 @@
     "content": "Vertragsinhalt (Markdown)",
     "saving": "Speichert...",
     "deleteTitle": "Vertrag löschen",
-    "deleteConfirm": "Bist du sicher, dass du diesen Vertrag löschen möchtest?"
+    "deleteConfirm": "Bist du sicher, dass du diesen Vertrag löschen möchtest?",
+    "created": "Erstellt"
   },
   "callsheet": {
+    "addDescription": "Ergänze Datum, Uhrzeit und Aktivität für deinen Shooting-Zeitplan.",
+    "dateTime": "Datum und Uhrzeit",
     "title": "Callsheet",
     "subtitle": "Shooting-Details und Zeitplan verwalten",
     "details": "Shooting Details",
@@ -326,12 +330,16 @@
     "dropToUpload": "Dateien oder Ordner zum Hochladen ablegen"
   },
   "profile": {
-    "branding": "Branding & Design",
-    "brandingDescription": "Definiere dein persönliches Erscheinungsbild. Diese Einstellungen werden für alle deine öffentlichen Projektseiten verwendet.",
-    "primaryColor": "Primärfarbe",
-    "brandingImage": "Banner Bild",
-    "brandingImageHelp": "Empfohlen: 2000x500px. Wird oben auf deinen Projektseiten angezeigt.",
-    "uploadBanner": "Banner hochladen"
+    "title": "Profil",
+    "yourProfile": "Dein Profil",
+    "description": "Fülle dein Profil aus, damit deine Daten automatisch in Projekte übernommen werden.",
+    "branding": "Dein Branding",
+    "brandingDescription": "Passe das Erscheinungsbild deiner öffentlichen Projekte an.",
+    "primaryColor": "Akzentfarbe",
+    "brandingImage": "Titelbild",
+    "uploadBanner": "Titelbild hochladen",
+    "brandingImageHelp": "Ein Bild bis 5 MB auswählen.",
+    "preview": "Vorschau"
   },
   "auth": {
     "login": "Anmelden",
@@ -378,12 +386,9 @@
     "invalidInput": "Bitte die Eingaben prüfen.",
     "userExists": "Für diese E-Mail-Adresse besteht bereits ein Konto.",
     "signupWithInvite": "Mit Einladungscode registrieren",
-    "oauthInviteRequired": "Bitte zuerst mit Einladungscode, E-Mail und Passwort registrieren. Bestehende Google-Konten können sich weiterhin anmelden."
-  },
-  "profile": {
-    "title": "Profil",
-    "yourProfile": "Dein Profil",
-    "description": "Fülle dein Profil aus, damit deine Daten automatisch in Projekte übernommen werden."
+    "oauthInviteRequired": "Bitte zuerst mit Einladungscode, E-Mail und Passwort registrieren. Bestehende Google-Konten können sich weiterhin anmelden.",
+    "showPassword": "Passwort anzeigen",
+    "hidePassword": "Passwort verbergen"
   },
   "projectForm": {
     "tabDetails": "Details",
@@ -489,7 +494,7 @@
     "title": "Shoot-It Organizer",
     "subtitle": "Professionelle Organisation von Fotoshootings leicht gemacht",
     "getStarted": "Jetzt starten",
-    "heroTitle": "Dein Shooting. Alles an einem Ort.",
+    "heroTitle": "Dein Shooting.\nAlles an einem Ort.",
     "heroDescription": "Plane Projekte, sammle Ideen und teile deine Ergebnisse.",
     "plan": "Planen",
     "planDescription": "Organisiere Shootings, Termine und alle wichtigen Details an einem Ort.",
@@ -558,5 +563,52 @@
     "forbidden": "Keine Berechtigung. Bitte mit einem Admin-Konto anmelden.",
     "invalidInput": "Bitte die Eingaben prüfen.",
     "errorOccurred": "Die Änderung konnte nicht gespeichert werden. Bitte erneut versuchen."
+  },
+  "design": {
+    "changeCover": "Titelbild ändern",
+    "coverHelp": "Ein Bild bis 5 MB auswählen. Es erscheint auch auf der öffentlichen Projektseite.",
+    "projectMenu": "Projektaktionen",
+    "copyLink": "Link kopieren",
+    "openPublic": "Öffentliche Seite öffnen",
+    "fileDetails": "Datei-Details",
+    "preview": "Vorschau öffnen",
+    "gridView": "Rasteransicht",
+    "listView": "Listenansicht",
+    "uploadImages": "Bilder hochladen",
+    "downloadZip": "ZIP herunterladen",
+    "selectImage": "Bild auswählen",
+    "imageActions": "Bildaktionen",
+    "teamSubtitle": "Dein Team für dieses Shooting",
+    "searchPeople": "Personen suchen",
+    "all": "Alle",
+    "noRating": "Ohne Bewertung",
+    "saveNotes": "Notizen speichern",
+    "inFolder": "In Ordner",
+    "uploaded": "Hochgeladen",
+    "projectCover": "Projekt-Titelbild",
+    "comments": "Kommentare",
+    "commentPlaceholder": "Kommentar schreiben …",
+    "sendComment": "Senden",
+    "approve": "Freigeben",
+    "decline": "Ablehnen",
+    "pending": "Zur Freigabe",
+    "approved": "Freigegeben",
+    "declined": "Abgelehnt",
+    "myMoodboards": "Meine Moodboards",
+    "signatures": "Unterschriften",
+    "voting": "Abstimmung",
+    "calendar": "Kalender",
+    "availability": "Verfügbarkeit",
+    "proposeDate": "Termin vorschlagen",
+    "start": "Beginn",
+    "end": "Ende",
+    "noDates": "Noch keine Termine vorgeschlagen",
+    "yes": "Ja",
+    "no": "Nein",
+    "open": "Offen",
+    "dateRangeError": "Das Ende muss nach dem Beginn liegen.",
+    "masonry": "Masonry-Ansicht",
+    "previousImage": "Vorheriges Bild",
+    "nextImage": "Nächstes Bild"
   }
 }

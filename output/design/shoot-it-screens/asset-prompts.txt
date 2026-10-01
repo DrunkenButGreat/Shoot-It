@@ -1,0 +1,13 @@
+Generated using the built-in image_gen tool. Final web assets:
+public/images/design/coastal-editorial.webp
+public/images/design/coastal-portrait.webp
+public/images/design/studio-camera.webp
+
+Asset 1
+Use case: photorealistic-natural. Asset type: wide website hero photograph for Shoot-It, a photography project organizer. A candid editorial photograph of an adult woman with windblown light brown hair, wearing an elegant beige wool coat, looking toward the ocean on a rugged northern European beach. Waist-up portrait in the RIGHT third, head comfortably inside frame, ocean waves and soft coastline across the LEFT half with plenty of quiet space for separately rendered dark webpage headline. Landscape 16:9 composition. Natural soft late afternoon light, pale blue-gray sky, sand, neutral beige, realistic skin texture and fabric, premium fashion editorial without excessive retouching. The subject should remain legible when image is cropped into a wide banner. NO text, NO logos, NO UI, NO borders, NO watermark.
+
+Asset 2
+Use case: photorealistic-natural. Asset type: vertical login-page editorial photograph for Shoot-It, a photography project organizer. Adult man in a dark charcoal outdoor jacket, windswept brown hair, short natural beard, standing on a rugged northern European rocky coastline and looking to his right. Mid-shot chest and torso, centered with head below upper quarter, quiet sky at top for a separately rendered logo, darker rock area at bottom for separately rendered small white caption. Portrait 2:3 composition. Moody soft overcast daylight, slate blue sky, charcoal coat, realistic natural skin and textile texture, premium outdoor editorial photography. NO text, NO logos, NO UI, NO borders, NO watermark.
+
+Asset 3
+Use case: photorealistic-natural. Asset type: portrait registration-page background photo for Shoot-It photography organizer. Warm quiet photographic still life: a black unbranded mirrorless camera with a prime lens on a pale oak tabletop, a few landscape contact prints loosely arranged in foreground, a small matte ceramic vase with dried delicate grasses at the back right. Beige plaster wall, late afternoon sunlight casting soft window shadows, warm neutral sand, cream, oak and charcoal palette. Portrait 2:3 framing with generous calm empty wall in top quarter for a separately rendered white logo, camera in middle third and photo prints below. Realistic professional editorial photograph, subtly film-like texture. No lettering, no brand names, no watermark, no UI.

@@ -1,12 +1,21 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useMemo } from 'react';
-import { useI18n } from '@/components/I18nProvider';
-import { ResultImageGrid } from '../results/ResultImageGrid';
-import { FolderTree } from '../results/FolderTree';
-import { Download, FolderOpen, Loader2, CheckSquare, Square } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { supportsDirectDownload, directDownloadViaManifest } from '@/lib/direct-download';
+import { useI18n } from "@/components/I18nProvider";
+import { Button } from "@/components/ui/button";
+import {
+  directDownloadViaManifest,
+  supportsDirectDownload,
+} from "@/lib/direct-download";
+import {
+  CheckSquare,
+  Download,
+  FolderOpen,
+  Loader2,
+  Square,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { FolderTree } from "../results/FolderTree";
+import { ResultImageGrid } from "../results/ResultImageGrid";
 
 type ResultFile = {
   id: string;
@@ -34,9 +43,11 @@ export function PublicResults({ projectId }: { projectId: string }) {
   const [rootImages, setRootImages] = useState<ResultFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-  const [selectedImageIds, setSelectedImageIds] = useState<Set<string>>(new Set());
+  const [selectedImageIds, setSelectedImageIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [isDownloading, setIsDownloading] = useState(false);
-  const [downloadMode, setDownloadMode] = useState<'zip' | 'files'>('zip');
+  const [downloadMode, setDownloadMode] = useState<"zip" | "files">("zip");
   const canDirectDownload = supportsDirectDownload();
   const [galleryLayout, setGalleryLayout] = useState<string>("masonry");
 
@@ -52,7 +63,7 @@ export function PublicResults({ projectId }: { projectId: string }) {
         }
       }
     } catch (error) {
-      console.error('Failed to fetch results:', error);
+      console.error("Failed to fetch results:", error);
     } finally {
       setLoading(false);
     }
@@ -66,32 +77,39 @@ export function PublicResults({ projectId }: { projectId: string }) {
     if (selectedFolderId === null) {
       // All images
       const allImages = [...rootImages];
-      folders.forEach(f => allImages.push(...f.images));
+      folders.forEach((f) => allImages.push(...f.images));
       return allImages;
     }
-    if (selectedFolderId === 'unassigned') {
+    if (selectedFolderId === "unassigned") {
       return rootImages;
     }
-    const folder = folders.find(f => f.id === selectedFolderId);
+    const folder = folders.find((f) => f.id === selectedFolderId);
     return folder ? folder.images : [];
   }, [selectedFolderId, folders, rootImages]);
+  const allSelected =
+    filteredImages.length > 0 &&
+    filteredImages.every((image) => selectedImageIds.has(image.id));
+  const selectFolder = (id: string | null) => {
+    setSelectedFolderId(id);
+    setSelectedImageIds(new Set());
+  };
 
   const handleDownload = async () => {
     if (selectedImageIds.size === 0) return;
-    
+
     setIsDownloading(true);
     const endpoint = `/api/projects/${projectId}/results/download`;
     const body = { imageIds: Array.from(selectedImageIds), folderIds: [] };
     try {
-      if (downloadMode === 'files' && canDirectDownload) {
+      if (downloadMode === "files" && canDirectDownload) {
         await directDownloadViaManifest(endpoint, body);
         return;
       }
 
       const response = await fetch(endpoint, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(body),
       });
@@ -99,7 +117,7 @@ export function PublicResults({ projectId }: { projectId: string }) {
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
+        const a = document.createElement("a");
         a.href = url;
         a.download = `results.zip`;
         document.body.appendChild(a);
@@ -108,17 +126,17 @@ export function PublicResults({ projectId }: { projectId: string }) {
         document.body.removeChild(a);
       }
     } catch (error) {
-      console.error('Failed to download:', error);
+      console.error("Failed to download:", error);
     } finally {
       setIsDownloading(false);
     }
   };
 
   const toggleSelectAll = () => {
-    if (selectedImageIds.size === filteredImages.length) {
+    if (allSelected) {
       setSelectedImageIds(new Set());
     } else {
-      const allImageIds = new Set<string>(filteredImages.map(img => img.id));
+      const allImageIds = new Set<string>(filteredImages.map((img) => img.id));
       setSelectedImageIds(allImageIds);
     }
   };
@@ -139,12 +157,12 @@ export function PublicResults({ projectId }: { projectId: string }) {
   }
 
   const hasSelection = selectedImageIds.size > 0;
-  const currentFolder = folders.find(f => f.id === selectedFolderId);
+  const currentFolder = folders.find((f) => f.id === selectedFolderId);
 
   if (folders.length === 0 && rootImages.length === 0) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white py-12 text-center text-slate-500">
-        {t('results.noFolders')}
+        {t("results.noFolders")}
       </div>
     );
   }
@@ -152,135 +170,148 @@ export function PublicResults({ projectId }: { projectId: string }) {
   return (
     <div className="flex flex-col h-full gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-         <div className="text-sm font-medium text-gray-500">
-            {hasSelection ? t('results.itemsSelected').replace('{count}', selectedImageIds.size.toString()) : t('results.subtitle')}
-         </div>
-         {hasSelection && (
-           <div className="flex items-center gap-2">
+        <div className="text-sm font-medium text-gray-500">
+          {hasSelection
+            ? t("results.itemsSelected").replace(
+                "{count}",
+                selectedImageIds.size.toString(),
+              )
+            : t("results.subtitle")}
+        </div>
+        {hasSelection && (
+          <div className="flex items-center gap-2">
             {canDirectDownload && (
               <div className="flex items-center rounded-md border border-gray-200 bg-white p-0.5 text-xs shadow-sm">
                 <button
-                  onClick={() => setDownloadMode('zip')}
+                  onClick={() => setDownloadMode("zip")}
                   disabled={isDownloading}
-                  className={`px-2.5 py-1.5 rounded font-medium transition-all ${downloadMode === 'zip' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+                  className={`px-2.5 py-1.5 rounded font-medium transition-all ${downloadMode === "zip" ? "bg-gray-100 text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
                 >
-                  {t('selection.downloadAsZip')}
+                  {t("selection.downloadAsZip")}
                 </button>
                 <button
-                  onClick={() => setDownloadMode('files')}
+                  onClick={() => setDownloadMode("files")}
                   disabled={isDownloading}
-                  className={`px-2.5 py-1.5 rounded font-medium transition-all ${downloadMode === 'files' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+                  className={`px-2.5 py-1.5 rounded font-medium transition-all ${downloadMode === "files" ? "bg-gray-100 text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
                 >
-                  {t('selection.downloadAsFiles')}
+                  {t("selection.downloadAsFiles")}
                 </button>
               </div>
             )}
             <Button
-                variant="default"
-                size="sm"
-                disabled={isDownloading}
-                onClick={handleDownload}
-                className="bg-blue-600 hover:bg-blue-700 rounded-xl gap-2"
+              variant="default"
+              size="sm"
+              disabled={isDownloading}
+              onClick={handleDownload}
+              className="bg-blue-600 hover:bg-blue-700 rounded-xl gap-2"
             >
-                <Download className="h-4 w-4" />
-                {isDownloading ? t('common.loading') : t('results.downloadSelected')}
+              <Download className="h-4 w-4" />
+              {isDownloading
+                ? t("common.loading")
+                : t("results.downloadSelected")}
             </Button>
-           </div>
-         )}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col md:flex-row gap-8 min-h-[600px]">
         {/* Sidebar */}
-        <aside className="w-full md:w-64 flex-shrink-0">
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden sticky top-24">
-              <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
-                <h3 className="font-semibold text-gray-700">{t('selection.folders')}</h3>
-              </div>
-              <div className="p-2 space-y-1">
-                <button
-                  onClick={() => setSelectedFolderId(null)}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${
-                    selectedFolderId === null 
-                      ? 'bg-blue-50 text-blue-700 font-medium' 
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="w-4 h-4" />
-                  {t('selection.allImages')}
-                </button>
-
-                <button
-                  onClick={() => setSelectedFolderId('unassigned')}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${
-                    selectedFolderId === 'unassigned'
-                      ? 'bg-blue-50 text-blue-700 font-medium' 
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="w-4 h-4" />
-                  {t('selection.unassigned')}
-                </button>
-                
-                <FolderTree
-                  folders={folders}
-                  projectId={projectId}
-                  onDelete={() => {}} // Read-only
-                  selectedFolderId={selectedFolderId}
-                  onSelectFolder={setSelectedFolderId}
-                  isReadOnly={true}
-                />
-              </div>
+        <aside className="w-full md:w-44 flex-shrink-0">
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden sticky top-24">
+            <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+              <h3 className="font-semibold text-gray-700">
+                {t("selection.folders")}
+              </h3>
             </div>
+            <div className="p-2 space-y-1">
+              <button
+                onClick={() => selectFolder(null)}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${
+                  selectedFolderId === null
+                    ? "bg-blue-50 text-blue-700 font-medium"
+                    : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                <div className="w-4 h-4" />
+                {t("selection.allImages")}
+              </button>
+
+              <button
+                onClick={() => selectFolder("unassigned")}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${
+                  selectedFolderId === "unassigned"
+                    ? "bg-blue-50 text-blue-700 font-medium"
+                    : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                <div className="w-4 h-4" />
+                {t("selection.unassigned")}
+              </button>
+
+              <FolderTree
+                folders={folders}
+                projectId={projectId}
+                onDelete={() => {}} // Read-only
+                selectedFolderId={selectedFolderId}
+                onSelectFolder={selectFolder}
+                isReadOnly={true}
+              />
+            </div>
+          </div>
         </aside>
 
         {/* Main Content */}
-        <div className="flex-1 space-y-8 rounded-xl border border-slate-200 bg-white p-6">
-           {selectedFolderId && selectedFolderId !== 'unassigned' && (
-              <div className="flex items-center gap-2 text-sm text-gray-500 pb-2 border-b border-gray-100">
-                  <FolderOpen className="h-4 w-4" />
-                  <span>{currentFolder?.name}</span>
-              </div>
-           )}
+        <div className="min-w-0 flex-1 space-y-8 rounded-xl border border-slate-200 bg-white p-6">
+          {selectedFolderId && selectedFolderId !== "unassigned" && (
+            <div className="flex items-center gap-2 text-sm text-gray-500 pb-2 border-b border-gray-100">
+              <FolderOpen className="h-4 w-4" />
+              <span>{currentFolder?.name}</span>
+            </div>
+          )}
 
-           {filteredImages.length === 0 ? (
-             <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
-                  <FolderOpen className="h-8 w-8 text-slate-300" />
-                </div>
-                <p className="text-gray-500 text-lg font-medium">{t('common.noImages')}</p>
-             </div>
-           ) : (
-             <>
-               <div className="flex items-center justify-between">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+          {filteredImages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
+                <FolderOpen className="h-8 w-8 text-slate-300" />
+              </div>
+              <p className="text-gray-500 text-lg font-medium">
+                {t("common.noImages")}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={toggleSelectAll}
                   className="text-gray-500 hover:text-gray-700"
                 >
-                  {selectedImageIds.size === filteredImages.length ? (
+                  {allSelected ? (
                     <CheckSquare className="h-4 w-4 mr-2" />
                   ) : (
                     <Square className="h-4 w-4 mr-2" />
                   )}
-                  {selectedImageIds.size === filteredImages.length ? t('results.deselectAll') : t('results.selectAll')}
+                  {allSelected
+                    ? t("results.deselectAll")
+                    : t("results.selectAll")}
                 </Button>
                 <p className="text-sm text-gray-500">
-                  {filteredImages.length} {t('selection.images')}
+                  {filteredImages.length} {t("selection.images")}
                 </p>
-               </div>
+              </div>
 
-                <ResultImageGrid
-                  images={filteredImages}
-                  selectedIds={selectedImageIds}
-                  onToggleSelect={toggleImageSelection}
-                  onDelete={() => {}}
-                  showDelete={false}
-                  projectId={projectId}
-                  layout={galleryLayout}
-                />
-             </>
-           )}
+              <ResultImageGrid
+                images={filteredImages}
+                selectedIds={selectedImageIds}
+                onToggleSelect={toggleImageSelection}
+                onDelete={() => {}}
+                showDelete={false}
+                projectId={projectId}
+                layout={galleryLayout}
+              />
+            </>
+          )}
         </div>
       </div>
     </div>

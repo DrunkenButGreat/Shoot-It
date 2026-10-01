@@ -46,7 +46,7 @@ export default async function CallsheetPage({ params }: { params: Promise<{ id: 
     ...callsheet,
     scheduleItems: callsheet.scheduleItems.map(item => ({
       ...item,
-      time: item.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      time: item.time.toISOString(),
     }))
   } : null;
 

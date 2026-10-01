@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { ImageCard } from "./ImageCard";
 
@@ -19,13 +19,13 @@ export function SelectionImageGrid({
   onImageClick,
   onRatingUpdated,
   selectedIds,
-  onToggleSelect
+  onToggleSelect,
 }: SelectionImageGridProps) {
   if (images.length === 0) return null;
 
   if (layout === "grid") {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+      <div className="grid grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
         {images.map((image, i) => (
           <ImageCard
             key={image.id}
@@ -34,7 +34,9 @@ export function SelectionImageGrid({
             onRatingUpdated={onRatingUpdated}
             onImageClick={() => onImageClick(i)}
             selected={selectedIds?.has(image.id)}
-            onSelect={onToggleSelect ? () => onToggleSelect(image.id) : undefined}
+            onSelect={
+              onToggleSelect ? () => onToggleSelect(image.id) : undefined
+            }
             hideRatings={false}
           />
         ))}
@@ -65,7 +67,9 @@ export function SelectionImageGrid({
                 onImageClick={() => onImageClick(i)}
                 justified={true}
                 selected={selectedIds?.has(image.id)}
-                onSelect={onToggleSelect ? () => onToggleSelect(image.id) : undefined}
+                onSelect={
+                  onToggleSelect ? () => onToggleSelect(image.id) : undefined
+                }
                 hideRatings={false}
               />
             </div>
@@ -76,33 +80,23 @@ export function SelectionImageGrid({
     );
   }
 
-  // Masonry (Default)
   return (
-    <div className="flex gap-4 items-start">
-      {Array.from({ length: 5 }).map((_, colIdx) => {
-        const columnImages = images.filter((_, i) => i % 5 === colIdx);
-        return (
-          <div key={colIdx} className="flex-1 flex flex-col gap-4">
-            {columnImages.map((image) => {
-              const globalIndex = images.findIndex(img => img.id === image.id);
-              return (
-                <div key={image.id}>
-                  <ImageCard
-                    image={image}
-                    projectId={projectId}
-                    onRatingUpdated={onRatingUpdated}
-                    onImageClick={() => onImageClick(globalIndex)}
-                    masonry={true}
-                    selected={selectedIds?.has(image.id)}
-                    onSelect={onToggleSelect ? () => onToggleSelect(image.id) : undefined}
-                    hideRatings={false}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        );
-      })}
+    <div className="columns-2 gap-3 xl:columns-3 2xl:columns-4">
+      {images.map((image, index) => (
+        <div key={image.id} className="mb-3 break-inside-avoid">
+          <ImageCard
+            image={image}
+            projectId={projectId}
+            onRatingUpdated={onRatingUpdated}
+            onImageClick={() => onImageClick(index)}
+            masonry
+            selected={selectedIds?.has(image.id)}
+            onSelect={
+              onToggleSelect ? () => onToggleSelect(image.id) : undefined
+            }
+          />
+        </div>
+      ))}
     </div>
   );
 }

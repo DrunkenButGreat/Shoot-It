@@ -1,6 +1,7 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useI18n } from "@/components/I18nProvider";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,11 +9,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useI18n } from '@/components/I18nProvider';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useEffect, useState } from "react";
 
 type Folder = {
   id: string;
@@ -25,16 +25,21 @@ export function FolderForm({
   isOpen,
   onClose,
   onSuccess,
+  defaultParentId,
 }: {
   projectId: string;
   folders: Folder[];
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  defaultParentId?: string | null;
 }) {
   const { t } = useI18n();
-  const [name, setName] = useState('');
-  const [parentId, setParentId] = useState('');
+  const [name, setName] = useState("");
+  const [parentId, setParentId] = useState("");
+  useEffect(() => {
+    if (isOpen) setParentId(defaultParentId || "");
+  }, [isOpen, defaultParentId]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,24 +47,27 @@ export function FolderForm({
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`/api/projects/${projectId}/results/folders`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `/api/projects/${projectId}/results/folders`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            parentId: parentId || null,
+          }),
         },
-        body: JSON.stringify({
-          name,
-          parentId: parentId || null,
-        }),
-      });
+      );
 
       if (response.ok) {
-        setName('');
-        setParentId('');
+        setName("");
+        setParentId("");
         onSuccess();
       }
     } catch (error) {
-      console.error('Failed to create folder:', error);
+      console.error("Failed to create folder:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -69,15 +77,15 @@ export function FolderForm({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('results.addFolder')}</DialogTitle>
+          <DialogTitle>{t("results.addFolder")}</DialogTitle>
           <DialogDescription>
-            {t('results.addFolderDescription')}
+            {t("results.addFolderDescription")}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">{t('results.folderName')}</Label>
+              <Label htmlFor="name">{t("results.folderName")}</Label>
               <Input
                 id="name"
                 value={name}
@@ -87,14 +95,14 @@ export function FolderForm({
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="parent">{t('results.parentFolder')}</Label>
+              <Label htmlFor="parent">{t("results.parentFolder")}</Label>
               <select
                 id="parent"
                 value={parentId}
                 onChange={(e) => setParentId(e.target.value)}
                 className="w-full px-3 py-2 border rounded-md"
               >
-                <option value="">-- {t('results.rootLevel')} --</option>
+                <option value="">-- {t("results.rootLevel")} --</option>
                 {folders.map((f) => (
                   <option key={f.id} value={f.id}>
                     {f.name}
@@ -105,10 +113,10 @@ export function FolderForm({
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
-              {t('common.cancel')}
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? t('common.saving') : t('common.create')}
+              {isSubmitting ? t("common.saving") : t("common.create")}
             </Button>
           </DialogFooter>
         </form>

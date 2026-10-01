@@ -120,7 +120,7 @@
     "noResponsesYet": "No responses yet."
   },
   "selection": {
-    "title": "Selection Gallery",
+    "title": "Image selection",
     "images": "images",
     "stars": "Stars",
     "color": "Color",
@@ -180,11 +180,12 @@
     "folderDeleted": "Folder deleted",
     "moveToRoot": "Move to Root",
     "moveTo": "Move to",
+    "folderDescription": "Create or edit a folder for your image selection.",
     "folderName": "Folder Name",
     "importToGroup": "Import Folder into Group"
   },
   "moodboard": {
-    "title": "Moodboard Groups",
+    "title": "Moodboard",
     "privateCollection": "My Collection",
     "collectionDescription": "Your ideas for upcoming shoots.",
     "noGroups": "No moodboard groups yet",
@@ -262,9 +263,12 @@
     "content": "Contract Content (Markdown)",
     "saving": "Saving...",
     "deleteTitle": "Delete Contract",
-    "deleteConfirm": "Are you sure you want to delete this contract?"
+    "deleteConfirm": "Are you sure you want to delete this contract?",
+    "created": "Created"
   },
   "callsheet": {
+    "addDescription": "Add a date, time and activity to your shoot schedule.",
+    "dateTime": "Date and time",
     "title": "Callsheet",
     "subtitle": "Manage shoot details and timeline",
     "details": "Shoot Details",
@@ -325,12 +329,16 @@
     "dropToUpload": "Drop files or folders to upload"
   },
   "profile": {
-    "branding": "Branding & Design",
-    "brandingDescription": "Define your personal appearance. These settings will be used for all your public project pages.",
-    "primaryColor": "Primary Color",
-    "brandingImage": "Banner Image",
-    "brandingImageHelp": "Recommended: 2000x500px. Shown at the top of your project pages.",
-    "uploadBanner": "Upload Banner"
+    "title": "Profile",
+    "yourProfile": "Your Profile",
+    "description": "Fill out your profile so your data is automatically included in projects.",
+    "branding": "Your branding",
+    "brandingDescription": "Customize the appearance of your public projects.",
+    "primaryColor": "Accent color",
+    "brandingImage": "Cover image",
+    "uploadBanner": "Upload cover image",
+    "brandingImageHelp": "Choose an image up to 5 MB.",
+    "preview": "Preview"
   },
   "auth": {
     "login": "Login",
@@ -377,12 +385,9 @@
     "invalidInput": "Please check your input.",
     "userExists": "An account already exists for this email address.",
     "signupWithInvite": "Register with invitation code",
-    "oauthInviteRequired": "Please register with an invitation code, email and password first. Existing Google accounts can still sign in."
-  },
-  "profile": {
-    "title": "Profile",
-    "yourProfile": "Your Profile",
-    "description": "Fill out your profile so your data is automatically included in projects."
+    "oauthInviteRequired": "Please register with an invitation code, email and password first. Existing Google accounts can still sign in.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "projectForm": {
     "tabDetails": "Details",
@@ -488,7 +493,7 @@
     "title": "Shoot-It Organizer",
     "subtitle": "Professional photoshoot organization made easy",
     "getStarted": "Get started",
-    "heroTitle": "Your shoot. All in one place.",
+    "heroTitle": "Your shoot.\nAll in one place.",
     "heroDescription": "Plan projects, collect ideas and share your results.",
     "plan": "Plan",
     "planDescription": "Organize shoots, schedules and every important detail in one place.",
@@ -557,5 +562,52 @@
     "forbidden": "Access denied. Please sign in with an admin account.",
     "invalidInput": "Please check your input.",
     "errorOccurred": "Could not save the change. Please try again."
+  },
+  "design": {
+    "changeCover": "Change cover image",
+    "coverHelp": "Choose an image up to 5 MB. It also appears on the public project page.",
+    "projectMenu": "Project actions",
+    "copyLink": "Copy link",
+    "openPublic": "Open public page",
+    "fileDetails": "File details",
+    "preview": "Open preview",
+    "gridView": "Grid view",
+    "listView": "List view",
+    "uploadImages": "Upload images",
+    "downloadZip": "Download ZIP",
+    "selectImage": "Select image",
+    "imageActions": "Image actions",
+    "teamSubtitle": "Your team for this shoot",
+    "searchPeople": "Search people",
+    "all": "All",
+    "noRating": "Unrated",
+    "saveNotes": "Save notes",
+    "inFolder": "In folder",
+    "uploaded": "Uploaded",
+    "projectCover": "Project cover image",
+    "comments": "Comments",
+    "commentPlaceholder": "Write a comment …",
+    "sendComment": "Send",
+    "approve": "Approve",
+    "decline": "Decline",
+    "pending": "Pending approval",
+    "approved": "Approved",
+    "declined": "Declined",
+    "myMoodboards": "My moodboards",
+    "signatures": "signatures",
+    "voting": "Availability",
+    "calendar": "Calendar",
+    "availability": "Availability",
+    "proposeDate": "Suggest a date",
+    "start": "Start",
+    "end": "End",
+    "noDates": "No dates suggested yet",
+    "yes": "Yes",
+    "no": "No",
+    "open": "Pending",
+    "dateRangeError": "The end must be after the start.",
+    "masonry": "Masonry view",
+    "previousImage": "Previous image",
+    "nextImage": "Next image"
   }
 }

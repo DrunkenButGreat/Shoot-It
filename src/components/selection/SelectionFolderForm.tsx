@@ -87,7 +87,7 @@ export function SelectionFolderForm({
         <DialogHeader>
           <DialogTitle>{folder ? t('selection.editFolder') : t('selection.newFolder')}</DialogTitle>
           <DialogDescription>
-            {t('results.folderDescription')}
+            {t('selection.folderDescription')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>

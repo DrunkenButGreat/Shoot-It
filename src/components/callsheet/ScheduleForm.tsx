@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -28,7 +29,7 @@ export function ScheduleForm({
   const { t } = useI18n();
   const [time, setTime] = useState('');
   const [activity, setActivity] = useState('');
-  const [location, setLocation] = useState('');
+  const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,20 +43,22 @@ export function ScheduleForm({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          time,
+          time: new Date(time).toISOString(),
           activity,
-          location: location || null,
+          notes: notes || undefined,
         }),
       });
 
       if (response.ok) {
         setTime('');
         setActivity('');
-        setLocation('');
+        setNotes('');
         onSuccess();
+      } else {
+        throw new Error();
       }
     } catch (error) {
-      console.error('Failed to create schedule item:', error);
+      toast.error(t('common.error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -67,18 +70,18 @@ export function ScheduleForm({
         <DialogHeader>
           <DialogTitle>{t('callsheet.add')}</DialogTitle>
           <DialogDescription>
-            {t('projectForm.isCreatingDescription')}
+            {t('callsheet.addDescription')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="time">{t('callsheet.time')}</Label>
+              <Label htmlFor="time">{t('callsheet.dateTime')}</Label>
               <Input
                 id="time"
+                type="datetime-local"
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                placeholder="09:00"
                 required
               />
             </div>
@@ -90,14 +93,16 @@ export function ScheduleForm({
                 onChange={(e) => setActivity(e.target.value)}
                 placeholder="..."
                 required
+                maxLength={200}
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="location">{t('callsheet.location')}</Label>
+              <Label htmlFor="notes">{t('callsheet.notesTitle')}</Label>
               <Input
-                id="location"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                maxLength={1000}
                 placeholder="..."
               />
             </div>

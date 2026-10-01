@@ -1,26 +1,22 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { 
-  Folder as FolderIcon, 
-  FolderOpen, 
-  ChevronRight, 
-  ChevronDown, 
-  Trash2, 
-  MoreVertical,
-  Plus
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
 import { useI18n } from "@/components/I18nProvider";
-import { SelectionImageGrid } from "./SelectionImageGrid";
-import ImageUpload from "../moodboard/ImageUpload";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  ChevronDown,
+  ChevronRight,
+  Folder as FolderIcon,
+  FolderOpen,
+  MoreVertical,
+  Trash2,
+} from "lucide-react";
+import { useState } from "react";
 
 interface Rating {
   id: string;
@@ -58,7 +54,10 @@ interface SelectionFolderTreeProps {
   onSelectFolder: (id: string | null) => void;
   onDeleteFolder: (id: string) => void;
   onEditFolder: (folder: SelectionFolder) => void;
-  onMoveImages: (imageIds: string[], targetFolderId: string | null) => Promise<void>;
+  onMoveImages: (
+    imageIds: string[],
+    targetFolderId: string | null,
+  ) => Promise<void>;
 }
 
 export function SelectionFolderTree({
@@ -67,10 +66,12 @@ export function SelectionFolderTree({
   onSelectFolder,
   onDeleteFolder,
   onEditFolder,
-  onMoveImages
+  onMoveImages,
 }: SelectionFolderTreeProps) {
   const { t } = useI18n();
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
+    () => new Set(folders.map((folder) => folder.id)),
+  );
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
 
   const toggleFolder = (id: string, e: React.MouseEvent) => {
@@ -106,30 +107,51 @@ export function SelectionFolderTree({
   const renderFolder = (folder: SelectionFolder, level = 0) => {
     const isExpanded = expandedFolders.has(folder.id);
     const isSelected = selectedFolderId === folder.id;
-    const childFolders = folders.filter(f => f.parentId === folder.id);
+    const childFolders = folders.filter((f) => f.parentId === folder.id);
     const isOver = dragOverFolder === folder.id;
 
     return (
       <div key={folder.id} className="space-y-0.5">
-        <div 
+        <div
           className={`flex items-center justify-between group py-1.5 px-2 rounded-lg transition-all border-2 cursor-pointer ${
-            isOver ? 'border-blue-500 bg-blue-50' : 'border-transparent'
+            isOver ? "border-blue-500 bg-blue-50" : "border-transparent"
           } ${
-            isSelected ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-50'
+            isSelected
+              ? "bg-blue-50 text-blue-700 font-medium"
+              : "text-gray-600 hover:bg-gray-50"
           }`}
           style={{ marginLeft: `${level * 1}rem` }}
           onDragOver={(e) => onDragOver(e, folder.id)}
           onDragLeave={() => setDragOverFolder(null)}
           onDrop={(e) => onDrop(e, folder.id)}
+          role="button"
+          tabIndex={0}
+          aria-label={folder.name}
+          onKeyDown={(e) => {
+            if (
+              e.target === e.currentTarget &&
+              (e.key === "Enter" || e.key === " ")
+            ) {
+              e.preventDefault();
+              onSelectFolder(folder.id);
+            }
+          }}
           onClick={() => onSelectFolder(folder.id)}
         >
           <div className="flex items-center gap-1.5 flex-1 min-w-0">
-            <button 
+            <button
+              aria-label={folder.name}
+              aria-expanded={isExpanded}
+              tabIndex={childFolders.length ? 0 : -1}
               onClick={(e) => toggleFolder(folder.id, e)}
               className="p-0.5 hover:bg-white rounded transition-colors"
             >
               {childFolders.length > 0 ? (
-                isExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />
+                isExpanded ? (
+                  <ChevronDown className="h-3.5 w-3.5" />
+                ) : (
+                  <ChevronRight className="h-3.5 w-3.5" />
+                )
               ) : (
                 <div className="w-3.5 h-3.5" />
               )}
@@ -144,39 +166,51 @@ export function SelectionFolderTree({
             </div>
           </div>
 
-          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          <span className="text-xs text-slate-400">
+            {folder._count?.images ?? folder.images.length}
+          </span>
+          <div className="flex items-center gap-0.5 opacity-70 group-hover:opacity-100 transition-opacity">
             <DropdownMenu>
-              <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                <Button variant="ghost" size="icon" className="h-6 w-6">
+              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  aria-label={t("common.actions")}
+                >
                   <MoreVertical className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => onEditFolder(folder)}>
-                  {t('common.edit')}
+                  {t("common.edit")}
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   className="text-red-600 focus:text-red-600"
-                  onClick={(e) => { e.stopPropagation(); onDeleteFolder(folder.id); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteFolder(folder.id);
+                  }}
                 >
                   <Trash2 className="h-3.5 w-3.5 mr-2" />
-                  {t('common.delete')}
+                  {t("common.delete")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
 
-        {isExpanded && childFolders.map(child => renderFolder(child, level + 1))}
+        {isExpanded &&
+          childFolders.map((child) => renderFolder(child, level + 1))}
       </div>
     );
   };
 
-  const topLevelFolders = folders.filter(f => !f.parentId);
+  const topLevelFolders = folders.filter((f) => !f.parentId);
 
   return (
     <div className="space-y-0.5">
-      {topLevelFolders.map(folder => renderFolder(folder))}
+      {topLevelFolders.map((folder) => renderFolder(folder))}
     </div>
   );
 }

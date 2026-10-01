@@ -1,9 +1,14 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Trash2, FileText, CheckCircle } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useI18n } from "@/components/I18nProvider";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -11,8 +16,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { useI18n } from '@/components/I18nProvider';
+} from "@/components/ui/dialog";
+import { CheckCircle, FileText, Trash2 } from "lucide-react";
+import { useState } from "react";
 
 type Contract = {
   id: string;
@@ -41,16 +47,19 @@ export function ContractCard({
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/contracts/${contract.id}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(
+        `/api/projects/${projectId}/contracts/${contract.id}`,
+        {
+          method: "DELETE",
+        },
+      );
 
       if (response.ok) {
         onDelete();
         setShowDeleteDialog(false);
       }
     } catch (error) {
-      console.error('Failed to delete contract:', error);
+      console.error("Failed to delete contract:", error);
     } finally {
       setIsDeleting(false);
     }
@@ -72,7 +81,8 @@ export function ContractCard({
                   {contract.title}
                 </CardTitle>
                 <CardDescription className="flex items-center gap-1.5 mt-1">
-                  {t('contracts.created')}: {new Date(contract.createdAt).toLocaleDateString(locale)}
+                  {t("contracts.created")}:{" "}
+                  {new Date(contract.createdAt).toLocaleDateString(locale)}
                 </CardDescription>
               </div>
             </div>
@@ -80,7 +90,7 @@ export function ContractCard({
               {isSigned && (
                 <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
                   <CheckCircle className="h-3 w-3 mr-1" />
-                  {t('contracts.signed')}
+                  {t("contracts.signed")}
                 </div>
               )}
               <Button
@@ -97,14 +107,14 @@ export function ContractCard({
         </CardHeader>
         <CardContent className="space-y-4 pt-0">
           <div className="prose max-w-none pt-2 border-t border-gray-50">
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
-              {contract.content.substring(0, 140)}
-              {contract.content.length > 140 && '...'}
+            <p className="min-h-80 whitespace-pre-wrap text-sm leading-7 text-slate-600">
+              {contract.content}
             </p>
           </div>
           {isSigned && (
             <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px] font-medium text-slate-500">
-              {t('contracts.lastSigned')} {new Date(contract.signatures[0].signedAt).toLocaleString()}
+              {t("contracts.lastSigned")}{" "}
+              {new Date(contract.signatures[0].signedAt).toLocaleString()}
             </div>
           )}
         </CardContent>
@@ -113,17 +123,24 @@ export function ContractCard({
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('contracts.deleteContract')}</DialogTitle>
+            <DialogTitle>{t("contracts.deleteContract")}</DialogTitle>
             <DialogDescription>
-               {t('common.deleteConfirm')} ("{contract.title}")
+              {t("common.deleteConfirm")} ("{contract.title}")
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
-              {t('common.cancel')}
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+            >
+              {t("common.cancel")}
             </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
-              {isDeleting ? t('common.loading') : t('common.delete')}
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? t("common.loading") : t("common.delete")}
             </Button>
           </DialogFooter>
         </DialogContent>
