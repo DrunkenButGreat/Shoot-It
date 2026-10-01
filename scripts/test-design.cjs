@@ -83,9 +83,13 @@ for (const locale of ['de', 'en']) {
   assert.match(privateCard, /draggable="true"/);
   assert.ok(privateCard.includes(`${dictionary.design.selectImage}: Sample.jpg`));
 
-  // Uploaded participant portraits take precedence, and the virtual owner has no edit menu.
+  // Participant uploads fill missing portraits; linked profile photos take precedence.
   const person = render(ParticipantCard, { participant, projectId: 'test' });
   assert.match(person, /src="\/portrait.jpg"/);
+  const linked = render(ParticipantCard, { participant: { ...participant, user: { id: 'linked', name: 'Test', image: '/profile.jpg' } }, projectId: 'test' });
+  assert.match(linked, /src="\/profile.jpg"/);
+  assert.ok(!linked.includes('src="/portrait.jpg"'));
+
   assert.ok(person.includes(`${dictionary.common.actions}: Test Person`));
   const owner = render(ParticipantCard, { participant: { ...participant, id: 'owner-test' }, projectId: 'test' });
   assert.ok(!owner.includes(`${dictionary.common.actions}: Test Person`));

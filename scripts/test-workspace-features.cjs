@@ -90,6 +90,33 @@ async function main() {
       assert.equal((await db.project.findUnique({ where: { id: a.id } })).brandingImage, saved);
       assert.ok(fs.existsSync(path.join(testDir, 'sample.png')));
     }
+
+    const portrait = load('src/app/api/projects/[id]/participants/[participantId]/image/route').POST;
+    const person = await db.participant.create({ data: { projectId: a.id, name: 'Portrait test', userId: outsider.id } });
+    const portraitParams = (projectId = a.id) => ({ params: Promise.resolve({ id: projectId, participantId: person.id }) });
+    const portraitRequest = (file = new File([fs.readFileSync(path.join(testDir, 'sample.png'))], 'sample.png', { type: 'image/png' })) => {
+      const body = new FormData(); body.set('file', file);
+      return new Request('http://localhost/test', { method: 'POST', body });
+    };
+    session = null;
+    assert.equal((await portrait(portraitRequest(), portraitParams())).status, 401);
+    session = { user: { id: outsider.id } };
+    assert.equal((await portrait(portraitRequest(), portraitParams())).status, 403);
+    assert.equal((await portrait(portraitRequest(), portraitParams(b.id))).status, 404);
+    await db.projectAccess.create({ data: { projectId: a.id, userId: outsider.id, role: 'VIEWER' } });
+    assert.equal((await portrait(portraitRequest(), portraitParams())).status, 403);
+    await db.projectAccess.update({ where: { projectId_userId: { projectId: a.id, userId: outsider.id } }, data: { role: 'EDITOR' } });
+    const response = await portrait(portraitRequest(), portraitParams());
+    assert.equal(response.status, 201);
+    const photo = await response.json();
+    files.push(path.resolve('uploads', photo.path.slice('/api/uploads/'.length)));
+    assert.equal((await sharp(files.at(-1)).metadata()).format, 'webp');
+    assert.equal((await db.participant.findUnique({ where: { id: person.id }, include: { images: true } })).images[0].path, photo.path);
+    assert.equal((await db.user.findUnique({ where: { id: outsider.id } })).image, null);
+    assert.equal((await portrait(portraitRequest(new File(['bad'], 'bad.png', { type: 'image/png' })), portraitParams())).status, 400);
+    assert.equal((await portrait(portraitRequest(new File([Buffer.alloc(5 * 1024 * 1024 + 1)], 'big.png', { type: 'image/png' })), portraitParams())).status, 400);
+    assert.equal(await db.participantImage.count({ where: { participantId: person.id } }), 1);
+    session = { user: { id: owner.id } };
     assert.equal((await site()).loginImage, '/images/design/coastal-portrait.webp');
     const form = new FormData(); form.set('slot', 'loginImage');
     form.set('file', new File([fs.readFileSync(path.join(testDir, 'sample.png'))], 'sample.png', { type: 'image/png' }));
@@ -103,7 +130,7 @@ async function main() {
     assert.equal((await site()).loginImage, '/images/design/coastal-portrait.webp');
     form.set('file', new File(['not an image'], 'sample.png', { type: 'image/png' }));
     assert.equal((await appearance.POST(new Request('http://localhost/test', { method: 'POST', body: form }))).status, 400);
-    console.log('Workspace checks passed: migration, per-user recency, revoked access, cover sources, cross-project denial, admin images and reset.');
+    console.log('Workspace checks passed: migration, per-user recency, revoked access, cover sources, cross-project denial, admin images and reset, participant portraits and editor permissions.');
   } finally {
     for (const file of files) fs.rmSync(file, { force: true });
     fs.rmSync(testDir, { recursive: true, force: true });

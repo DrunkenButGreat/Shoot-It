@@ -26,7 +26,7 @@ export async function GET(
     const participants = await prisma.participant.findMany({
       where: { projectId: id },
       include: {
-        images: true,
+        images: { orderBy: [{ createdAt: "desc" }, { id: "desc" }] },
         customFields: true,
         user: {
           select: {
@@ -88,7 +88,7 @@ export async function POST(
         userId: userId,
       },
       include: {
-        images: true,
+        images: { orderBy: [{ createdAt: "desc" }, { id: "desc" }] },
         customFields: true,
       },
     })

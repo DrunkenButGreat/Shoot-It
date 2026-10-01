@@ -1,5 +1,6 @@
 "use client";
 
+import { getParticipantPortrait } from "@/lib/participant-portrait";
 import { useI18n } from "@/components/I18nProvider";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -75,10 +76,7 @@ export function ParticipantCard({
     }
   };
 
-  const portrait =
-    participant.images[0]?.thumbnail ||
-    participant.images[0]?.path ||
-    participant.user?.image;
+  const portrait = getParticipantPortrait(participant);
   return (
     <Card
       className={`relative overflow-hidden bg-white ${selected ? "border-blue-600 ring-1 ring-blue-600" : ""} ${list ? "flex items-center" : ""}`}

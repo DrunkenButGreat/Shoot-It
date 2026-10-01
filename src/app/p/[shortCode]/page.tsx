@@ -1,3 +1,4 @@
+import { getParticipantPortrait } from "@/lib/participant-portrait";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { canAccessProject } from "@/lib/permissions";
@@ -68,6 +69,7 @@ export default async function PublicProjectPage({
       },
       participants: {
         include: {
+          images: { take: 1, orderBy: [{ createdAt: "desc" }, { id: "desc" }] },
           user: {
             select: {
               id: true,
@@ -534,9 +536,9 @@ export default async function PublicProjectPage({
                       >
                         <div className="p-4 flex items-center gap-4">
                           <div className="relative">
-                            {participant.user?.image ? (
+                            {getParticipantPortrait(participant) ? (
                               <img
-                                src={participant.user.image}
+                                src={getParticipantPortrait(participant)}
                                 alt={participant.name}
                                 className="h-16 w-16 rounded-lg object-cover"
                               />

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import prisma from "@/lib/prisma"
-import { canAccessProject } from "@/lib/permissions"
+import { canAccessProject, canEditProject } from "@/lib/permissions"
 import { Button } from "@/components/ui/button"
 import { ParticipantsContent } from "@/components/participants/ParticipantsContent"
 
@@ -49,7 +49,7 @@ export default async function ParticipantsPage({
     prisma.participant.findMany({
       where: { projectId: id },
       include: {
-        images: true,
+        images: { orderBy: [{ createdAt: "desc" }, { id: "desc" }] },
         customFields: true,
         user: {
           select: {
@@ -117,7 +117,7 @@ export default async function ParticipantsPage({
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <ParticipantsContent projectId={id} initialParticipants={allParticipants} />
+        <ParticipantsContent projectId={id} initialParticipants={allParticipants} canEdit={await canEditProject(session.user.id, id)} />
       </main>
     </div>
   )

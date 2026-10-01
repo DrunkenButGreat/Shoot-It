@@ -1,5 +1,6 @@
 "use client";
 
+import { getParticipantPortrait } from "@/lib/participant-portrait";
 import { useI18n } from "@/components/I18nProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,12 +32,14 @@ interface Participant {
 
 interface ParticipantsContentProps {
   projectId: string;
+  canEdit: boolean;
   initialParticipants: Participant[];
 }
 
 export function ParticipantsContent({
   projectId,
   initialParticipants: participants,
+  canEdit,
 }: ParticipantsContentProps) {
   const router = useRouter();
   const { t } = useI18n();
@@ -54,6 +57,24 @@ export function ParticipantsContent({
   const [view, setView] = useState("grid");
   const [selected, setSelected] = useState<Participant | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const uploadPortrait = async (file?: File) => {
+    if (!file || !selected || !canEdit || selected.id.startsWith('owner-')) return;
+    const participantId = selected.id;
+    setUploading(true);
+    try {
+      if (!file.type.startsWith('image/') || file.size > 5 * 1024 * 1024) throw new Error(t('participants.imageHelp'));
+      const body = new FormData(); body.set('file', file);
+      const response = await fetch(`/api/projects/${projectId}/participants/${participantId}/image`, { method: 'POST', body });
+      if (!response.ok) throw new Error(t('common.error'));
+      const image = await response.json();
+      setSelected(current => current?.id === participantId ? { ...current, images: [image, ...current.images] } : current);
+      toast.success(t('participants.imageSaved'));
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('common.error'));
+    } finally { setUploading(false); }
+  };
   const roles = [
     ...new Set(
       participants
@@ -210,20 +231,24 @@ export function ParticipantsContent({
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            {(selected.images[0]?.path || selected.user?.image) && (
-              <img
-                src={
-                  selected.images[0]?.thumbnail ||
-                  selected.images[0]?.path ||
-                  selected.user?.image ||
-                  ""
-                }
-                alt=""
-                className="mb-4 aspect-[4/3] w-full rounded-md object-cover"
-              />
+            {getParticipantPortrait(selected) && (
+              <img src={getParticipantPortrait(selected)} alt={selected.name}
+                className="mb-4 aspect-[4/3] w-full rounded-md object-cover" />
+            )}
+            {canEdit && !selected.id.startsWith('owner-') && (
+              <div className="mb-4 space-y-2">
+                <Label htmlFor="participant-portrait">{t('participants.image')}</Label>
+                <input id="participant-portrait" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/tiff,image/heic"
+                  disabled={uploading || saving} aria-describedby="participant-image-help"
+                  className="w-full min-w-0 text-sm file:mr-2 file:rounded file:border-0 file:bg-blue-50 file:p-2 file:text-blue-700"
+                  onChange={event => { void uploadPortrait(event.target.files?.[0]); event.target.value = ''; }} />
+                <p id="participant-image-help" className="text-xs text-slate-500">{t('participants.imageHelp')}</p>
+                {selected.user?.image && <p className="text-xs text-slate-500">{t('participants.profileImagePriority')}</p>}
+                {uploading && <p role="status" className="text-sm">{t('common.saving')}</p>}
+              </div>
             )}
             <fieldset
-              disabled={selected.id.startsWith("owner-") || saving}
+              disabled={!canEdit || selected.id.startsWith("owner-") || saving || uploading}
               className="space-y-3"
             >
               {(["name", "role", "email", "phone"] as const).map((field) => (

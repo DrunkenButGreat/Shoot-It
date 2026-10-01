@@ -231,6 +231,11 @@
     "unfavorite": "Remove favorite"
   },
   "participants": {
+    "image": "Participant photo",
+    "imageHelp": "Upload an image up to 5 MB. It is saved for this project and appears on the public project page when participants are visible.",
+    "profileImagePriority": "This person’s own profile photo takes precedence. Your upload is used when no profile photo is set.",
+    "imageSaved": "Participant photo saved.",
+
     "title": "Participants",
     "noParticipants": "No participants yet",
     "participantsPrompt": "Add participants to start organizing your photoshoot",

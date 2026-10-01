@@ -33,7 +33,7 @@ export async function PUT(
       },
       data: validatedData,
       include: {
-        images: true,
+        images: { orderBy: [{ createdAt: "desc" }, { id: "desc" }] },
         customFields: true,
       },
     })

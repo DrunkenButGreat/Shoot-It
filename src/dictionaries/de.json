@@ -232,6 +232,11 @@
     "unfavorite": "Favorit entfernen"
   },
   "participants": {
+    "image": "Beteiligtenbild",
+    "imageHelp": "Bild bis 5 MB hochladen. Es wird für dieses Projekt gespeichert und bei öffentlich sichtbaren Beteiligten auch auf der Projektseite angezeigt.",
+    "profileImagePriority": "Das eigene Profilbild dieser Person hat Vorrang. Dein Upload dient als Ersatz, falls kein Profilbild hinterlegt ist.",
+    "imageSaved": "Beteiligtenbild gespeichert.",
+
     "title": "Beteiligte",
     "noParticipants": "Noch keine Beteiligten vorhanden",
     "participantsPrompt": "Füge Beteiligte hinzu, um dein Shooting zu organisieren",

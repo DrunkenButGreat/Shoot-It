@@ -1,3 +1,4 @@
+import { getParticipantPortrait } from "@/lib/participant-portrait";
 import { auth } from "@/auth";
 import { ProjectActions } from "@/components/projects/ProjectActions";
 import { ProjectCover } from "@/components/projects/ProjectCover";
@@ -55,7 +56,7 @@ export default async function ProjectPage({
             id: true,
             name: true,
             user: { select: { image: true } },
-            images: { take: 1 },
+            images: { take: 1, orderBy: [{ createdAt: "desc" }, { id: "desc" }] },
           },
         },
         selectionImages: { take: 3, select: { path: true, thumbnail: true } },
@@ -210,9 +211,7 @@ export default async function ProjectPage({
                             ? project.participants
                                 .map(
                                   (person) =>
-                                    person.user?.image ||
-                                    person.images[0]?.thumbnail ||
-                                    person.images[0]?.path,
+                                    getParticipantPortrait(person),
                                 )
                                 .filter((src): src is string => !!src)
                             : [];
