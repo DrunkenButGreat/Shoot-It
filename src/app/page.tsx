@@ -1,3 +1,4 @@
+import { getSiteImages } from "@/lib/site-settings";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { Images, ListChecks, Users } from "lucide-react";
@@ -6,6 +7,7 @@ import { BrandMark } from "@/components/layout/BrandMark";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export default async function HomePage() {
+  const siteImages = await getSiteImages();
   const t = await getDictionary(getLocale(await cookies()));
   return (
     <div className="min-h-screen bg-white">
@@ -30,7 +32,7 @@ export default async function HomePage() {
       <main className="mx-auto max-w-[1440px] px-5 pb-16 sm:px-8">
         <section className="relative min-h-[570px] overflow-hidden rounded-2xl bg-slate-100">
           <img
-            src="/images/design/coastal-editorial.webp"
+            src={siteImages.landingImage}
             alt=""
             className="absolute inset-0 h-full w-full object-cover object-right sm:object-center"
           />

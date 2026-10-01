@@ -4,6 +4,9 @@ import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { useRouter } from "next/navigation"
 import { X, ChevronLeft, ChevronRight, Star, Folder as FolderIcon, Download, Loader2 } from "lucide-react"
+import { FilterBar } from "../selection/FilterBar"
+import { Button } from "@/components/ui/button"
+import { matchesSelectionFilters } from "@/lib/selection-filters"
 import { ImageCard } from "../selection/ImageCard"
 import { RatingControls } from "../selection/RatingControls"
 import { useI18n } from "@/components/I18nProvider"
@@ -64,6 +67,9 @@ export function PublicSelection({
 }: PublicSelectionProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
+  const [stars, setStars] = useState<string[]>([])
+  const [colors, setColors] = useState<string[]>([])
+  const [unrated, setUnrated] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [isDownloadingAll, setIsDownloadingAll] = useState(false)
   const [downloadMode, setDownloadMode] = useState<'zip' | 'files'>('zip')
@@ -81,11 +87,26 @@ export function PublicSelection({
   const isGuest = !userHasAccess && !!allowGuestSelection
   const canRate = !!userHasAccess || !!allowGuestSelection
 
-  const filteredImages = images.filter(img => {
-    if (selectedFolderId === 'unassigned') return !img.folderId
-    if (!selectedFolderId) return true
-    return img.folderId === selectedFolderId
-  })
+  const filteredImages = images.filter(image => matchesSelectionFilters(image, {
+    folderId: selectedFolderId, stars, colors, unrated,
+  }))
+  const handleFilterChange = (type: string, value: string | null) => {
+    const update = (previous: string[]) => value === null ? []
+      : previous.includes(value) ? previous.filter(item => item !== value) : [...previous, value]
+    if (type === 'stars') setStars(update)
+    else setColors(update)
+  }
+  useEffect(() => {
+    setSelectedIds(new Set())
+    setSelectedIndex(null)
+    document.body.style.overflow = 'unset'
+  }, [selectedFolderId, stars, colors, unrated])
+
+  // A rating change can remove the open image from the filtered set.
+  useEffect(() => {
+    setSelectedIndex(null)
+    document.body.style.overflow = 'unset'
+  }, [images])
 
   // Organize folders into a tree structure
   const folderTree = folders.filter(f => !f.parentId).map(folder => {
@@ -232,7 +253,7 @@ export function PublicSelection({
 
   const flatFolders = getFlatFolders(folderTree)
 
-  const lightbox = selectedIndex !== null && mounted ? createPortal(
+  const lightbox = selectedIndex !== null && filteredImages[selectedIndex] && mounted ? createPortal(
     <div
       className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-xl flex flex-col animate-in fade-in duration-300"
       onClick={closeLightbox}
@@ -240,8 +261,8 @@ export function PublicSelection({
       {/* Lightbox Header */}
       <div className="h-20 flex items-center justify-between px-6 md:px-10 bg-gradient-to-b from-black/60 to-transparent shrink-0">
         <div className="text-white/80">
-          <p className="text-sm font-bold uppercase tracking-widest">{images[selectedIndex].filename}</p>
-          <p className="text-xs text-white/50">{selectedIndex + 1} / {images.length}</p>
+          <p className="text-sm font-bold uppercase tracking-widest">{filteredImages[selectedIndex].filename}</p>
+          <p className="text-xs text-white/50">{selectedIndex + 1} / {filteredImages.length}</p>
         </div>
         <div className="flex items-center gap-2">
           {allowDownload && (
@@ -316,6 +337,14 @@ export function PublicSelection({
 
   return (
     <div className="flex flex-col gap-6">
+      <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
+        <div className="flex gap-2">
+          <Button size="sm" variant={unrated ? 'ghost' : 'secondary'} aria-pressed={!unrated} onClick={() => setUnrated(false)}>{t('design.all')}</Button>
+          <Button size="sm" variant={unrated ? 'secondary' : 'ghost'} aria-pressed={unrated} onClick={() => setUnrated(true)}>{t('design.noRating')}</Button>
+        </div>
+        <FilterBar onFilterChange={handleFilterChange} activeStars={stars} activeColors={colors} />
+        <p role="status" className="text-sm text-slate-500">{t('project.imagesCount').replace('{count}', String(filteredImages.length))}</p>
+      </div>
       {/* Download toolbar */}
       {allowDownload && filteredImages.length > 0 && (
         <div className="flex justify-end items-center gap-2 flex-wrap">

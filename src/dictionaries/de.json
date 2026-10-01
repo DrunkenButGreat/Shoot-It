@@ -610,5 +610,19 @@
     "masonry": "Masonry-Ansicht",
     "previousImage": "Vorheriges Bild",
     "nextImage": "Nächstes Bild"
-  }
+  },
+  "appearance": {
+    "title": "Seitenbilder",
+    "help": "Bilder für Startseite, Anmeldung und Registrierung ändern. Bis 5 MB pro Bild; Änderungen sind sofort öffentlich sichtbar.",
+    "landingImage": "Startseite",
+    "loginImage": "Anmeldung",
+    "signupImage": "Registrierung",
+    "reset": "Standardbild verwenden",
+    "saved": "Seitenbilder gespeichert.",
+    "upload": "Hochladen",
+    "chooseCover": "Wähle ein Bild aus diesem Projekt. Es wird als eigenes Titelbild gespeichert und auf der öffentlichen Projektseite angezeigt.",
+    "useCover": "Als Titelbild verwenden",
+    "previous": "Zurück",
+    "next": "Weiter"
+}
 }

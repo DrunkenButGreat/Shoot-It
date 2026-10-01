@@ -38,6 +38,7 @@ jobs:
       - run: node scripts/test-release-workflow.cjs
       - run: npm run test:migrations
       - run: npm run test:registration
+      - run: npm run test:workspace
       - run: npm run test:design
       - run: npx tsc --noEmit
 

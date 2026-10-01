@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.20.0] - 2026-10-01
+
+### Added
+- Per-user recently opened projects based on actual visits, including removal of projects whose access was revoked.
+- Admin controls to upload or reset images for the landing, login and signup pages.
+- Project cover selection from linked moodboards, image selections and results; covers retain an independent image copy.
+- Star, color and unrated filters for public image selections, including filtered previews and downloads.
+- Additive migration for project visits and site image settings; existing project data and default images are preserved.
+
 ## [1.19.0] - 2026-10-01
 
 ### Added

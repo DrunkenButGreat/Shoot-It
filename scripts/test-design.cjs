@@ -39,6 +39,15 @@ const { scheduleItemSchema } = load('src/lib/validations');
 const image = { id: 'sample', filename: 'Sample.jpg', path: '/sample.jpg', thumbnail: null, ratings: null };
 const participant = { id: 'person', name: 'Test Person', role: 'Model', email: null, phone: null, notes: null, images: [{ path: '/portrait.jpg' }] };
 const noop = () => {};
+const { matchesSelectionFilters } = load('src/lib/selection-filters');
+const filters = { folderId: null, stars: [], colors: [], unrated: false };
+const rated = { folderId: 'folder', ratings: { stars: 4, color: 'GREEN' } };
+assert.ok(matchesSelectionFilters(rated, { ...filters, stars: ['3', '4'], colors: ['GREEN'] }));
+assert.ok(!matchesSelectionFilters(rated, { ...filters, stars: ['5'], colors: ['GREEN'] }));
+assert.ok(!matchesSelectionFilters(rated, { ...filters, folderId: 'unassigned' }));
+assert.ok(!matchesSelectionFilters(rated, { ...filters, unrated: true }));
+assert.ok(matchesSelectionFilters({ ratings: null }, { ...filters, folderId: 'unassigned', unrated: true }));
+
 
 for (const locale of ['de', 'en']) {
   const dictionary = load(`src/dictionaries/${locale}.json`);

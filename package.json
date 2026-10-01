@@ -1,6 +1,6 @@
 {
   "name": "photoshoot-organizer",
-  "version": "1.19.0",
+  "version": "1.20.0",
   "private": true,
   "scripts": {
     "devdb": "docker compose up -d db && next dev --turbopack",
@@ -20,7 +20,8 @@
     "db:baseline": "node scripts/migrate.cjs baseline",
     "test:updater": "python3 scripts/test-updater.py && python3 scripts/test-container-update.py",
     "test:migrations": "node scripts/test-migrations.cjs",
-    "test:design": "node scripts/test-design.cjs"
+    "test:design": "node scripts/test-design.cjs",
+    "test:workspace": "node scripts/test-workspace-features.cjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",

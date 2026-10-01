@@ -1,3 +1,5 @@
+import { SiteAppearance } from "@/components/admin/SiteAppearance"
+import { getSiteImages } from "@/lib/site-settings"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { cookies } from "next/headers"
@@ -10,6 +12,7 @@ import AdminDashboard from "@/components/admin/AdminDashboard"
 
 export default async function AdminPage() {
   if (!await getAdmin()) notFound()
+  const siteImages = await getSiteImages()
   const dict = await getDictionary(getLocale(await cookies()))
   const [mode, userCount, projectCount, activeInvites, invites, users] = await Promise.all([
     getRegistrationMode(),
@@ -47,6 +50,7 @@ export default async function AdminPage() {
             </div>
           ))}
         </div>
+        <SiteAppearance initialImages={siteImages} />
         <AdminDashboard
           mode={mode}
           invites={invites.map(invite => ({ ...invite, createdAt: invite.createdAt.toISOString(), expiresAt: invite.expiresAt.toISOString(), usedAt: invite.usedAt?.toISOString() ?? null, revokedAt: invite.revokedAt?.toISOString() ?? null }))}

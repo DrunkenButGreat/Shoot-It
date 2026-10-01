@@ -1,3 +1,4 @@
+import { getSiteImages } from "@/lib/site-settings";
 import { Suspense } from "react";
 import LoginForm from "@/components/auth/LoginForm";
 import { cookies } from "next/headers";
@@ -7,13 +8,14 @@ import { BrandMark } from "@/components/layout/BrandMark";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export default async function LoginPage() {
+  const siteImages = await getSiteImages();
   const mode = await getRegistrationMode();
   const dict = await getDictionary(getLocale(await cookies()));
   return (
     <main className="grid min-h-screen bg-white lg:grid-cols-[46%_54%]">
       <section className="relative hidden overflow-hidden bg-slate-900 lg:block">
         <img
-          src="/images/design/coastal-portrait.webp"
+          src={siteImages.loginImage}
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
         />

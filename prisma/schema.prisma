@@ -34,6 +34,7 @@ model User {
   applications         ProjectApplication[]
   sessions             Session[]
   imageRatings         ImageRating[]
+  projectVisits        ProjectVisit[]
 }
 
 enum RegistrationMode {
@@ -130,6 +131,7 @@ model Project {
   resultFolders            ResultFolder[]
   selectionImages          SelectionImage[]
   selectionFolders         SelectionFolder[]
+  visits                   ProjectVisit[]
 
   @@index([shortCode])
   @@index([ownerId])
@@ -506,4 +508,22 @@ enum AppointmentStatus {
   PENDING
   ACCEPTED
   REJECTED
+}
+
+model ProjectVisit {
+  userId String
+  projectId String
+  openedAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([userId, projectId])
+  @@index([userId, openedAt])
+}
+
+model SiteSettings {
+  id String @id @default("global")
+  landingImage String?
+  loginImage String?
+  signupImage String?
 }

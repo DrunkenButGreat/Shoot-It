@@ -1,15 +1,17 @@
+import { getSiteImages } from "@/lib/site-settings";
 import SignupForm from "@/components/auth/SignupForm";
 import { getRegistrationMode } from "@/lib/registration";
 import { BrandMark } from "@/components/layout/BrandMark";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export default async function SignupPage() {
+  const siteImages = await getSiteImages();
   const mode = await getRegistrationMode();
   return (
     <main className="grid min-h-screen bg-white lg:grid-cols-[46%_54%]">
       <section className="relative hidden overflow-hidden bg-[#9b7e68] lg:block">
         <img
-          src="/images/design/studio-camera.webp"
+          src={siteImages.signupImage}
           alt=""
           className="absolute inset-0 h-full w-full object-cover opacity-90"
         />

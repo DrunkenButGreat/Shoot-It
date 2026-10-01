@@ -609,5 +609,19 @@
     "masonry": "Masonry view",
     "previousImage": "Previous image",
     "nextImage": "Next image"
-  }
+  },
+  "appearance": {
+    "title": "Page images",
+    "help": "Change images for the landing, login and signup pages. Up to 5 MB per image; changes are immediately visible publicly.",
+    "landingImage": "Landing page",
+    "loginImage": "Login",
+    "signupImage": "Signup",
+    "reset": "Use default image",
+    "saved": "Page images saved.",
+    "upload": "Upload",
+    "chooseCover": "Choose an image from this project. A separate copy will be saved as the cover and shown on the public project page.",
+    "useCover": "Use as cover",
+    "previous": "Previous",
+    "next": "Next"
+}
 }

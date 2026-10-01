@@ -34,16 +34,28 @@ type ProjectNav = { id: string; name: string; showApplications?: boolean };
 
 export function WorkspaceShell({
   children,
-  recentProjects = [],
   project,
   isAdmin = false,
 }: {
   children: React.ReactNode;
-  recentProjects?: RecentProject[];
   project?: ProjectNav;
   isAdmin?: boolean;
 }) {
   const pathname = usePathname();
+  const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    if (project?.id) {
+      void fetch(`/api/projects/${project.id}/visit`, { method: "POST" }).catch(() => {});
+    } else {
+      void fetch("/api/projects/recent", { cache: "no-store" })
+        .then(async response => {
+          if (response.ok && !cancelled) setRecentProjects(await response.json());
+        }).catch(() => {});
+    }
+    return () => { cancelled = true; };
+  }, [project?.id, pathname]);
+
   const [open, setOpen] = useState(false);
   const menuToggle = useRef<HTMLButtonElement>(null);
   const menuClose = useRef<HTMLButtonElement>(null);

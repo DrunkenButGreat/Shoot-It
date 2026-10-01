@@ -31,6 +31,7 @@ export function FilterBar({
               return (
                 <Button
                   key={stars}
+                  aria-pressed={isActive}
                   variant={isActive ? "default" : "outline"}
                   size="sm"
                   onClick={() => onFilterChange("stars", stars.toString())}
@@ -94,6 +95,7 @@ export function FilterBar({
               return (
                 <Button
                   key={color.id}
+                  aria-pressed={isActive}
                   variant="outline"
                   size="sm"
                   onClick={() => onFilterChange("color", color.id)}

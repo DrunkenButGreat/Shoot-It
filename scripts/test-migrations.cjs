@@ -60,6 +60,7 @@ async function main() {
 
     const legacy = database()
     legacy.command([cli, 'db', 'push', '--skip-generate'])
+    await legacy.db.$executeRawUnsafe('DROP TABLE "ProjectVisit", "SiteSettings"')
     const old = await legacy.db.user.create({ data: { email: 'legacy@example.test', isAdmin: true } })
     await legacy.db.registrationSettings.create({ data: { id: 'global', mode: 'CLOSED' } })
     const later = await legacy.db.user.create({ data: { email: 'later-admin@example.test', isAdmin: true, createdAt: new Date('2099-01-01') } })
@@ -79,6 +80,7 @@ async function main() {
 
     const before111 = database()
     before111.command([cli, 'db', 'push', '--skip-generate'])
+    await before111.db.$executeRawUnsafe('DROP TABLE "ProjectVisit", "SiteSettings"')
     await before111.db.user.create({ data: { email: 'before111@example.test' } })
     for (const sql of ['DROP TABLE "RegistrationInvite"', 'DROP TABLE "RegistrationSettings"',
                        'DROP TYPE "RegistrationMode"', 'ALTER TABLE "User" DROP COLUMN "isAdmin", DROP COLUMN "isOwner"']) {
@@ -104,6 +106,7 @@ async function main() {
 
     const drift = database()
     drift.command([cli, 'db', 'push', '--skip-generate'])
+    await drift.db.$executeRawUnsafe('DROP TABLE "ProjectVisit", "SiteSettings"')
     await drift.db.$executeRawUnsafe('ALTER TABLE "User" DROP COLUMN "isAdmin", DROP COLUMN "isOwner"')
     drift.command([migrate, 'baseline'], false)
     const tables = await drift.db.$queryRaw`SELECT tablename FROM pg_tables WHERE schemaname = current_schema() AND tablename = '_prisma_migrations'`
