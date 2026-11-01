@@ -1,5 +1,7 @@
 "use client";
 
+import { GalleryLoadMore } from "@/components/GalleryLoadMore";
+
 import { imagePreviewSource } from "@/lib/image-preview";
 
 import { useI18n } from "@/components/I18nProvider";
@@ -392,13 +394,10 @@ export function ResultsContent({
                     layout={view}
                   />
                   {visibleImages.length < filteredImages.length && (
-                    <Button
-                      variant="outline"
+                    <GalleryLoadMore
                       className="mt-3 w-full"
-                      onClick={() => setVisibleLimit((limit) => limit + 100)}
-                    >
-                      {t("common.loadMore")}
-                    </Button>
+                      onLoadMore={() => setVisibleLimit((limit) => limit + 100)}
+                    />
                   )}
                 </>
               ) : (

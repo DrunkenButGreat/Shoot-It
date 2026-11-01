@@ -1,5 +1,7 @@
 "use client"
 
+import { GalleryLoadMore } from "@/components/GalleryLoadMore"
+
 import { OriginalImageButton, useIOSDevice } from "@/components/OriginalImageButton"
 
 import { imagePreviewSource } from "@/lib/image-preview"
@@ -527,13 +529,10 @@ export function PublicSelection({
               </div>
             )}
             {visibleImages.length < filteredImages.length && (
-              <Button
-                variant="outline"
+              <GalleryLoadMore
                 className="mt-4 w-full"
-                onClick={() => setVisibleLimit(limit => limit + 100)}
-              >
-                {t('common.loadMore')}
-              </Button>
+                onLoadMore={() => setVisibleLimit(limit => limit + 100)}
+              />
             )}
           </>
         )}
