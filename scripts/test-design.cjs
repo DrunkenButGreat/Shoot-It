@@ -174,7 +174,8 @@ for (const locale of ['de', 'en']) {
   await new Promise(resolve => setTimeout(resolve, 0));
   hookIndex = 0;
   const loadedPublicResults = PublicResults({ projectId: 'test' });
-  const publicResults = renderToStaticMarkup(loadedPublicResults);
+  const publicResults = renderToStaticMarkup(React.createElement(I18nProvider,
+    { initialLocale: locale, initialDictionary: dictionary }, loadedPublicResults));
   assert.ok(publicResults.includes('image-99.jpg'));
   assert.ok(!publicResults.includes('image-100.jpg'));
   assert.ok(publicResults.includes(dictionary.common.loadMore));
