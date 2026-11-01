@@ -149,8 +149,8 @@ async function main() {
     load('src/auth.ts', {
       'next-auth': value => { config = value; return {} },
       '@auth/prisma-adapter': { PrismaAdapter: () => ({}) },
-      'next-auth/providers/google': value => value,
-      'next-auth/providers/credentials': value => value,
+      'next-auth/providers/google': value => ({ id: 'google', type: 'oidc', ...value }),
+      'next-auth/providers/credentials': value => ({ id: 'credentials', type: 'credentials', ...value }),
     })
     config = await config()
     const account = { type: 'oauth', provider: 'google', providerAccountId: 'synthetic-google' }

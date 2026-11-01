@@ -3,7 +3,6 @@ const assert = require('node:assert/strict')
 const { randomUUID, createHash } = require('node:crypto')
 const { readFileSync } = require('node:fs')
 const { resolve } = require('node:path')
-const { pathToFileURL } = require('node:url')
 const { execFileSync } = require('node:child_process')
 const { createServer } = require('node:http')
 const Module = require('node:module')
@@ -27,8 +26,8 @@ async function main() {
   const { PrismaAdapter } = await import('@auth/prisma-adapter')
   const { default: Google } = await import('next-auth/providers/google')
   const { default: Credentials } = await import('next-auth/providers/credentials')
-  const core = resolve(require.resolve('next-auth'), '../node_modules/@auth/core/index.js')
-  const { Auth } = await import(pathToFileURL(core))
+  const core = await import('@auth/core')
+  const { Auth } = core
   const jose = await import('jose')
   const { generateKeyPair, exportJWK, SignJWT } = jose
   const keys = await generateKeyPair('RS256')
@@ -41,6 +40,7 @@ async function main() {
     const mod = new Module(path, module)
     mod.filename = path; mod.paths = module.paths
     mod.require = id => {
+      if (id === '@auth/core') return { ...core, Auth: (req, config) => Auth(req, { ...config, logger: { error() {}, warn() {}, debug() {} } }) }
       if (id === 'jose') return jose
       if (id === '@/lib/prisma') return { __esModule: true, default: db }
       if (id === '@/lib/admin') return { getAdmin: async () => admin }
@@ -87,9 +87,18 @@ async function main() {
     execFileSync(process.execPath, ['node_modules/prisma/build/index.js', 'migrate', 'deploy'], { env: { ...process.env, DATABASE_URL: url.toString() }, stdio: 'pipe' })
     const lib = load('src/lib/pocket-id.ts')
     const api = load('src/app/api/admin/pocket-id/route.ts')
-    load('src/auth.ts')
+    const { handleAuth } = load('src/auth.ts')
     assert.equal(await lib.getPocketIdConfig(), null)
     assert.equal((await configFactory()).providers.some(p => p.id === 'pocket-id'), false)
+    const defaultsEnv = { AUTH_URL: process.env.AUTH_URL, NODE_ENV: process.env.NODE_ENV, VERCEL: process.env.VERCEL }
+    delete process.env.AUTH_URL
+    process.env.NODE_ENV = 'production'
+    process.env.VERCEL = '1'
+    assert.equal((await configFactory()).trustHost, true, 'Preserve Auth.js hosting defaults without a saved URL')
+    for (const [key, value] of Object.entries(defaultsEnv)) {
+      if (value === undefined) delete process.env[key]
+      else process.env[key] = value
+    }
     const request = (body, origin = process.env.AUTH_URL, type = 'application/json') => new Request(`${process.env.AUTH_URL}/api/admin/pocket-id`, { method: 'PATCH', headers: { Origin: origin, 'Content-Type': type }, body: JSON.stringify(body) })
     assert.equal((await api.GET()).status, 403)
     assert.equal((await api.PATCH(request(settings))).status, 403)
@@ -109,6 +118,7 @@ async function main() {
     await lib.savePocketIdSettings({ ...settings, clientSecret: '' })
     assert.equal((await lib.getPocketIdConfig()).clientSecret, config.clientSecret)
     await lib.checkPocketIdDiscovery(issuer)
+    await lib.checkPocketIdDiscovery(issuer + '/.well-known/openid-configuration')
     badDiscovery = true
     await assert.rejects(lib.checkPocketIdDiscovery(issuer), e => e.code === 'discoveryFailed')
     badDiscovery = false
@@ -118,12 +128,30 @@ async function main() {
     process.env.NODE_ENV = 'development'
     for (const invalid of ['https://user:secret@id.example', 'file:///etc/passwd', 'https://id.example?x=1']) assert.throws(() => lib.pocketIdUrl(invalid))
 
+    const publicUrl = 'https://shoot-it.example.test'
+    const setup = (origin, site, publicUrlValue = publicUrl) => new Request('http://container.internal:3000/api/admin/pocket-id', {
+      method: 'PATCH', headers: { Origin: origin, 'Sec-Fetch-Site': site, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...settings, issuer: issuer + '/.well-known/openid-configuration', clientSecret: '', publicUrl: publicUrlValue }),
+    })
+    assert.equal((await api.PATCH(setup('https://attacker.test', 'cross-site', 'https://attacker.test'))).status, 403)
+    assert.equal((await api.PATCH(setup('https://sibling.example.test', 'same-site'))).status, 403)
+    assert.equal((await api.PATCH(setup(publicUrl, 'same-origin', publicUrl + '/not-a-root'))).status, 400)
+    assert.equal((await api.PATCH(setup(publicUrl, 'same-origin'))).status, 200, 'Bootstrap must work despite incorrect AUTH_URL')
+    assert.equal((await (await api.GET()).json()).publicUrl, publicUrl)
+    assert.equal((await lib.getPocketIdConfig()).issuer, issuer)
+    assert.equal((await lib.getPocketIdConfig()).clientSecret, config.clientSecret)
+    const cfg = await configFactory()
+    assert.equal(cfg.useSecureCookies, true)
+    assert.equal(await cfg.callbacks.redirect({ url: '/project/123', baseUrl: process.env.AUTH_URL }), publicUrl + '/project/123')
+    assert.equal(await cfg.callbacks.redirect({ url: 'https://attacker.test', baseUrl: process.env.AUTH_URL }), publicUrl)
+    assert.equal((await api.PATCH(request({ ...settings, clientSecret: '' }, publicUrl))).status, 200)
+    assert.equal((await api.PATCH(setup(publicUrl, 'cross-site'))).status, 403)
+
     const cookies = new Map()
     async function authRequest(path, options = {}) {
-      const cfg = await configFactory()
-      const response = await Auth(new Request(process.env.AUTH_URL + '/api/auth' + path, {
-        ...options, headers: { cookie: [...cookies].map(([k, v]) => `${k}=${v}`).join('; '), ...options.headers },
-      }), { ...cfg, secret: process.env.AUTH_SECRET, trustHost: true, basePath: '/api/auth', logger: { error() {}, warn() {}, debug() {} } })
+      const response = await handleAuth(new Request('http://container.internal:3000/api/auth' + path, {
+        ...options, headers: { 'X-Forwarded-Host': 'untrusted.test', 'X-Forwarded-Proto': 'http', cookie: [...cookies].map(([k, v]) => `${k}=${v}`).join('; '), ...options.headers },
+      }))
       for (const cookie of response.headers.getSetCookie()) {
         const pair = cookie.split(';')[0], index = pair.indexOf('=')
         cookies.set(pair.slice(0, index), pair.slice(index + 1))
@@ -136,6 +164,8 @@ async function main() {
       const started = await authRequest('/signin/pocket-id', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ csrfToken: csrf.csrfToken, callbackUrl: '/dashboard' }) })
       const authorization = new URL(started.headers.get('location'))
       assert.equal(authorization.origin, issuer)
+      assert.equal(authorization.searchParams.get('redirect_uri'), publicUrl + '/api/auth/callback/pocket-id')
+      assert.ok(started.headers.getSetCookie().some(cookie => cookie.includes('Secure')))
       expectedChallenge = authorization.searchParams.get('code_challenge')
       tokenNonce = authorization.searchParams.get('nonce')
       assert.ok(expectedChallenge && tokenNonce && authorization.searchParams.get('state'))
@@ -152,10 +182,11 @@ async function main() {
       await db.registrationSettings.upsert({ where: { id: 'global' }, create: { id: 'global', mode }, update: { mode } })
       const result = await login(identity(mode))
       assert.ok(result.session.user?.id, result.response.headers.get('location'))
+      assert.equal(result.response.headers.get('location'), publicUrl + '/dashboard')
       const user = await db.user.findUnique({ where: { id: result.session.user.id } })
       assert.equal(user.isAdmin, false); assert.equal(user.isOwner, false)
     }
-    const owner = await db.user.create({ data: { email: 'Owner@Example.test', name: 'Keep local name', isAdmin: true, isOwner: true } })
+    const owner = await db.user.create({ data: { email: 'Owner@Example.test', name: 'Keep local name', password: await require('bcryptjs').hash('synthetic-password', 4), isAdmin: true, isOwner: true } })
     const project = await db.project.create({ data: { name: 'Preserve', ownerId: owner.id, shortCode: randomUUID() } })
     const linked = await login(identity('owner', 'owner@example.test'))
     assert.equal(linked.session.user.id, owner.id)
@@ -175,11 +206,17 @@ async function main() {
     assert.equal(new Set(concurrent.map(u => u.id)).size, 1)
     assert.equal(await db.account.count({ where: { providerAccountId: 'parallel' } }), 1)
     await assert.rejects(lib.savePocketIdSettings({ ...settings, issuer: 'https://different.example' }), e => e.code === 'issuerLocked')
+    await lib.savePocketIdSettings({ ...settings, issuer: issuer + '/.well-known/openid-configuration', clientSecret: '' })
     await login(identity('owner', 'owner@example.test'))
     await lib.savePocketIdSettings({ ...settings, enabled: false, clientSecret: '' })
     assert.equal(await lib.getPocketIdConfig(), null)
     await assert.rejects(lib.provisionPocketIdAccount(identity('disabled'), config), e => e.code === 'configurationChanged')
     assert.ok((await (await authRequest('/session')).json()).user, 'Existing session survives provider disablement')
+    cookies.clear()
+    const csrf = await (await authRequest('/csrf')).json()
+    const passwordLogin = await authRequest('/callback/credentials', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ csrfToken: csrf.csrfToken, email: owner.email, password: 'synthetic-password', callbackUrl: '/dashboard' }) })
+    assert.equal(passwordLogin.headers.get('location'), publicUrl + '/dashboard')
+    assert.equal((await (await authRequest('/session')).json()).user.id, owner.id)
     await lib.savePocketIdSettings(settings)
     process.env.AUTH_SECRET = 'rotated-secret'
     assert.equal(await lib.getPocketIdConfig(), null)
@@ -193,7 +230,7 @@ async function main() {
     const de = JSON.parse(readFileSync('src/dictionaries/de.json')).pocketId
     const en = JSON.parse(readFileSync('src/dictionaries/en.json')).pocketId
     assert.deepEqual(Object.keys(de).sort(), Object.keys(en).sort())
-    console.log('PASS: admin security, encryption/rotation, discovery, real Auth.js OIDC/PKCE/state/nonce/signature, verified-email linking, conflicts, concurrent provisioning, registration policies and disablement.')
+    console.log('PASS: proxy bootstrap/CSRF, public callbacks and Secure cookies despite wrong AUTH_URL/forwarded headers, discovery URLs, password login, OIDC/PKCE/state/nonce/signature, account linking, encryption and disablement.')
   } finally {
     await new Promise(resolve => server.close(resolve))
     await db.$executeRawUnsafe(`DROP SCHEMA "${schema}" CASCADE`)

@@ -7,12 +7,17 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-type Settings = { enabled: boolean; issuer: string; clientId: string; hasClientSecret: boolean }
+type Settings = { publicUrl: string; enabled: boolean; issuer: string; clientId: string; hasClientSecret: boolean }
+
+const withDiscoveryUrl = (settings: Settings) => ({ ...settings, issuer: settings.issuer && !settings.issuer.endsWith("/.well-known/openid-configuration") ? `${settings.issuer}/.well-known/openid-configuration` : settings.issuer })
 
 export function PocketIdSettings({ initial, callbackUrl }: { initial: Settings; callbackUrl: string }) {
   const { t } = useI18n()
   const router = useRouter()
-  const [settings, setSettings] = useState(initial)
+  const [settings, setSettings] = useState(withDiscoveryUrl(initial))
+  const previewCallback = settings.publicUrl
+    ? `${settings.publicUrl.replace(/\/$/, "")}/api/auth/callback/pocket-id`
+    : callbackUrl
   const [secret, setSecret] = useState("")
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
@@ -27,12 +32,17 @@ export function PocketIdSettings({ initial, callbackUrl }: { initial: Settings; 
         method: test ? "POST" : "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(test ? { issuer: settings.issuer } : {
-          enabled: settings.enabled, issuer: settings.issuer, clientId: settings.clientId, clientSecret: secret,
+          publicUrl: settings.publicUrl, enabled: settings.enabled, issuer: settings.issuer, clientId: settings.clientId, clientSecret: secret,
         }),
       })
       const result = await response.json()
       if (!response.ok) throw new Error(t(`pocketId.${result.error || "errorOccurred"}`))
-      if (!test) { setSettings(result); setSecret(""); router.refresh() }
+      if (!test) {
+        setSettings(withDiscoveryUrl(result)); setSecret("")
+        // Changing the public origin can change secure-cookie names or their host.
+        if (result.publicUrl !== initial.publicUrl) window.location.assign(`${result.publicUrl || ""}/login`)
+        else router.refresh()
+      }
       setNotice(t(test ? "pocketId.discoveryOk" : "pocketId.saved"))
     } catch (error) { setError(error instanceof Error ? error.message : t("pocketId.errorOccurred")) }
     finally { setBusy(false) }
@@ -44,15 +54,21 @@ export function PocketIdSettings({ initial, callbackUrl }: { initial: Settings; 
     <p className="text-sm text-gray-600">{t("pocketId.setup")}</p>
     <div className="space-y-2">
       <Label htmlFor="pocket-id-callback">{t("pocketId.callback")}</Label>
-      <Input id="pocket-id-callback" readOnly value={callbackUrl} onFocus={e => e.target.select()} />
+      <Input id="pocket-id-callback" readOnly value={previewCallback} onFocus={e => e.target.select()} />
       <Button type="button" variant="outline" onClick={async () => {
-        try { await navigator.clipboard.writeText(callbackUrl); setNotice(t("pocketId.copied")) }
+        try { await navigator.clipboard.writeText(previewCallback); setNotice(t("pocketId.copied")) }
         catch { setError(t("pocketId.copyFailed")) }
       }}>{t("pocketId.copy")}</Button>
     </div>
     <form onSubmit={e => { e.preventDefault(); void submit(false) }}>
       <fieldset disabled={busy} className="space-y-4">
         <legend className="sr-only">{t("pocketId.title")}</legend>
+        <div className="space-y-2">
+          <Label htmlFor="public-url">{t("pocketId.publicUrl")}</Label>
+          <Input id="public-url" type="url" value={settings.publicUrl} onChange={e => setSettings({ ...settings, publicUrl: e.target.value })} maxLength={2048} aria-describedby="public-url-help" />
+          <p id="public-url-help" className="text-sm text-gray-600">{t("pocketId.publicUrlHelp")}</p>
+          <Button type="button" variant="outline" onClick={() => setSettings({ ...settings, publicUrl: window.location.origin })}>{t("pocketId.useBrowserUrl")}</Button>
+        </div>
         <label className="flex items-center gap-2">
           <input type="checkbox" checked={settings.enabled} onChange={e => setSettings({ ...settings, enabled: e.target.checked })} />
           {t("pocketId.enabled")}

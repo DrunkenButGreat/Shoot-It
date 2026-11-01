@@ -11,12 +11,13 @@ import UserMenu from "@/components/auth/UserMenu"
 import AdminDashboard from "@/components/admin/AdminDashboard"
 import { PocketIdSettings } from "@/components/admin/PocketIdSettings"
 import { getPocketIdSettings } from "@/lib/pocket-id"
+import { getPublicUrl } from "@/lib/public-url"
 
 export default async function AdminPage() {
   if (!await getAdmin()) notFound()
   const siteImages = await getSiteImages()
   const pocketId = await getPocketIdSettings()
-  const callbackUrl = `${(process.env.AUTH_URL || "http://localhost:3000").replace(/\/$/, "")}/api/auth/callback/pocket-id`
+  const callbackUrl = `${await getPublicUrl()}/api/auth/callback/pocket-id`
   const dict = await getDictionary(getLocale(await cookies()))
   const [mode, userCount, projectCount, activeInvites, invites, users] = await Promise.all([
     getRegistrationMode(),

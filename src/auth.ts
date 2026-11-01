@@ -1,4 +1,5 @@
-import NextAuth from "next-auth"
+import NextAuth, { type NextAuthConfig } from "next-auth"
+import { Auth, setEnvDefaults } from "@auth/core"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import prisma from "@/lib/prisma"
 import Credentials from "next-auth/providers/credentials"
@@ -7,15 +8,22 @@ import bcrypt from "bcryptjs"
 import { z } from "zod"
 import { createRegisteredUser, getRegistrationMode } from "@/lib/registration"
 import { getPocketIdConfig, PocketIdError, provisionPocketIdAccount, verifyPocketIdToken } from "@/lib/pocket-id"
+import { getPublicUrl } from "@/lib/public-url"
+import { authReturnPath } from "@/lib/auth-return-path"
 
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
 })
 
-export const { handlers, signIn, signOut, auth } = NextAuth(async () => {
+export async function createAuthConfig(): Promise<NextAuthConfig> {
   const pocketId = await getPocketIdConfig()
-  return {
+  const publicUrl = await getPublicUrl()
+  const config: NextAuthConfig = {
+    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+    basePath: "/api/auth",
+    trustHost: publicUrl ? true : undefined,
+    useSecureCookies: publicUrl ? publicUrl.startsWith("https:") : undefined,
     adapter: {
       ...PrismaAdapter(prisma),
       // Enforce the policy at the OAuth creation boundary as well as the form API.
@@ -33,6 +41,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth(async () => {
         name: "Pocket ID",
         type: "oidc" as const,
         issuer: pocketId.issuer,
+        wellKnown: `${pocketId.issuer}/.well-known/openid-configuration`,
         clientId: pocketId.clientId,
         clientSecret: pocketId.secret,
         authorization: { params: { scope: "openid profile email" } },
@@ -80,6 +89,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth(async () => {
       }),
     ],
     callbacks: {
+      async redirect({ url, baseUrl }) {
+        const base = publicUrl || baseUrl
+        if (url.startsWith("/")) return `${base}${authReturnPath(url)}`
+        try { if (new URL(url).origin === base) return url } catch { /* Use the public root for invalid destinations. */ }
+        return base
+      },
       async signIn({ account }) {
         if (account?.provider === "pocket-id") {
           if (!pocketId) return "/login?error=pocketIdUnavailable"
@@ -127,4 +142,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth(async () => {
       }
     }
   }
-})
+  setEnvDefaults(process.env, config, true)
+  return config
+}
+
+export const { signIn, signOut, auth } = NextAuth(createAuthConfig)
+
+// NextAuth's HTTP adapter unconditionally applies AUTH_URL; use its core with the saved origin instead.
+export async function handleAuth(request: Request) {
+  const publicUrl = await getPublicUrl()
+  const incoming = new URL(request.url)
+  const url = publicUrl ? new URL(incoming.pathname + incoming.search, publicUrl) : incoming
+  return Auth(new Request(url, request), await createAuthConfig())
+}
