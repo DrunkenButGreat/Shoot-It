@@ -38,7 +38,8 @@ def main(app_image, updater_image):
                        for field in ['path', 'thumbnail']]
             indexes += [f'{model}_{kind}_name_key' for model in ['SelectionFolder', 'ResultFolder']
                         for kind in ['root', 'child']]
-            sql('DROP TABLE IF EXISTS "PocketIdSettings"; DROP TABLE IF EXISTS "FileCleanupJob"; '
+            sql('ALTER TABLE "SelectionImage" DROP COLUMN "capturedAt"; '
+                'DROP TABLE IF EXISTS "PocketIdSettings"; DROP TABLE IF EXISTS "FileCleanupJob"; '
                 'ALTER TABLE "Project" DROP COLUMN IF EXISTS "coverHidden", DROP COLUMN IF EXISTS "coverPositionX", DROP COLUMN IF EXISTS "coverPositionY"; ' +
                 ' '.join(f'DROP INDEX IF EXISTS "{index}";' for index in indexes))
         def update(mode='run', target=None, success=True):
