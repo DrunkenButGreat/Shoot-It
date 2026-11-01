@@ -1,11 +1,12 @@
 "use client";
 
+import { SelectionImageList } from "./SelectionImageList";
 import { ImageCard } from "./ImageCard";
 import type { RatingUpdateHandler } from "./RatingControls";
 
 interface SelectionImageGridProps {
   images: any[];
-  layout: "grid" | "masonry" | "justified";
+  layout: "grid" | "masonry" | "justified" | "list";
   projectId: string;
   onImageClick: (index: number) => void;
   onRatingUpdated: RatingUpdateHandler;
@@ -25,6 +26,10 @@ export function SelectionImageGrid({
   onDelete,
 }: SelectionImageGridProps) {
   if (images.length === 0) return null;
+
+  if (layout === "list") {
+    return <SelectionImageList images={images} projectId={projectId} onPreview={onImageClick} onRatingUpdated={onRatingUpdated} selectedIds={selectedIds} onToggleSelect={onToggleSelect} onDelete={onDelete} />;
+  }
 
   if (layout === "grid") {
     return (
@@ -62,7 +67,7 @@ export function SelectionImageGrid({
               className="shootit-gallery-item relative group"
               style={{
                 flexGrow: aspect * 100,
-                flexBasis: `${aspect * 180}px`,
+                flexBasis: `calc(${aspect} * var(--gallery-item-base-width))`,
               }}
             >
               <ImageCard

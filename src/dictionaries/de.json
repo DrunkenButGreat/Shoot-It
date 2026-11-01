@@ -10,6 +10,12 @@
     "failed": "{count} Dateien fehlgeschlagen"
   },
   "common": {
+    "sortBy": "Sortieren nach",
+    "sortCapturedAsc": "Aufnahmedatum: älteste zuerst",
+    "sortCapturedDesc": "Aufnahmedatum: neueste zuerst",
+    "galleryView": "Galerieansicht",
+
+    "imageSize": "Bildgröße",
     "tbd": "Ausstehend",
     "back": "Zurück",
     "save": "Speichern",

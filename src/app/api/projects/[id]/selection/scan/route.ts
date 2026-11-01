@@ -77,6 +77,7 @@ export async function POST(
                     thumbnail: `/api/uploads/${relativeDir}/${previewFilename}`,
                     width: metadata.width,
                     height: metadata.height,
+                    capturedAt: metadata.capturedAt,
                     size: metadata.size
                 }
             })

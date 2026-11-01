@@ -1,5 +1,6 @@
 "use client";
 
+import { GallerySizeControl } from "@/components/GallerySizeControl";
 import { useI18n } from "@/components/I18nProvider";
 import { Input } from "@/components/ui/input";
 import { ArrowUpDown, Search } from "lucide-react";
@@ -125,7 +126,8 @@ export function MoodboardContent({
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 items-center">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 items-center">
+          <GallerySizeControl />
           <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input

@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.27.0] - 2026-11-01
+
+### Added
+- List view and capture-date sorting in internal and public selection galleries, preserving ratings, selection, downloads and previews.
+- Optional EXIF capture dates on selection uploads/imports, a non-destructive schema migration and a resumable backfill script for existing originals.
+- Shared gallery image-size slider (75–200%) for selection, results, moodboards and public overviews, with a browser-local preference, keyboard/touch controls and German/English labels.
+
+### Changed
+- Refresh the README with current technology versions, gallery controls, upload progress, storage overview, regression checks and capture-date upgrade instructions.
+
 ## [1.26.0] - 2026-11-01
 
 ### Added
@@ -22,7 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Label personal storage explicitly and explain deduplicated shared moodboard files; keep shared projects outside personal totals.
 - Format dashboard file sizes using the selected language.
-
 
 ## [1.24.0] - 2026-11-01
 

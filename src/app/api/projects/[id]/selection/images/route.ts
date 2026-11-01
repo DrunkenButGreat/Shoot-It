@@ -65,7 +65,7 @@ export async function POST(
         await writeFile(imagePath, buffer)
 
         // Get image metadata and generate preview
-        let metadata = { width: 0, height: 0 }
+        let metadata: { width: number; height: number; capturedAt: Date | null } = { width: 0, height: 0, capturedAt: null }
         const previewFilename = `preview_${secureFilename}.webp`
         const previewPath = path.join(uploadDir, previewFilename)
 
@@ -88,6 +88,7 @@ export async function POST(
                 thumbnail: thumbnailPath,
                 width: metadata.width,
                 height: metadata.height,
+                capturedAt: metadata.capturedAt,
                 size: file.size
             }
         })

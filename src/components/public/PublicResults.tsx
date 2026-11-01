@@ -1,5 +1,6 @@
 "use client";
 
+import { GallerySizeControl } from "@/components/GallerySizeControl";
 import { GalleryLoadMore } from "@/components/GalleryLoadMore";
 
 import { useI18n } from "@/components/I18nProvider";
@@ -267,6 +268,7 @@ export function PublicResults({ projectId }: { projectId: string }) {
 
         {/* Main Content */}
         <div className="min-w-0 flex-1 space-y-8 rounded-xl border border-slate-200 bg-white p-6">
+          {galleryLayout !== "list" && <GallerySizeControl />}
           {selectedFolderId && selectedFolderId !== "unassigned" && (
             <div className="flex items-center gap-2 text-sm text-gray-500 pb-2 border-b border-gray-100">
               <FolderOpen className="h-4 w-4" />

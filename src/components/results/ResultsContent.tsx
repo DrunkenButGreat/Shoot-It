@@ -1,5 +1,6 @@
 "use client";
 
+import { GallerySizeControl } from "@/components/GallerySizeControl";
 import { GalleryLoadMore } from "@/components/GalleryLoadMore";
 
 import { imagePreviewSource } from "@/lib/image-preview";
@@ -301,7 +302,8 @@ export function ResultsContent({
                 <span> / {t("selection.unassigned")}</span>
               )}
             </nav>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {view !== "list" && <GallerySizeControl />}
               <Button
                 variant={view === "grid" ? "secondary" : "ghost"}
                 size="icon"

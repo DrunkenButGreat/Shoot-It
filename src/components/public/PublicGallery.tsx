@@ -1,5 +1,6 @@
 "use client"
 
+import { GallerySizeControl } from "@/components/GallerySizeControl";
 import { GalleryLoadMore } from "@/components/GalleryLoadMore"
 
 import { OriginalImageButton } from "@/components/OriginalImageButton"
@@ -202,6 +203,7 @@ export function PublicGallery({
 
     return (
         <>
+            {images.length > 0 && <GallerySizeControl />}
             {layout === "grid" ? (
                 <div className="shootit-gallery-grid">
                     {visibleImages.map((image, index) => (
@@ -253,7 +255,7 @@ export function PublicGallery({
                                 className="shootit-gallery-item shootit-gallery-media relative rounded-xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all border border-gray-100 bg-gray-50 mb-0"
                                 style={{
                                     flexGrow: aspect * 100,
-                                    flexBasis: `${aspect * 180}px`,
+                                    flexBasis: `calc(${aspect} * var(--gallery-item-base-width))`,
                                     height: 'var(--gallery-preview-height)'
                                 }}
                                 onClick={() => openLightbox(index)}

@@ -46,6 +46,9 @@ jobs:
       - run: node scripts/test-pottsblitz.cjs
       - run: node scripts/test-media-upload.cjs
       - run: node scripts/test-gallery-previews.cjs
+      - run: node scripts/test-gallery-scroll.cjs
+      - run: node scripts/test-gallery-size.cjs
+      - run: node scripts/test-selection-gallery.cjs
       - run: node scripts/test-ios-device.cjs
       - run: npm run test:design
       - run: npx tsc --noEmit

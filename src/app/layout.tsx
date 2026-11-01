@@ -4,6 +4,7 @@ import AuthProvider from "@/components/auth/AuthProvider";
 import { cookies } from "next/headers";
 import { getLocale, getDictionary } from "@/lib/i18n";
 import { I18nProvider } from "@/components/I18nProvider";
+import { GallerySizeProvider } from "@/components/GallerySizeProvider";
 import Footer from "@/components/ui/Footer";
 
 export const metadata: Metadata = {
@@ -25,10 +26,12 @@ export default async function RootLayout({
       <body className="antialiased min-h-screen flex flex-col">
         <I18nProvider initialLocale={locale} initialDictionary={dictionary}>
           <AuthProvider>
-            <div className="flex-1 flex flex-col">
-              {children}
-            </div>
-            <Footer />
+            <GallerySizeProvider>
+              <div className="flex-1 flex flex-col">
+                {children}
+              </div>
+              <Footer />
+            </GallerySizeProvider>
           </AuthProvider>
         </I18nProvider>
       </body>

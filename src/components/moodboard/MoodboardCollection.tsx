@@ -1,5 +1,6 @@
 "use client";
 
+import { GallerySizeControl } from "@/components/GallerySizeControl";
 import { imagePreviewSource } from "@/lib/image-preview";
 
 import { useI18n } from "@/components/I18nProvider";
@@ -209,6 +210,7 @@ export function MoodboardCollection({
               {t("moodboard.collectionDescription")}
             </DialogDescription>
           </DialogHeader>
+          <GallerySizeControl />
           {selectedGroup && (
             <MoodboardGroup
               group={{

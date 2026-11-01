@@ -10,6 +10,12 @@
     "failed": "{count} files failed"
   },
   "common": {
+    "sortBy": "Sort by",
+    "sortCapturedAsc": "Capture date: oldest first",
+    "sortCapturedDesc": "Capture date: newest first",
+    "galleryView": "Gallery view",
+
+    "imageSize": "Image size",
     "tbd": "TBD",
     "back": "Back",
     "save": "Save",
