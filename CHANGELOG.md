@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.24.0] - 2026-11-01
+
+### Added
+- Byte-weighted upload progress, completed-file counts and estimated transfer time for selection, results, moodboards and profile branding, in German and English.
+- Accessible progress indicators in standard, compact and gallery upload layouts, with a separate server-processing state.
+- Upload regression tests covering parallel transfers, retries, stalled estimates, partial failures, folder payloads and bilingual UI states in CI.
+
+### Changed
+- Track uploads through XMLHttpRequest while preserving six concurrent transfers, retry limits and existing upload endpoints.
+- Prevent overlapping upload batches within each uploader, including gallery drag-and-drop, while keeping gallery controls usable.
+
 ## [1.23.0] - 2026-11-01
 
 ### Added

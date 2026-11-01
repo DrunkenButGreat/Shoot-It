@@ -44,6 +44,7 @@ jobs:
       - run: npm run test:audit
       - run: npm run test:audit:integration
       - run: node scripts/test-pottsblitz.cjs
+      - run: node scripts/test-media-upload.cjs
       - run: node scripts/test-gallery-previews.cjs
       - run: node scripts/test-ios-device.cjs
       - run: npm run test:design

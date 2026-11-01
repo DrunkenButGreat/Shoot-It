@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Upload, Loader2, FileImage, FolderOpen, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useI18n } from "@/components/I18nProvider"
+import { uploadMedia, type UploadProgress } from "@/lib/media-upload"
 
 interface ImageUploadProps {
     uploadUrl: string
@@ -27,13 +28,14 @@ export default function ImageUpload({
     compact,
     children,
     disabled,
-    maxSize,
     enableFolderUpload,
     folderId
 }: ImageUploadProps) {
     const { t } = useI18n()
     const defaultLabel = label || t('selection.dragAndDrop')
-    const [uploadingCount, setUploadingCount] = useState(0)
+    const [progress, setProgress] = useState<UploadProgress | null>(null)
+    const uploadingRef = useRef(false)
+    const scanningRef = useRef(false)
     const [isDragging, setIsDragging] = useState(false)
     const [uploadMode, setUploadMode] = useState<'file' | 'folder'>('file')
     const [showModeDropdown, setShowModeDropdown] = useState(false)
@@ -53,6 +55,7 @@ export default function ImageUpload({
     }, [uploadMode])
 
     const uploadFiles = useCallback(async (files: (File & { relativePath?: string })[]) => {
+        if (disabled || uploadingRef.current) return
         const fileArray = files.filter(file => file.type.startsWith("image/") || file.type.startsWith("video/"))
 
         if (fileArray.length === 0) {
@@ -60,86 +63,26 @@ export default function ImageUpload({
             return
         }
 
-        setUploadingCount(prev => prev + fileArray.length)
-
-        // Upload through a bounded concurrency pool with retries. Firing thousands
-        // of parallel requests overwhelms the browser/server and silently drops
-        // uploads — this keeps a few in flight at a time and retries transient errors.
-        const CONCURRENCY = 6
-        const MAX_RETRIES = 3
-        let lastResult: any = null
-        let failed = 0
-
-        const uploadOne = async (file: File & { relativePath?: string }): Promise<boolean> => {
-            for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-                try {
-                    const formData = new FormData()
-                    formData.append("file", file)
-                    if (file.relativePath) {
-                        formData.append("relativePath", file.relativePath)
-                    }
-                    if (folderId) {
-                        formData.append("folderId", folderId)
-                    }
-
-                    const response = await fetch(uploadUrl, {
-                        method: "POST",
-                        body: formData,
-                    })
-
-                    if (response.ok) {
-                        lastResult = await response.json()
-                        return true
-                    }
-
-                    // Client errors (validation, auth) won't succeed on retry.
-                    if (response.status >= 400 && response.status < 500) {
-                        const error = await response.json().catch(() => ({}))
-                        console.error(`Upload failed for ${file.name}:`, error.error)
-                        return false
-                    }
-                    // 5xx: fall through to retry
-                } catch (error) {
-                    console.error(`Upload error for ${file.name} (attempt ${attempt + 1}):`, error)
-                    // network error: fall through to retry
-                }
-
-                if (attempt < MAX_RETRIES) {
-                    await new Promise(r => setTimeout(r, 400 * (attempt + 1)))
-                }
+        uploadingRef.current = true
+        try {
+            const { lastResult, failed } = await uploadMedia(fileArray, uploadUrl, folderId, setProgress)
+            onSuccess(lastResult)
+            if (failed > 0) {
+                alert(
+                    t('selection.uploadPartialFailed')
+                        .replace('{failed}', failed.toString())
+                        .replace('{total}', fileArray.length.toString())
+                )
             }
-            return false
+        } finally {
+            uploadingRef.current = false
+            setProgress(null)
+            if (fileInputRef.current) fileInputRef.current.value = ""
         }
-
-        let cursor = 0
-        const worker = async () => {
-            while (cursor < fileArray.length) {
-                const file = fileArray[cursor++]
-                const ok = await uploadOne(file)
-                if (!ok) failed++
-                setUploadingCount(prev => Math.max(0, prev - 1))
-            }
-        }
-
-        const workers = Array.from(
-            { length: Math.min(CONCURRENCY, fileArray.length) },
-            () => worker()
-        )
-        await Promise.all(workers)
-
-        onSuccess(lastResult)
-        if (fileInputRef.current) fileInputRef.current.value = ""
-
-        if (failed > 0) {
-            alert(
-                t('selection.uploadPartialFailed')
-                    .replace('{failed}', failed.toString())
-                    .replace('{total}', fileArray.length.toString())
-            )
-        }
-    }, [uploadUrl, onSuccess, t, folderId])
+    }, [uploadUrl, onSuccess, t, folderId, disabled])
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (scanningRef.current) return
         const files = e.target.files
         if (files && files.length > 0) {
             const fileArray = Array.from(files) as (File & { relativePath?: string })[]
@@ -154,18 +97,17 @@ export default function ImageUpload({
     }
 
     const onDragOver = useCallback((e: React.DragEvent) => {
-        if (disabled) return
         e.preventDefault()
         e.stopPropagation()
+        if (disabled || uploadingRef.current || scanningRef.current) return
         setIsDragging(true)
     }, [disabled])
 
     const onDragLeave = useCallback((e: React.DragEvent) => {
-        if (disabled) return
         e.preventDefault()
         e.stopPropagation()
         setIsDragging(false)
-    }, [disabled])
+    }, [])
 
     const scanFiles = async (item: FileSystemEntry, path = ""): Promise<(File & { relativePath?: string })[]> => {
         try {
@@ -214,47 +156,74 @@ export default function ImageUpload({
         return []
     }
 
-    const onDrop = useCallback(async (e: React.DragEvent) => {
-        if (disabled) return
+    const onDrop = async (e: React.DragEvent) => {
         e.preventDefault()
         e.stopPropagation()
         setIsDragging(false)
+        if (disabled || uploadingRef.current || scanningRef.current) return
+        scanningRef.current = true
+        try {
+            const items = e.dataTransfer.items
+            const files: (File & { relativePath?: string })[] = []
 
-        const items = e.dataTransfer.items
-        const files: (File & { relativePath?: string })[] = []
-
-        // Capture all entries synchronously first to avoid DataTransfer expiration issues
-        const entries: FileSystemEntry[] = []
-        if (items && items.length > 0) {
-            for (let i = 0; i < items.length; i++) {
-                const entry = items[i].webkitGetAsEntry()
-                if (entry) {
-                    entries.push(entry)
+            // Capture all entries synchronously first to avoid DataTransfer expiration issues
+            const entries: FileSystemEntry[] = []
+            if (items && items.length > 0) {
+                for (let i = 0; i < items.length; i++) {
+                    const entry = items[i].webkitGetAsEntry()
+                    if (entry) {
+                        entries.push(entry)
+                    }
                 }
             }
-        }
 
-        // Now process entries (async is fine here as we have the entries)
-        if (entries.length > 0) {
-            const scanPromises = entries.map(entry => scanFiles(entry))
-            const results = await Promise.all(scanPromises)
-            results.forEach(res => files.push(...res))
-        }
-
-        // Fallback to basic files if no valid entries were found/scanned
-        if (files.length === 0) {
-            const droppedFiles = e.dataTransfer.files
-            if (droppedFiles && droppedFiles.length > 0) {
-                files.push(...Array.from(droppedFiles))
+            // Now process entries (async is fine here as we have the entries)
+            if (entries.length > 0) {
+                const scanPromises = entries.map(entry => scanFiles(entry))
+                const results = await Promise.all(scanPromises)
+                results.forEach(res => files.push(...res))
             }
-        }
 
-        if (files.length > 0) {
-            uploadFiles(files)
-        }
-    }, [uploadFiles, disabled])
+            // Fallback to basic files if no valid entries were found/scanned
+            if (files.length === 0) {
+                const droppedFiles = e.dataTransfer.files
+                if (droppedFiles && droppedFiles.length > 0) {
+                    files.push(...Array.from(droppedFiles))
+                }
+            }
 
-    const isUploading = uploadingCount > 0
+            if (files.length > 0) {
+                await uploadFiles(files)
+            }
+        } finally {
+            scanningRef.current = false
+        }
+    }
+
+    const isUploading = progress !== null
+    const remaining = progress?.remainingSeconds
+    const duration = remaining == null ? '' : remaining < 60
+        ? t('upload.seconds').replace('{seconds}', remaining.toString())
+        : t('upload.minutesSeconds')
+            .replace('{minutes}', Math.floor(remaining / 60).toString())
+            .replace('{seconds}', (remaining % 60).toString())
+    const uploadStatus = progress && (
+        <div className="w-full min-w-0 space-y-1 text-xs text-gray-700">
+            <div className="flex flex-wrap justify-between gap-x-3 gap-y-1">
+                <span>{t('upload.completed').replace('{completed}', progress.completed.toString()).replace('{total}', progress.total.toString())}</span>
+                <span className="tabular-nums">{progress.percent}%</span>
+            </div>
+            <div role="progressbar" aria-label={t('upload.progress')} aria-valuenow={progress.percent}
+                aria-valuemin={0} aria-valuemax={100} className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                <div className="h-full rounded-full bg-blue-500" style={{ width: `${progress.percent}%` }} />
+            </div>
+            <p role="status" aria-live="polite">
+                {progress.processing ? t('upload.processing') : remaining == null
+                    ? t('upload.estimating') : t('upload.remaining').replace('{duration}', duration)}
+            </p>
+            {progress.failed > 0 && <p className="text-red-600">{t('upload.failed').replace('{count}', progress.failed.toString())}</p>}
+        </div>
+    )
 
     // If acting as a wrapper
     if (children) {
@@ -272,8 +241,14 @@ export default function ImageUpload({
                     className="hidden"
                     accept="image/*,video/*"
                     multiple
+                    disabled={disabled || isUploading}
                 />
 
+                {isUploading && (
+                    <div className="mb-2 ml-auto w-full max-w-sm bg-white p-3 rounded-xl shadow-sm border">
+                        {uploadStatus}
+                    </div>
+                )}
                 {children}
 
                 {/* Drop Overlay */}
@@ -287,13 +262,6 @@ export default function ImageUpload({
                     </div>
                 )}
 
-                {/* Uploading indicator for wrapper mode */}
-                {isUploading && (
-                    <div className="absolute top-2 right-2 z-50 bg-white/90 backdrop-blur py-1 px-3 rounded-full shadow-sm border flex items-center gap-2">
-                        <Loader2 className="h-3 w-3 animate-spin text-blue-500" />
-                        <span className="text-xs font-medium">{t('selection.uploading').replace('{count}', uploadingCount.toString())}</span>
-                    </div>
-                )}
             </div>
         )
     }
@@ -307,7 +275,7 @@ export default function ImageUpload({
                 "relative flex flex-col items-center justify-center transition-all duration-200 w-full h-full border-2 border-dashed rounded-xl",
                 compact ? "min-h-[44px] gap-1 p-1" : "min-h-[150px] gap-4 p-4",
                 isDragging ? "border-blue-500 bg-blue-50/50" : "border-gray-200 bg-gray-50/50 hover:bg-gray-100/50",
-                (isUploading || disabled) && "opacity-80 pointer-events-none",
+                (isUploading || disabled) && "opacity-80",
                 className
             )}
         >
@@ -336,7 +304,7 @@ export default function ImageUpload({
                 </div>
 
                 <p className={cn("font-medium text-gray-700", compact ? "text-xs" : "text-sm")}>
-                    {isUploading ? t('selection.uploading').replace('{count}', uploadingCount.toString()) : isDragging ? t('results.dropToUpload') : (uploadMode === 'folder' ? t('results.uploadFolder') : defaultLabel)}
+                    {isUploading ? t('upload.progress') : isDragging ? t('results.dropToUpload') : (uploadMode === 'folder' ? t('results.uploadFolder') : defaultLabel)}
                 </p>
 
                 {!compact && !isUploading && (
@@ -345,6 +313,8 @@ export default function ImageUpload({
                     </p>
                 )}
             </div>
+
+            {uploadStatus}
 
             {!compact && !isUploading && (
                 <div className="flex flex-col items-center gap-2 mt-2">
@@ -416,6 +386,7 @@ export default function ImageUpload({
             {compact && !isUploading && !disabled && (
                 <button
                     className="absolute inset-0 cursor-pointer"
+                    aria-label={defaultLabel}
                     onClick={() => fileInputRef.current?.click()}
                 />
             )}

@@ -1,4 +1,14 @@
 {
+  "upload": {
+    "progress": "Upload progress",
+    "completed": "{completed} of {total} files completed",
+    "processing": "Processing …",
+    "estimating": "Uploading – estimating remaining time …",
+    "remaining": "About {duration} of transfer remaining",
+    "seconds": "{seconds} sec",
+    "minutesSeconds": "{minutes} min {seconds} sec",
+    "failed": "{count} files failed"
+  },
   "common": {
     "tbd": "TBD",
     "back": "Back",

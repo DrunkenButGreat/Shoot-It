@@ -1,4 +1,14 @@
 {
+  "upload": {
+    "progress": "Upload-Fortschritt",
+    "completed": "{completed} von {total} Dateien abgeschlossen",
+    "processing": "Wird verarbeitet …",
+    "estimating": "Übertragung läuft – Restzeit wird berechnet …",
+    "remaining": "Noch ca. {duration} Übertragung",
+    "seconds": "{seconds} Sek.",
+    "minutesSeconds": "{minutes} Min. {seconds} Sek.",
+    "failed": "{count} Dateien fehlgeschlagen"
+  },
   "common": {
     "tbd": "Ausstehend",
     "back": "Zurück",
