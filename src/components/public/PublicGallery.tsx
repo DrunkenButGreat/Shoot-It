@@ -1,5 +1,7 @@
 "use client"
 
+import { GalleryLoadMore } from "@/components/GalleryLoadMore"
+
 import { OriginalImageButton } from "@/components/OriginalImageButton"
 
 import { imagePreviewSource } from "@/lib/image-preview"
@@ -7,8 +9,6 @@ import { imagePreviewSource } from "@/lib/image-preview"
 import { useState, useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
 import { X, ChevronLeft, ChevronRight, ZoomIn, Play } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { useI18n } from "@/components/I18nProvider"
 
 interface Image {
     id: string
@@ -94,7 +94,6 @@ export function PublicGallery({
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
     const [mounted, setMounted] = useState(false)
     const [visibleLimit, setVisibleLimit] = useState(100)
-    const { t } = useI18n()
     const visibleImages = images.slice(0, visibleLimit)
 
     useEffect(() => {
@@ -290,9 +289,10 @@ export function PublicGallery({
             )}
 
             {visibleImages.length < images.length && (
-                <Button variant="outline" className="mt-4 w-full" onClick={() => setVisibleLimit(limit => limit + 100)}>
-                    {t("common.loadMore")}
-                </Button>
+                <GalleryLoadMore
+                  className="mt-4 w-full"
+                  onLoadMore={() => setVisibleLimit(limit => limit + 100)}
+                />
             )}
 
             {images.length === 0 && (

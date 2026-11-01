@@ -1,5 +1,7 @@
 "use client";
 
+import { GalleryLoadMore } from "@/components/GalleryLoadMore";
+
 import { LightboxOriginalImageButton } from "@/components/LightboxOriginalImageButton";
 
 import { imagePreviewSource } from "@/lib/image-preview";
@@ -462,13 +464,10 @@ export function SelectionContent({
                 onRatingUpdated={handleRatingUpdated}
               />
               {visibleImages.length < filteredImages.length && (
-                <Button
-                  variant="outline"
+                <GalleryLoadMore
                   className="w-full"
-                  onClick={() => setVisibleLimit((limit) => limit + 100)}
-                >
-                  {t("common.loadMore")}
-                </Button>
+                  onLoadMore={() => setVisibleLimit((limit) => limit + 100)}
+                />
               )}
             </div>
           )}
