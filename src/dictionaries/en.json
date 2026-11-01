@@ -10,6 +10,12 @@
     "failed": "{count} files failed"
   },
   "common": {
+    "sortBy": "Sort by",
+    "sortCapturedAsc": "Capture date: oldest first",
+    "sortCapturedDesc": "Capture date: newest first",
+    "galleryView": "Gallery view",
+
+    "imageSize": "Image size",
     "tbd": "TBD",
     "back": "Back",
     "save": "Save",
@@ -78,7 +84,13 @@
   },
   "dashboard": {
     "storageTitle": "Storage overview",
-    "storageTotal": "Total Shoot-It storage",
+    "storageTotal": "Storage used by your projects",
+    "storageLabel": "Storage",
+    "storageLargest": "Largest projects",
+    "storageEmpty": "You have no projects of your own yet. Create a project to see your storage usage here.",
+    "storageShowAll": "Show all projects",
+    "storageShowLess": "Show less",
+    "storageSharedHint": "Shared moodboard files are counted only once in the total. Individual project sizes may therefore overlap.",
     "storageImage": "file",
     "storageImages": "files",
     "title": "Dashboard",

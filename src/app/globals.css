@@ -98,28 +98,32 @@
 
 /* Compact overview tiles. These selectors never affect the fullscreen portal. */
 .shootit-gallery-grid {
-  --gallery-preview-height: 200px;
+  --gallery-preview-height: calc(200px * var(--gallery-scale, 1));
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(168px * var(--gallery-scale, 1))), 1fr));
   gap: 12px;
   align-items: start;
 }
 .shootit-gallery-masonry {
-  columns: 168px;
-  column-gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(168px * var(--gallery-scale, 1))), 1fr));
+  gap: 12px;
+  align-items: start;
 }
+.shootit-gallery-grid > *,
 .shootit-gallery-masonry > * {
-  break-inside: avoid;
-  margin-bottom: 12px;
+  min-width: 0;
+  margin-bottom: 0;
 }
 .shootit-gallery-justified {
-  --gallery-preview-height: 180px;
+  --gallery-item-base-width: calc(180px * var(--gallery-scale, 1));
+  --gallery-preview-height: calc(180px * var(--gallery-scale, 1));
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   align-items: flex-start;
 }
-.shootit-gallery-justified > .shootit-gallery-item { min-width: 100px; }
+.shootit-gallery-justified > .shootit-gallery-item { min-width: min(100px, 100%); max-width: 100%; }
 .shootit-gallery-grid .shootit-gallery-media,
 .shootit-gallery-justified .shootit-gallery-media {
   height: var(--gallery-preview-height);
@@ -133,21 +137,24 @@
 .shootit-gallery-masonry .shootit-gallery-media :is(img, video) {
   width: 100%;
   height: auto;
-  max-height: 220px;
+  max-height: calc(220px * var(--gallery-scale, 1));
   object-fit: contain;
 }
 .shootit-gallery-overview .shootit-gallery-grid {
-  --gallery-preview-height: 160px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  --gallery-preview-height: calc(160px * var(--gallery-scale, 1));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, calc((100% - 24px) / 3 * var(--gallery-scale, 1))), 1fr));
 }
 @media (max-width: 639px) {
   .shootit-gallery-grid {
-    --gallery-preview-height: 170px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    --gallery-preview-height: calc(170px * var(--gallery-scale, 1));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, calc((100% - 10px) / 2 * var(--gallery-scale, 1))), 1fr));
     gap: 10px;
   }
-  .shootit-gallery-masonry { column-count: 2; column-width: auto; column-gap: 10px; }
-  .shootit-gallery-masonry .shootit-gallery-media :is(img, video) { max-height: 180px; }
-  .shootit-gallery-justified { --gallery-preview-height: 150px; gap: 10px; }
-  .shootit-gallery-overview .shootit-gallery-grid { --gallery-preview-height: 120px; }
+  .shootit-gallery-masonry { grid-template-columns: repeat(auto-fill, minmax(min(100%, calc((100% - 10px) / 2 * var(--gallery-scale, 1))), 1fr)); gap: 10px; }
+  .shootit-gallery-masonry .shootit-gallery-media :is(img, video) { max-height: calc(180px * var(--gallery-scale, 1)); }
+  .shootit-gallery-justified { --gallery-preview-height: calc(150px * var(--gallery-scale, 1)); gap: 10px; }
+  .shootit-gallery-overview .shootit-gallery-grid {
+    --gallery-preview-height: calc(120px * var(--gallery-scale, 1));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, calc((100% - 20px) / 3 * var(--gallery-scale, 1))), 1fr));
+  }
 }

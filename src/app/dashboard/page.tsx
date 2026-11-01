@@ -40,7 +40,12 @@ export default async function DashboardPage() {
   })
 
   const ownProjects = projects.filter(project => project.ownerId === currentUserId)
-  const storageOverview = await getStorageOverview(ownProjects.map(project => project.id))
+  const sharedProjects = projects.filter(project => project.ownerId !== currentUserId)
+  const [storageOverview, sharedStorage] = await Promise.all([
+    getStorageOverview(ownProjects.map(project => project.id)),
+    sharedProjects.length ? getStorageOverview(sharedProjects.map(project => project.id)) : Promise.resolve({ projects: [] }),
+  ])
+  const storageById = new Map([...storageOverview.projects, ...sharedStorage.projects].map(project => [project.projectId, project.bytes]))
   const storage = {
     totalBytes: storageOverview.totalBytes,
     projects: ownProjects.map(project => ({
@@ -48,7 +53,7 @@ export default async function DashboardPage() {
       name: project.name,
       isArchived: project.isArchived,
       imageCount: project._count.selectionImages + project._count.resultImages,
-      bytes: storageOverview.projects.find(item => item.projectId === project.id)?.bytes ?? 0,
+      bytes: storageById.get(project.id) ?? 0,
     })),
   }
 
@@ -68,6 +73,7 @@ export default async function DashboardPage() {
       participantCount: project._count.participants,
       selectionCount: project._count.selectionImages,
       resultCount: project._count.resultImages,
+      storageBytes: storageById.get(project.id) ?? 0,
     }))} storage={storage} /></main>
   )
 }

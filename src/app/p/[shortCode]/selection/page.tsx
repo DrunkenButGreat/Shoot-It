@@ -89,7 +89,7 @@ export default async function PublicSelectionPage({
     }
 
     const [images, folders] = await Promise.all([
-        prisma.selectionImage.findMany({ where: { projectId: project.id }, select: { id: true, filename: true, path: true, thumbnail: true, width: true, height: true, folderId: true, ratings: { select: { id: true, stars: true, color: true } } }, orderBy: { importedAt: "desc" } }),
+        prisma.selectionImage.findMany({ where: { projectId: project.id }, select: { id: true, filename: true, path: true, thumbnail: true, width: true, height: true, folderId: true, capturedAt: true, ratings: { select: { id: true, stars: true, color: true } } }, orderBy: { importedAt: "desc" } }),
         prisma.selectionFolder.findMany({ where: { projectId: project.id }, include: { _count: { select: { images: true } } } }),
     ])
 

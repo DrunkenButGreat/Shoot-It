@@ -1,27 +1,27 @@
 # PhotoShoot Organizer
 
-A comprehensive self-hosted web application for managing photoshoot projects, built with Next.js 15, TypeScript, and PostgreSQL.
+A comprehensive self-hosted web application for managing photoshoot projects, built with Next.js 16, TypeScript, and PostgreSQL.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Next.js](https://img.shields.io/badge/Next.js-15.1-black)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.4-black)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)](https://www.typescriptlang.org/)
-[![Prisma](https://img.shields.io/badge/Prisma-6.2-2D3748)](https://www.prisma.io/)
+[![Prisma](https://img.shields.io/badge/Prisma-6.19-2D3748)](https://www.prisma.io/)
 
 Optional Pocket ID sign-in can be configured in the administration UI. See the [setup and upgrade guide](deploy/POCKET-ID.md).
 
 ## 🎯 Overview
 
-PhotoShoot Organizer is a production-ready platform designed specifically for photographers and creative teams to manage all aspects of photoshoots, from initial planning to final delivery.
+PhotoShoot Organizer is a self-hosted platform designed specifically for photographers and creative teams to manage all aspects of photoshoots, from initial planning to final delivery.
 
-**Implementation Status:** 10 of 12 phases complete (83%) - See [PROGRESS.md](PROGRESS.md) for details.
+**Current version: 1.27.0.** See [CHANGELOG.md](CHANGELOG.md) for release changes and the [upgrade guide](deploy/UPDATES.md) for deployment and recovery.
 
 ## ✨ Features
 
-### ✅ Implemented (83%)
+### Available features
 
 - **Authentication & Authorization**
   - Local email/password login with bcrypt
-  - Google OAuth integration
+  - Google OAuth and optional Pocket ID sign-in
   - JWT session management
   - Role-based access control (Owner/Editor/Viewer)
 
@@ -31,6 +31,8 @@ PhotoShoot Organizer is a production-ready platform designed specifically for ph
   - Public short URLs for sharing
   - Search and filter capabilities
   - Project statistics and counts
+  - Localized storage sizes on project cards, including shared projects
+  - Personal storage overview with an expandable ranking of owned projects; shared projects are excluded from the personal total
 
 - **Participants Module**
   - Manage models, stylists, makeup artists, and crew
@@ -48,47 +50,61 @@ PhotoShoot Organizer is a production-ready platform designed specifically for ph
   - 5-star rating system (1-5 stars)
   - Color labeling (RED/YELLOW/GREEN)
   - Advanced filtering by stars and colors
-  - Responsive grid layout
-  - Quick rating updates
+  - Grid, masonry, justified and list rendering; internal grid/masonry/list controls and public view selection
+  - Sorting by import order, filename or EXIF capture date (oldest/newest first)
+  - Quick rating updates in image and list views
 
-- **Contracts Module** (API Complete)
+- **Contracts Module**
   - Create and manage contracts
   - Digital signature pad with canvas
   - Multiple signatures per contract
   - Signature tracking (IP, timestamp, user agent)
   - PDF export ready
 
-- **Callsheet Module** (API Complete)
+- **Callsheet Module**
   - Shooting schedule management
   - Location details and parking info
   - Emergency contacts
   - Equipment list
   - Timeline visualization ready
 
-- **Results Module** (API Complete)
+- **Results Module**
   - Folder hierarchy for organizing final images
   - Folder creation and management
   - Image upload to folders
   - Download capabilities
 
-### 🚧 In Progress (17%)
+### Gallery controls and uploads
 
-- **Image Upload Functionality**
-  - Moodboard image uploads
-  - Selection gallery imports
-  - Results folder uploads
-
-- **Testing & Polish**
-  - Dark mode implementation
-  - Performance optimization
-  - Comprehensive error handling
+- **Image size:** use the slider above selection, results, moodboards and public
+  overview galleries to resize previews from **75% to 200%** in 5% steps. At
+  **100%**, the existing default sizes are used. Larger tiles show fewer columns;
+  layouts wrap to fit narrow screens without horizontal scrolling.
+- **Personal preference:** the size is shared across galleries and remembered in
+  the current browser. Other visitors keep their own preference. If browser
+  storage is blocked, resizing still works for the current session.
+- **List view:** selection galleries retain previews, selection and ratings, plus
+  permitted download/delete actions. The size slider is hidden in list views;
+  fullscreen previews and original downloads are independent of the slider.
+- **Capture-date sorting:** selection galleries can sort oldest or newest first
+  using the original EXIF capture date. Images without a date stay at the end.
+  New selection uploads and local imports extract this automatically; see
+  [existing-image upgrades](#capture-dates-for-existing-selection-images).
+- **Loading more:** internal and public selection/results galleries and public
+  image galleries reveal the next 100 images as you approach the end. A manual
+  load-more button remains available. Appended images retain row order.
+- **Uploads:** moodboards, selection, results and profile branding show overall
+  progress, completed-file counts, estimated remaining time and a separate
+  processing state. Uploads use bounded concurrency and retry handling.
+- **Languages:** gallery controls and progress messages are available in German
+  (default) and English.
 
 ## 🏗️ Architecture
 
 ### Technology Stack
 
 - **Frontend:**
-  - Next.js 15.1 (App Router)
+  - Next.js 16.4 (App Router)
   - React 19
   - TypeScript 5.7
   - Tailwind CSS 3.4
@@ -96,7 +112,7 @@ PhotoShoot Organizer is a production-ready platform designed specifically for ph
 
 - **Backend:**
   - Next.js API Routes
-  - Prisma 6.2 ORM
+  - Prisma 6.19 ORM
   - PostgreSQL 18
   - Auth.js v5 (NextAuth)
 
@@ -114,15 +130,15 @@ PhotoShoot Organizer is a production-ready platform designed specifically for ph
 
 ```
 /
-├── config/                  # Configuration files
+├── src/config/              # Configuration files
 │   ├── app.config.ts        # App settings and limits
 │   ├── theme.config.ts      # Branding and colors
 │   └── export.config.ts     # Export settings
 ├── prisma/
-│   └── schema.prisma        # Database schema (17 models)
+│   └── schema.prisma        # Database schema and additive migrations
 ├── src/
 │   ├── app/                 # Next.js App Router
-│   │   ├── api/             # API routes (20+ endpoints)
+│   │   ├── api/             # API routes
 │   │   ├── login/           # Authentication pages
 │   │   ├── dashboard/       # Dashboard
 │   │   └── project/[id]/    # Project pages
@@ -256,18 +272,21 @@ host/systemd updater was installed, [disable its timer before switching](deploy/
 
 ## 📊 Database Schema
 
-The application uses 17 Prisma models:
+The Prisma schema covers these main areas:
 
-- **Authentication:** User, Account, Session, VerificationToken
-- **Projects:** Project, ProjectAccess
-- **Moodboard:** MoodboardGroup, MoodboardImage, Comment
+- **Authentication:** User, Account, Session, VerificationToken, PocketIdSettings
+- **Administration:** RegistrationSettings, RegistrationInvite, SiteSettings
+- **Projects:** Project, ProjectAccess, ProjectVisit
+- **Moodboard:** MoodboardGroup, ProjectMoodboardLink, MoodboardImage, Comment
 - **Participants:** Participant, ParticipantImage, ParticipantField
 - **Contracts:** Contract, ContractSignature
 - **Callsheet:** Callsheet, CallsheetScheduleItem
-- **Selection:** SelectionImage, ImageRating
-- **Results:** ResultFolder, ResultImage
+- **Selection:** SelectionImage (including optional capture date), SelectionFolder, ImageRating
+- **Results:** ResultFolder, ResultFile
+- **Applications and scheduling:** ProjectApplication, ApplicationImage, AppointmentSlot, AppointmentResponse
+- **Media cleanup:** FileCleanupJob
 
-## 🔌 API Endpoints
+## 🔌 API Endpoint Examples
 
 ### Projects API (5 endpoints)
 ```
@@ -301,7 +320,7 @@ GET    /api/projects/[id]/selection                 # Get images (with filters)
 PUT    /api/projects/[id]/selection/[imageId]/rating   # Update rating
 ```
 
-### Contracts API (5 endpoints)
+### Contracts API (6 endpoints)
 ```
 GET    /api/projects/[id]/contracts                  # List contracts
 POST   /api/projects/[id]/contracts                  # Create contract
@@ -311,7 +330,7 @@ DELETE /api/projects/[id]/contracts/[contractId]     # Delete contract
 POST   /api/projects/[id]/contracts/[contractId]/sign  # Sign contract
 ```
 
-### Callsheet API (2 endpoints)
+### Callsheet API (3 endpoints)
 ```
 GET    /api/projects/[id]/callsheet          # Get callsheet
 POST   /api/projects/[id]/callsheet          # Create/update callsheet
@@ -325,7 +344,8 @@ POST   /api/projects/[id]/results/folders           # Create folder
 DELETE /api/projects/[id]/results/folders/[folderId] # Delete folder
 ```
 
-**Total:** 26 RESTful API endpoints
+The examples above are a subset. Additional routes cover uploads, downloads,
+folder operations, scheduling, administration and authentication under `src/app/api`.
 
 ## 🔐 Security Features
 
@@ -371,8 +391,30 @@ npm run build        # Build for production
 npm run start        # Start production server
 npm run lint         # Run ESLint
 npm run db:studio    # Open Prisma Studio
-npm run db:push      # Push schema changes
-npm run db:migrate   # Run migrations
+npm run db:push      # Prototype schemas only; use migrations for upgrades
+npm run db:migrate   # Create/apply development migrations
+npm run db:deploy    # Apply existing migrations without resetting data
+```
+
+### Gallery regression checks
+
+```sh
+node scripts/test-gallery-size.cjs
+node scripts/test-gallery-scroll.cjs
+node scripts/test-gallery-previews.cjs
+node scripts/test-selection-gallery.cjs
+npm run test:design
+npm run lint
+npm run build
+```
+
+These checks cover size persistence, blocked storage, gallery integration,
+preview generation, incremental loading, EXIF dates, sorting and list actions.
+The migration regression suite requires a disposable PostgreSQL database whose
+name ends in `_test` and refuses the normal application database:
+
+```sh
+TEST_DATABASE_URL=postgresql://.../shootit_migrations_test npm run test:migrations
 ```
 
 ### Database Management
@@ -535,3 +577,31 @@ TEST_DATABASE_URL=postgresql://.../shootit_registration_test npm run test:regist
 
 The check refuses the regular `DATABASE_URL`, creates synthetic users, and clears
 only its isolated test schema when done.
+
+## Capture dates for existing selection images
+
+The additive migration in 1.27.0 introduces an optional `capturedAt` column;
+existing images, ratings, folders and project data are preserved. Docker updates
+apply it through the existing startup migration workflow. In a local checkout,
+apply pending migrations and regenerate the client before starting the app:
+
+```sh
+npm run db:deploy
+npm run db:generate
+```
+
+To populate dates for previously uploaded images, run the following once on the
+server with access to the original files in `uploads`:
+
+```sh
+node --env-file=.env scripts/backfill-selection-dates.cjs
+# Docker Compose (environment variables are already injected):
+docker compose exec app node scripts/backfill-selection-dates.cjs
+```
+
+The script only fills missing capture dates and can be rerun. It reports updated,
+missing-date and failed-file counts, and exits with a failure status if any file
+could not be processed. It does not modify originals. Images without EXIF
+`DateTimeOriginal` stay at the end of capture-date sorting in either direction.
+`OffsetTimeOriginal` is respected when present; without a camera timezone, the
+wall-clock time is stored as UTC so server timezone changes do not affect sorting.

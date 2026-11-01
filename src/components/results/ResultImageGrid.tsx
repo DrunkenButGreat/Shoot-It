@@ -137,7 +137,7 @@ export function ResultImageGrid({
                 className="shootit-gallery-item relative group"
                 style={{
                   flexGrow: aspect * 100,
-                  flexBasis: `${aspect * 180}px`,
+                  flexBasis: `calc(${aspect} * var(--gallery-item-base-width))`,
                 }}
               >
                 <ImageCard

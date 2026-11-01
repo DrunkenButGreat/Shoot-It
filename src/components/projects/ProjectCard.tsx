@@ -1,11 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { Archive, ArchiveRestore, Calendar, MapPin, Users, Trash2 } from "lucide-react"
+import { Archive, ArchiveRestore, Calendar, MapPin, Users, Trash2, HardDrive } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useI18n } from "@/components/I18nProvider"
+import { formatBytes } from "@/lib/format-bytes"
 import type { DashboardProject } from "./DashboardContent"
 
 export function ProjectCard({ project }: { project: DashboardProject }) {
@@ -33,7 +34,7 @@ export function ProjectCard({ project }: { project: DashboardProject }) {
       setUpdating(false)
     }
   }
-  return <Link href={`/project/${project.id}`} className="group overflow-hidden rounded-xl border border-[#e2e5ea] bg-white transition-colors hover:border-slate-300">
+  return <Link href={`/project/${project.id}`} className="group min-w-0 overflow-hidden rounded-xl border border-[#e2e5ea] bg-white transition-colors hover:border-slate-300">
     <div className="relative aspect-[16/7] overflow-hidden bg-[#d9dde3]">
       {project.previewImage ? <img src={project.previewImage} style={{ objectPosition: `${project.coverPositionX}% ${project.coverPositionY}%` }} alt="" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]" /> : <div className="h-full w-full bg-[linear-gradient(135deg,#d8dde5,#eef0f3_55%,#cbd2db)]" />}
       <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-xs font-medium text-slate-700"><span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-blue-600" />{status}</span>
@@ -43,8 +44,8 @@ export function ProjectCard({ project }: { project: DashboardProject }) {
       </div>
     </div>
     <div className="p-4">
-      <div className="flex items-start justify-between gap-3"><div><h3 className="text-lg font-bold text-slate-950">{project.name}</h3>{project.description && <p className="line-clamp-1 text-sm text-slate-500">{project.description}</p>}</div><span className="flex items-center gap-1 text-xs text-slate-500"><Users className="h-3.5 w-3.5" />{project.participantCount}</span></div>
-      <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 border-t border-[#e2e5ea] pt-3 text-sm text-slate-500">{projectDate && <span className="flex items-center gap-2"><Calendar className="h-4 w-4" />{projectDate.toLocaleDateString(locale)}</span>}{project.location && <span className="flex items-center gap-2"><MapPin className="h-4 w-4" />{project.location}</span>}</div>
+      <div className="flex items-start justify-between gap-3"><div className="min-w-0 flex-1"><h3 className="break-words [overflow-wrap:anywhere] text-lg font-bold text-slate-950">{project.name}</h3>{project.description && <p className="line-clamp-1 text-sm text-slate-500">{project.description}</p>}</div><span className="flex items-center gap-1 text-xs text-slate-500"><Users className="h-3.5 w-3.5" />{project.participantCount}</span></div>
+      <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 border-t border-[#e2e5ea] pt-3 text-sm text-slate-500"><span className="flex items-center gap-2 text-slate-600"><HardDrive aria-hidden="true" className="h-4 w-4 shrink-0" /><span>{t("dashboard.storageLabel")}: <span className="whitespace-nowrap tabular-nums">{formatBytes(project.storageBytes, locale)}</span></span></span>{projectDate && <span className="flex items-center gap-2"><Calendar className="h-4 w-4" />{projectDate.toLocaleDateString(locale)}</span>}{project.location && <span className="flex items-center gap-2"><MapPin className="h-4 w-4" />{project.location}</span>}</div>
     </div>
   </Link>
 }

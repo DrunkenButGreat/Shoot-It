@@ -1,5 +1,10 @@
 "use client";
 
+import { sortSelectionImages, type SelectionSort } from "@/lib/selection-sort";
+import { SelectionSortControl } from "./SelectionSortControl";
+import { GallerySizeControl } from "@/components/GallerySizeControl";
+import { GalleryLoadMore } from "@/components/GalleryLoadMore";
+
 import { LightboxOriginalImageButton } from "@/components/LightboxOriginalImageButton";
 
 import { imagePreviewSource } from "@/lib/image-preview";
@@ -24,6 +29,7 @@ import {
   Columns,
   FolderPlus,
   LayoutGrid,
+  List,
   Move,
   Square,
   Trash2,
@@ -59,6 +65,7 @@ interface SelectionImage {
   height?: number | null;
   ratings: Rating | null;
   folderId?: string | null;
+  capturedAt?: Date | string | null;
 }
 
 interface SelectionFolder {
@@ -93,11 +100,12 @@ export function SelectionContent({
   const { t } = useI18n();
 
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [view, setView] = useState<"grid" | "masonry" | "justified">(
-    galleryLayout === "masonry" || galleryLayout === "justified"
+  const [view, setView] = useState<"grid" | "masonry" | "justified" | "list">(
+    galleryLayout === "masonry" || galleryLayout === "justified" || galleryLayout === "list"
       ? galleryLayout
       : "grid",
   );
+  const [sort, setSort] = useState<SelectionSort>("imported");
   const [unrated, setUnrated] = useState(false);
   const [lightboxImageId, setLightboxImageId] = useState<string | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
@@ -117,7 +125,7 @@ export function SelectionContent({
   const filteredImages = useMemo(() => {
     const stars = searchParams.getAll("stars");
     const colors = searchParams.getAll("color");
-    return images.filter(
+    return sortSelectionImages(images.filter(
       (img) =>
         (selectedFolderId === "unassigned"
           ? !img.folderId
@@ -125,8 +133,8 @@ export function SelectionContent({
         (!unrated || (!img.ratings?.stars && !img.ratings?.color)) &&
         (!stars.length || stars.includes(String(img.ratings?.stars))) &&
         (!colors.length || colors.includes(img.ratings?.color || "")),
-    );
-  }, [images, searchParams, selectedFolderId, unrated]);
+    ), sort);
+  }, [images, searchParams, selectedFolderId, unrated, sort]);
   const index = filteredImages.findIndex((image) => image.id === lightboxImageId);
   useEffect(() => {
     if (lightboxImageId && index < 0) setLightboxImageId(null);
@@ -391,7 +399,9 @@ export function SelectionContent({
                 {t("design.noRating")}
               </Button>
             </div>
-            <div className="flex gap-1">
+            <div className="flex flex-wrap items-center gap-1">
+              {view !== "list" && <GallerySizeControl />}
+              <SelectionSortControl value={sort} onChange={setSort} />
               <Button
                 size="icon"
                 variant={view === "grid" ? "secondary" : "ghost"}
@@ -400,6 +410,9 @@ export function SelectionContent({
                 aria-pressed={view === "grid"}
               >
                 <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button size="icon" variant={view === "list" ? "secondary" : "ghost"} onClick={() => setView("list")} aria-label={t("design.listView")} aria-pressed={view === "list"}>
+                <List className="h-4 w-4" />
               </Button>
               <Button
                 size="icon"
@@ -462,13 +475,10 @@ export function SelectionContent({
                 onRatingUpdated={handleRatingUpdated}
               />
               {visibleImages.length < filteredImages.length && (
-                <Button
-                  variant="outline"
+                <GalleryLoadMore
                   className="w-full"
-                  onClick={() => setVisibleLimit((limit) => limit + 100)}
-                >
-                  {t("common.loadMore")}
-                </Button>
+                  onLoadMore={() => setVisibleLimit((limit) => limit + 100)}
+                />
               )}
             </div>
           )}

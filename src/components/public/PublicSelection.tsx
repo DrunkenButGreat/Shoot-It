@@ -1,5 +1,11 @@
 "use client"
 
+import { sortSelectionImages, type SelectionSort } from "@/lib/selection-sort";
+import { SelectionSortControl } from "@/components/selection/SelectionSortControl";
+import { SelectionImageList } from "@/components/selection/SelectionImageList";
+import { GallerySizeControl } from "@/components/GallerySizeControl";
+import { GalleryLoadMore } from "@/components/GalleryLoadMore"
+
 import { OriginalImageButton, useIOSDevice } from "@/components/OriginalImageButton"
 
 import { imagePreviewSource } from "@/lib/image-preview"
@@ -29,6 +35,7 @@ interface SelectionImage {
   width?: number | null
   height?: number | null
   ratings: Rating | null
+  capturedAt?: Date | string | null
   folderId?: string | null
 }
 
@@ -67,6 +74,8 @@ export function PublicSelection({
   allowDownload = false,
   brandColor
 }: PublicSelectionProps) {
+  const [view, setView] = useState<"grid" | "masonry" | "justified" | "list">(layout)
+  const [sort, setSort] = useState<SelectionSort>("imported")
   const isIOS = useIOSDevice()
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null)
   const [selectionImages, setSelectionImages] = useState(images)
@@ -88,9 +97,9 @@ export function PublicSelection({
   const isGuest = !userHasAccess && !!allowGuestSelection
   const canRate = !!userHasAccess || !!allowGuestSelection
 
-  const filteredImages = useMemo(() => selectionImages.filter(image => matchesSelectionFilters(image, {
+  const filteredImages = useMemo(() => sortSelectionImages(selectionImages.filter(image => matchesSelectionFilters(image, {
     folderId: selectedFolderId, stars, colors, unrated,
-  })), [selectionImages, selectedFolderId, stars, colors, unrated])
+  })), sort), [selectionImages, selectedFolderId, stars, colors, unrated, sort])
   const selectedIndex = filteredImages.findIndex(image => image.id === selectedImageId)
   const setActiveImage = (id: string | null) => setSelectedImageId(id)
   const visibleImages = filteredImages.slice(0, visibleLimit)
@@ -341,7 +350,15 @@ export function PublicSelection({
   return (
     <div className="flex flex-col gap-6">
       <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {view !== "list" && <GallerySizeControl />}
+          <SelectionSortControl value={sort} onChange={setSort} />
+          <select aria-label={t('common.galleryView')} value={view} onChange={event => setView(event.target.value as typeof view)} className="h-11 max-w-full rounded-md border bg-white px-2 text-sm">
+            <option value="grid">{t('design.gridView')}</option>
+            <option value="list">{t('design.listView')}</option>
+            <option value="masonry">{t('design.masonry')}</option>
+            <option value="justified">{t('design.justified')}</option>
+          </select>
           <Button size="sm" variant={unrated ? 'ghost' : 'secondary'} aria-pressed={!unrated} onClick={() => setUnrated(false)}>{t('design.all')}</Button>
           <Button size="sm" variant={unrated ? 'secondary' : 'ghost'} aria-pressed={unrated} onClick={() => setUnrated(true)}>{t('design.noRating')}</Button>
         </div>
@@ -455,7 +472,9 @@ export function PublicSelection({
           </div>
         ) : (
           <>
-            {layout === "grid" ? (
+            {view === "list" ? (
+              <SelectionImageList images={visibleImages} projectId={projectId} onPreview={openLightbox} onRatingUpdated={handleRatingUpdated} readOnly={!canRate} isGuest={isGuest} selectedIds={selectedIds} onToggleSelect={allowDownload ? toggleSelect : undefined} onDownload={allowDownload ? downloadSingle : undefined} />
+            ) : view === "grid" ? (
               <div className="shootit-gallery-grid">
                 {visibleImages.map((image, index) => (
                   <ImageCard
@@ -473,7 +492,7 @@ export function PublicSelection({
                   />
                 ))}
               </div>
-            ) : layout === "justified" ? (
+            ) : view === "justified" ? (
               <div className="shootit-gallery-justified">
                 {visibleImages.map((image, index) => {
                   const width = image.width || 400
@@ -485,7 +504,7 @@ export function PublicSelection({
                       className="shootit-gallery-item relative"
                       style={{
                         flexGrow: aspect * 100,
-                        flexBasis: `${aspect * 180}px`,
+                        flexBasis: `calc(${aspect} * var(--gallery-item-base-width))`,
                       }}
                     >
                       <ImageCard
@@ -527,13 +546,10 @@ export function PublicSelection({
               </div>
             )}
             {visibleImages.length < filteredImages.length && (
-              <Button
-                variant="outline"
+              <GalleryLoadMore
                 className="mt-4 w-full"
-                onClick={() => setVisibleLimit(limit => limit + 100)}
-              >
-                {t('common.loadMore')}
-              </Button>
+                onLoadMore={() => setVisibleLimit(limit => limit + 100)}
+              />
             )}
           </>
         )}

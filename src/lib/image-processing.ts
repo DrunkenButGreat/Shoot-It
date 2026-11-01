@@ -1,4 +1,5 @@
 import sharp from 'sharp'
+import { exifCaptureDate } from './exif-date.js'
 import { appConfig } from '@/config/app.config'
 import path from 'path'
 import fs from 'fs/promises'
@@ -7,6 +8,7 @@ export interface ImageMetadata {
   width: number
   height: number
   size: number
+  capturedAt: Date | null
 }
 
 export async function generateThumbnail(
@@ -53,6 +55,7 @@ export async function getImageMetadata(filePath: string): Promise<ImageMetadata>
     width: (metadata.orientation && metadata.orientation >= 5 ? metadata.height : metadata.width) || 0,
     height: (metadata.orientation && metadata.orientation >= 5 ? metadata.width : metadata.height) || 0,
     size: stats.size,
+    capturedAt: exifCaptureDate(metadata.exif),
   }
 }
 

@@ -49,10 +49,12 @@ async function main() {
   const { ResultImageGrid } = load('src/components/results/ResultImageGrid')
   const { ProjectCard } = load('src/components/projects/ProjectCard')
   const { DashboardContent } = load('src/components/projects/DashboardContent')
+  const { StorageOverview } = load('src/components/projects/StorageOverview')
+  const { formatBytes } = load('src/lib/format-bytes')
   const image = { id: 'synthetic-image', filename: 'test.jpg', path: '/test.jpg', thumbnail: null, ratings: null }
   const project = { id: 'synthetic-project', name: 'Synthetic project', description: null, date: null,
     location: null, shortCode: 'synthetic', isArchived: false, previewImage: null,
-    participantCount: 0, selectionCount: 1, resultCount: 2, canDelete: true }
+    participantCount: 0, selectionCount: 1, resultCount: 2, storageBytes: 1536, canDelete: true }
   for (const locale of ['de', 'en']) {
     const dict = load(`src/dictionaries/${locale}.json`)
     const render = (component, props) => renderToStaticMarkup(React.createElement(I18nProvider,
@@ -80,11 +82,80 @@ async function main() {
     const viewer = render(ProjectCard, { project: { ...project, canDelete: false } })
     assert.ok(owner.includes(dict.project.delete))
     assert.ok(!viewer.includes(dict.project.delete))
+    assert.ok(owner.includes(dict.dashboard.storageLabel))
+    assert.ok(viewer.includes(locale === 'de' ? '1,5 KB' : '1.5 KB'))
+    assert.ok(render(ProjectCard, { project: { ...project, storageBytes: 0 } }).includes('0 B'))
     const storage = render(DashboardContent, { projects: [project], storage: { totalBytes: 1024,
       projects: [{ id: project.id, name: project.name, imageCount: 3, bytes: 1024, isArchived: false }] } })
     assert.ok(storage.includes(dict.dashboard.storageTitle))
-    assert.ok(storage.includes('1.0 KB'))
+    assert.ok(storage.includes(locale === 'de' ? '1,0 KB' : '1.0 KB'))
+    const rankedProjects = [
+      { id: 'zero', name: 'Zero', bytes: 0, imageCount: 0, isArchived: false },
+      { id: 'beta', name: 'Beta', bytes: 1024, imageCount: 1, isArchived: false },
+      { id: 'alpha', name: 'Alpha', bytes: 1024, imageCount: 2, isArchived: false },
+      { id: 'largest', name: 'Largest', bytes: 2048, imageCount: 3, isArchived: true },
+    ]
+    const ranking = render(StorageOverview, { storage: { totalBytes: 3072, projects: rankedProjects } })
+    assert.ok(ranking.indexOf('/project/largest') < ranking.indexOf('/project/alpha'))
+    assert.ok(ranking.indexOf('/project/alpha') < ranking.indexOf('/project/beta'))
+    assert.match(ranking, /<li hidden=""><a[^>]*href="\/project\/zero"/)
+    assert.match(ranking, /aria-expanded="false" aria-controls="storage-projects"/)
+    assert.ok(ranking.includes(dict.common.archived))
+    assert.ok(ranking.includes('width:100%'))
+    assert.ok(ranking.includes('width:50%'))
+    assert.ok(ranking.includes(dict.dashboard.storageSharedHint))
+    assert.deepEqual(rankedProjects.map(item => item.id), ['zero', 'beta', 'alpha', 'largest'])
+    const empty = render(StorageOverview, { storage: { totalBytes: 0, projects: [] } })
+    assert.ok(empty.includes(dict.dashboard.storageEmpty))
+    assert.ok(!empty.includes('aria-expanded'))
+    const zero = render(StorageOverview, { storage: { totalBytes: 0, projects: [rankedProjects[0]] } })
+    assert.ok(!zero.includes('width:'))
+    assert.ok(!zero.includes(dict.dashboard.storageEmpty))
+    assert.equal(formatBytes(1.5 * 1024 ** 3, locale), locale === 'de' ? '1,5 GB' : '1.5 GB')
+    assert.equal(formatBytes(0, locale), '0 B')
+    assert.equal(formatBytes(1024 ** 4, locale), locale === 'de' ? '1,0 TB' : '1.0 TB')
+    let expanded = false
+    const interactionLoad = loader({
+      react: { ...React, useState: () => [expanded, value => { expanded = value }] },
+      '@/components/I18nProvider': { useI18n: () => ({ locale, t: key => key.split('.').reduce((value, part) => value[part], dict) }) },
+    })
+    const InteractiveStorage = interactionLoad('src/components/projects/StorageOverview').StorageOverview
+    const findButton = node => {
+      if (!React.isValidElement(node)) return undefined
+      if (node.type === 'button') return node
+      return React.Children.toArray(node.props.children).map(findButton).find(Boolean)
+    }
+    const draw = () => InteractiveStorage({ storage: { totalBytes: 3072, projects: rankedProjects } })
+    findButton(draw()).props.onClick()
+    const open = draw()
+    assert.equal(findButton(open).props['aria-expanded'], true)
+    assert.ok(!renderToStaticMarkup(open).includes('<li hidden="">'))
+    assert.ok(renderToStaticMarkup(open).includes(dict.dashboard.storageShowLess))
+    findButton(open).props.onClick()
+    assert.equal(findButton(draw()).props['aria-expanded'], false)
   }
+  // The page batches only authorized projects and keeps shared bytes outside personal totals.
+  const storageCalls = []
+  const pageLoad = loader({
+    '@/auth': { auth: async () => ({ user: { id: 'owner', email: 'owner@example.test' } }) },
+    '@/lib/prisma': { __esModule: true, default: { project: { findMany: async ({ where }) => {
+      assert.deepEqual(where.OR, [{ ownerId: 'owner' }, { access: { some: { userId: 'owner' } } }, { participants: { some: { email: 'owner@example.test' } } }])
+      return ['owned', 'shared'].map(id => ({ ...project, id, ownerId: id === 'owned' ? 'owner' : 'someone-else',
+        date: null, _count: { participants: 1, selectionImages: 2, resultImages: 3 }, moodboardLinks: [] }))
+    } } } },
+    '@/lib/storage': { getStorageOverview: async ids => {
+      storageCalls.push(ids)
+      const bytes = ids[0] === 'owned' ? 1024 : 8192
+      return { totalBytes: bytes, projects: ids.map(projectId => ({ projectId, bytes })) }
+    } },
+    '@/components/projects/DashboardContent': { DashboardContent: () => null },
+  })
+  const page = await pageLoad('src/app/dashboard/page').default()
+  const props = page.props.children.props
+  assert.deepEqual(storageCalls, [['owned'], ['shared']])
+  assert.equal(props.storage.totalBytes, 1024)
+  assert.deepEqual(props.storage.projects.map(item => item.id), ['owned'])
+  assert.deepEqual(props.projects.map(item => item.storageBytes), [1024, 8192])
   assert.equal(load('src/config/app.config').appConfig.limits.maxUploadSize, 100 * 1024 * 1024)
 
   let session = { user: { id: 'owner' } }

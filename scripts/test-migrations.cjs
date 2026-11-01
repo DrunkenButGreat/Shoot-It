@@ -36,6 +36,7 @@ async function main() {
     return { db, command }
   }
   async function removeNewSchema(db) {
+    await db.$executeRawUnsafe('ALTER TABLE "SelectionImage" DROP COLUMN "capturedAt"')
     await db.$executeRawUnsafe('DROP TABLE "PocketIdSettings"')
     await db.$executeRawUnsafe('DROP TABLE "FileCleanupJob"')
     for (const model of ['SelectionImage', 'ResultFile', 'MoodboardImage', 'ParticipantImage', 'ApplicationImage']) {
@@ -115,12 +116,16 @@ async function main() {
       for (const field of fields) await before111.db.$executeRawUnsafe(`ALTER TABLE "${table}" DROP COLUMN "${field}"`)
     }
     await before111.db.$executeRawUnsafe('INSERT INTO "Project" (id,name,"shortCode","ownerId","updatedAt") SELECT \'old-project\',\'Preserved project\',\'old\',id,NOW() FROM "User" LIMIT 1')
+    await before111.db.$executeRawUnsafe(`INSERT INTO "SelectionImage" (id, filename, path, "projectId", "importedAt") VALUES ('old-image', 'preserved.jpg', '/api/uploads/selection/old-project/preserved.jpg', 'old-project', NOW())`)
     before111.command([migrate, 'upgrade'])
     before111.command([migrate, 'upgrade'])
     assert.equal((await before111.db.user.findUnique({ where: { email: 'before111@example.test' } })).isAdmin, true)
     assert.equal((await before111.db.user.findUnique({ where: { email: 'before111@example.test' } })).isOwner, true)
     assert.equal((await before111.db.registrationSettings.findUnique({ where: { id: 'global' } })).mode, 'OPEN')
     const oldProject = await before111.db.project.findUnique({ where: { id: 'old-project' } })
+    const oldImage = await before111.db.selectionImage.findUnique({ where: { id: 'old-image' } })
+    assert.equal(oldImage.filename, 'preserved.jpg')
+    assert.equal(oldImage.capturedAt, null)
     assert.equal(oldProject.name, 'Preserved project')
     assert.equal(oldProject.showSelectionFolders, true)
     assert.equal(oldProject.allowSelectionDownload, false)

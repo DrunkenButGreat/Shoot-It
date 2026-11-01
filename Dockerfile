@@ -66,6 +66,8 @@ ENV HOSTNAME="0.0.0.0"
 # Copy prisma schema for migrations
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/scripts/admin.cjs ./scripts/admin.cjs
+COPY --from=builder /app/scripts/backfill-selection-dates.cjs ./scripts/backfill-selection-dates.cjs
+COPY --from=builder /app/src/lib/exif-date.js ./src/lib/exif-date.js
 COPY --from=builder /app/scripts/migrate.cjs /app/scripts/healthcheck.cjs ./scripts/
 
 HEALTHCHECK --interval=10s --timeout=6s --start-period=30s --retries=6 CMD ["node", "scripts/healthcheck.cjs"]

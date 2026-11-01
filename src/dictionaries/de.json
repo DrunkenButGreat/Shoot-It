@@ -10,6 +10,12 @@
     "failed": "{count} Dateien fehlgeschlagen"
   },
   "common": {
+    "sortBy": "Sortieren nach",
+    "sortCapturedAsc": "Aufnahmedatum: älteste zuerst",
+    "sortCapturedDesc": "Aufnahmedatum: neueste zuerst",
+    "galleryView": "Galerieansicht",
+
+    "imageSize": "Bildgröße",
     "tbd": "Ausstehend",
     "back": "Zurück",
     "save": "Speichern",
@@ -78,7 +84,13 @@
   },
   "dashboard": {
     "storageTitle": "Speicherübersicht",
-    "storageTotal": "Gesamter Shoot-It-Speicher",
+    "storageTotal": "Speicher deiner Projekte",
+    "storageLabel": "Speicher",
+    "storageLargest": "Größte Projekte",
+    "storageEmpty": "Du hast noch keine eigenen Projekte. Erstelle ein Projekt, um deinen Speicherverbrauch hier zu sehen.",
+    "storageShowAll": "Alle Projekte anzeigen",
+    "storageShowLess": "Weniger anzeigen",
+    "storageSharedHint": "Gemeinsam verwendete Moodboard-Dateien werden in der Gesamtsumme nur einmal gezählt. Einzelne Projektgrößen können sich deshalb überschneiden.",
     "storageImage": "Datei",
     "storageImages": "Dateien",
     "title": "Dashboard",

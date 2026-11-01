@@ -351,6 +351,7 @@ model SelectionImage {
   projectId  String
   folderId   String?
   importedAt DateTime          @default(now())
+  capturedAt DateTime?
   project    Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   folder     SelectionFolder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
   ratings    ImageRating?
