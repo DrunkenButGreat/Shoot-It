@@ -82,12 +82,12 @@ async function handlers() {
     })
     assert.equal((await route.PUT(req({ stars: 5, guestId: 'guest' }), ctx({ imageId: 'image' }))).status, 401)
   }
-  route = load('src/proxy.ts', { '@/auth': { auth: fn => fn } })
+  route = load('src/proxy.ts', { '@/auth': { auth: async fn => fn } })
   for (const pathname of ['/', '/login', '/signup', '/p/share', '/api/auth/callback/google', '/images/design/coastal-editorial.webp', '/robots.txt']) {
-    assert.equal(route.proxy({ nextUrl: new URL(`http://localhost${pathname}`), url: `http://localhost${pathname}`, auth: null }).headers.get('x-middleware-next'), '1')
+    assert.equal((await route.proxy({ nextUrl: new URL(`http://localhost${pathname}`), url: `http://localhost${pathname}`, auth: null })).headers.get('x-middleware-next'), '1')
   }
   for (const pathname of ['/project/private', '/images-private/secret', '/robots.txt-private', '/images/../project/private']) {
-    assert.equal(route.proxy({ nextUrl: new URL(`http://localhost${pathname}`), url: `http://localhost${pathname}`, auth: null }).status, 307)
+    assert.equal((await route.proxy({ nextUrl: new URL(`http://localhost${pathname}`), url: `http://localhost${pathname}`, auth: null })).status, 307)
   }
 }
 async function policy() {

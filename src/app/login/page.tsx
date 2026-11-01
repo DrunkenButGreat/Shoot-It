@@ -10,6 +10,7 @@ import { getDictionary, getLocale } from "@/lib/i18n";
 import { getRegistrationMode } from "@/lib/registration";
 import { BrandMark } from "@/components/layout/BrandMark";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { getPocketIdConfig } from "@/lib/pocket-id";
 
 export default async function LoginPage({ searchParams }: {
   searchParams: Promise<{ callbackUrl?: string | string[] }>;
@@ -19,6 +20,7 @@ export default async function LoginPage({ searchParams }: {
   }
   const siteImages = await getSiteImages();
   const mode = await getRegistrationMode();
+  const pocketIdEnabled = !!await getPocketIdConfig();
   const dict = await getDictionary(getLocale(await cookies()));
   return (
     <main className="grid min-h-screen bg-white lg:grid-cols-[46%_54%]">
@@ -41,7 +43,7 @@ export default async function LoginPage({ searchParams }: {
           <LanguageSwitcher />
         </div>
         <Suspense fallback={<div>{dict.common.loading}</div>}>
-          <LoginForm mode={mode} />
+          <LoginForm mode={mode} pocketIdEnabled={pocketIdEnabled} />
         </Suspense>
       </section>
     </main>

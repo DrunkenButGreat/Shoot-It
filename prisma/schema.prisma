@@ -7,6 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model PocketIdSettings {
+  id           String  @id @default("global")
+  enabled      Boolean @default(false)
+  issuer       String  @default("")
+  clientId     String  @default("")
+  clientSecret String?
+}
+
 model User {
   id                   String                @id @default(cuid())
   email                String                @unique

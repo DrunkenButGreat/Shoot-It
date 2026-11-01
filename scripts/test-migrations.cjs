@@ -36,6 +36,7 @@ async function main() {
     return { db, command }
   }
   async function removeNewSchema(db) {
+    await db.$executeRawUnsafe('DROP TABLE "PocketIdSettings"')
     await db.$executeRawUnsafe('DROP TABLE "FileCleanupJob"')
     for (const model of ['SelectionImage', 'ResultFile', 'MoodboardImage', 'ParticipantImage', 'ApplicationImage']) {
       for (const field of ['path', 'thumbnail']) await db.$executeRawUnsafe(`DROP INDEX "${model}_${field}_idx"`)

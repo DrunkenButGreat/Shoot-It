@@ -9,10 +9,14 @@ import { getDictionary, getLocale } from "@/lib/i18n"
 import prisma from "@/lib/prisma"
 import UserMenu from "@/components/auth/UserMenu"
 import AdminDashboard from "@/components/admin/AdminDashboard"
+import { PocketIdSettings } from "@/components/admin/PocketIdSettings"
+import { getPocketIdSettings } from "@/lib/pocket-id"
 
 export default async function AdminPage() {
   if (!await getAdmin()) notFound()
   const siteImages = await getSiteImages()
+  const pocketId = await getPocketIdSettings()
+  const callbackUrl = `${(process.env.AUTH_URL || "http://localhost:3000").replace(/\/$/, "")}/api/auth/callback/pocket-id`
   const dict = await getDictionary(getLocale(await cookies()))
   const [mode, userCount, projectCount, activeInvites, invites, users] = await Promise.all([
     getRegistrationMode(),
@@ -51,6 +55,7 @@ export default async function AdminPage() {
           ))}
         </div>
         <SiteAppearance initialImages={siteImages} />
+        <PocketIdSettings initial={pocketId} callbackUrl={callbackUrl} />
         <AdminDashboard
           mode={mode}
           invites={invites.map(invite => ({ ...invite, createdAt: invite.createdAt.toISOString(), expiresAt: invite.expiresAt.toISOString(), usedAt: invite.usedAt?.toISOString() ?? null, revokedAt: invite.revokedAt?.toISOString() ?? null }))}

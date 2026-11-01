@@ -1,8 +1,8 @@
 import { auth } from "@/auth"
 import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
+import type { NextRequest, NextFetchEvent } from "next/server"
 
-export const proxy = auth((req) => {
+const authenticatedProxy = auth((req, _event: NextFetchEvent) => {
   const { pathname } = req.nextUrl
   const isLoggedIn = !!req.auth
 
@@ -30,6 +30,11 @@ export const proxy = auth((req) => {
 
   return NextResponse.next()
 })
+
+// Auth.js lazy configuration returns its wrapper asynchronously.
+export async function proxy(request: NextRequest, event: NextFetchEvent) {
+  return (await authenticatedProxy)(request, event)
+}
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
