@@ -18,6 +18,8 @@ interface ProjectActionsProps {
   project: {
     shortCode: string;
     brandingImage?: string | null;
+    coverPositionX: number;
+    coverPositionY: number;
     id: string;
     name: string;
     description: string | null;
@@ -51,6 +53,8 @@ export function ProjectActions({ project }: ProjectActionsProps) {
       <ProjectCover
         projectId={project.id}
         image={project.brandingImage}
+        positionX={project.coverPositionX}
+        positionY={project.coverPositionY}
         editable
         actionOnly
       />

@@ -1,5 +1,9 @@
 "use client"
 
+import { OriginalImageButton, useIOSDevice } from "@/components/OriginalImageButton"
+
+import { imagePreviewSource } from "@/lib/image-preview"
+
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { useRouter } from "next/navigation"
@@ -57,7 +61,6 @@ export function PublicSelection({
   images,
   folders,
   layout = "masonry",
-  columns = 4,
   userHasAccess,
   isAuthenticated,
   allowGuestSelection,
@@ -65,6 +68,7 @@ export function PublicSelection({
   allowDownload = false,
   brandColor
 }: PublicSelectionProps) {
+  const isIOS = useIOSDevice()
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const [stars, setStars] = useState<string[]>([])
@@ -74,7 +78,8 @@ export function PublicSelection({
   const [isDownloadingAll, setIsDownloadingAll] = useState(false)
   const [downloadMode, setDownloadMode] = useState<'zip' | 'files'>('zip')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const canDirectDownload = supportsDirectDownload()
+  const [canDirectDownload, setCanDirectDownload] = useState(false)
+  useEffect(() => { setCanDirectDownload(supportsDirectDownload()) }, [])
   const router = useRouter()
   const { t } = useI18n()
 
@@ -230,14 +235,6 @@ export function PublicSelection({
     })
   }
 
-  const getColumnsData = () => {
-    const cols: { image: SelectionImage; index: number }[][] = Array.from({ length: columns }, () => [])
-    filteredImages.forEach((image, index) => {
-      cols[index % columns].push({ image, index })
-    })
-    return cols
-  }
-
   // Get flat list of folders with names that show their hierarchy
   const getFlatFolders = (folderList: SelectionFolder[], prefix = ''): { id: string, name: string }[] => {
     let flat: { id: string, name: string }[] = []
@@ -260,12 +257,14 @@ export function PublicSelection({
     >
       {/* Lightbox Header */}
       <div className="h-20 flex items-center justify-between px-6 md:px-10 bg-gradient-to-b from-black/60 to-transparent shrink-0">
-        <div className="text-white/80">
-          <p className="text-sm font-bold uppercase tracking-widest">{filteredImages[selectedIndex].filename}</p>
+        <div className="min-w-0 flex-1 text-white/80">
+          <p className="truncate text-sm font-bold uppercase tracking-widest">{filteredImages[selectedIndex].filename}</p>
           <p className="text-xs text-white/50">{selectedIndex + 1} / {filteredImages.length}</p>
         </div>
-        <div className="flex items-center gap-2">
-          {allowDownload && (
+        <div className="flex shrink-0 items-center gap-2">
+          {allowDownload && (isIOS ? (
+            <OriginalImageButton image={filteredImages[selectedIndex]} allowed={allowDownload} />
+          ) : (
             <button
               className="p-3 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-2xl transition-all shadow-xl backdrop-blur-md border border-white/10"
               onClick={(e) => { e.stopPropagation(); downloadSingle(filteredImages[selectedIndex]) }}
@@ -273,7 +272,7 @@ export function PublicSelection({
             >
               <Download className="h-6 w-6" />
             </button>
-          )}
+          ))}
           <button
             className="p-3 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-2xl transition-all shadow-xl backdrop-blur-md border border-white/10"
             onClick={closeLightbox}
@@ -305,7 +304,7 @@ export function PublicSelection({
           onClick={(e) => e.stopPropagation()}
         >
           <img
-            src={filteredImages[selectedIndex].path}
+            src={imagePreviewSource(filteredImages[selectedIndex])}
             alt={filteredImages[selectedIndex].filename}
             className="max-w-full max-h-full object-contain shadow-2xl rounded-lg animate-in zoom-in-95 duration-500"
           />
@@ -453,7 +452,7 @@ export function PublicSelection({
         ) : (
           <>
             {layout === "grid" ? (
-              <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-${columns} gap-4`}>
+              <div className="shootit-gallery-grid">
                 {filteredImages.map((image, index) => (
                   <ImageCard
                     key={image.id}
@@ -471,7 +470,7 @@ export function PublicSelection({
                 ))}
               </div>
             ) : layout === "justified" ? (
-              <div className="flex flex-wrap gap-4">
+              <div className="shootit-gallery-justified">
                 {filteredImages.map((image, index) => {
                   const width = image.width || 400
                   const height = image.height || 300
@@ -479,10 +478,10 @@ export function PublicSelection({
                   return (
                     <div
                       key={image.id}
-                      className="relative h-[340px]"
+                      className="shootit-gallery-item relative"
                       style={{
                         flexGrow: aspect * 100,
-                        flexBasis: `${aspect * 200}px`,
+                        flexBasis: `${aspect * 180}px`,
                       }}
                     >
                       <ImageCard
@@ -504,28 +503,22 @@ export function PublicSelection({
                 <div className="flex-[1000] h-0" />
               </div>
             ) : (
-              /* Masonry */
-              <div className={`flex gap-4 items-start`}>
-                {getColumnsData().map((column, colIdx) => (
-                  <div key={colIdx} className="flex-1 flex flex-col gap-4">
-                    {column.map(({ image, index: globalIndex }) => (
-                      <div key={image.id}>
-                        <ImageCard
-                          image={image}
-                          projectId={projectId}
-                          onImageClick={() => openLightbox(globalIndex)}
-                          onRatingUpdated={handleRatingUpdated}
-                          masonry={true}
-                          readOnly={!canRate}
-                          isGuest={isGuest}
-                          selected={selectedIds.has(image.id)}
-                          onSelect={allowDownload ? () => toggleSelect(image.id) : undefined}
-                          forceSelectable={allowDownload}
-                          onDownload={allowDownload ? () => downloadSingle(image) : undefined}
-                        />
-                      </div>
-                    ))}
-                  </div>
+              <div className="shootit-gallery-masonry">
+                {filteredImages.map((image, index) => (
+                  <ImageCard
+                    key={image.id}
+                    image={image}
+                    projectId={projectId}
+                    onImageClick={() => openLightbox(index)}
+                    onRatingUpdated={handleRatingUpdated}
+                    masonry={true}
+                    readOnly={!canRate}
+                    isGuest={isGuest}
+                    selected={selectedIds.has(image.id)}
+                    onSelect={allowDownload ? () => toggleSelect(image.id) : undefined}
+                    forceSelectable={allowDownload}
+                    onDownload={allowDownload ? () => downloadSingle(image) : undefined}
+                  />
                 ))}
               </div>
             )}

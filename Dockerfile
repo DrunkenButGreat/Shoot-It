@@ -12,6 +12,7 @@ RUN npm ci
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
@@ -19,7 +20,8 @@ COPY . .
 RUN npx prisma generate
 
 # Build Next.js
-RUN npm run build
+RUN npm run test:design && node scripts/test-pottsblitz.cjs && node scripts/test-gallery-previews.cjs && node scripts/test-ios-device.cjs
+RUN NODE_OPTIONS=--max-old-space-size=1024 npm run build -- --webpack
 
 # Keep the locked production dependencies, including the migration CLI.
 FROM deps AS production-deps
@@ -70,3 +72,7 @@ HEALTHCHECK --interval=10s --timeout=6s --start-period=30s --retries=6 CMD ["nod
 
 # Automatic updates run migrations separately before starting this command.
 CMD ["sh", "-c", "node scripts/migrate.cjs start && exec node server.js"]
+
+ARG SOURCE_REVISION
+LABEL org.opencontainers.image.revision=$SOURCE_REVISION
+LABEL org.opencontainers.image.version="1.22.0"

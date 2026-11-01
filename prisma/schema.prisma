@@ -109,6 +109,9 @@ model Project {
   showCallsheetPublicly    Boolean                @default(false)
   showResultsPublicly      Boolean                @default(false)
   galleryLayout            String                 @default("masonry")
+  coverHidden              Boolean @default(false)
+  coverPositionX           Int @default(50)
+  coverPositionY           Int @default(50)
   brandingColor            String?
   brandingImage            String?
   isArchived               Boolean                @default(false)

@@ -250,7 +250,7 @@ export function WorkspaceShell({
           {t("nav.settings")}
         </Link>
         <p className="px-3 pt-3 text-[10px] text-slate-600">
-          v{packageInfo.version}
+          v{packageInfo.version.split("+")[0]}
         </p>
       </div>
     </>

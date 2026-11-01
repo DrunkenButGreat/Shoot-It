@@ -1,5 +1,9 @@
 "use client";
 
+import { LightboxOriginalImageButton } from "@/components/LightboxOriginalImageButton";
+
+import { imagePreviewSource } from "@/lib/image-preview";
+
 import { useI18n } from "@/components/I18nProvider";
 import { Button } from "@/components/ui/button";
 import {
@@ -144,6 +148,25 @@ export function SelectionContent({
 
     setSelectedImageIds(newSelected);
   };
+
+  const handleDeleteImage = async (imageId: string) => {
+    if (!confirm(t('selection.confirmDeleteImage'))) return
+
+    try {
+      const res = await fetch(`/api/projects/${projectId}/selection/images/bulk`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageIds: [imageId] })
+      })
+
+      if (!res.ok) throw new Error()
+
+      toast.success(t('selection.deletedImageSuccess'))
+      router.refresh()
+    } catch (error) {
+      toast.error(t('common.error'))
+    }
+  }
 
   const handleDeleteSelected = async () => {
     if (!selectedImageIds.size || !confirm(t("selection.confirmDeleteImages")))
@@ -421,6 +444,7 @@ export function SelectionContent({
                 layout={view}
                 selectedIds={selectedImageIds}
                 onToggleSelect={handleToggleImage}
+                onDelete={handleDeleteImage}
                 onImageClick={(i) => setIndex(i)}
                 onRatingUpdated={handleRatingUpdated}
               />
@@ -442,7 +466,7 @@ export function SelectionContent({
                   className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50"
                   onClick={handleDeleteSelected}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-4 w-4 mr-2" />{t("coverControls.deleteSelected")}
                 </Button>
 
                 {showFolders && (
@@ -541,8 +565,10 @@ export function SelectionContent({
         index={index}
         open={index >= 0}
         close={() => setIndex(-1)}
+        toolbar={{ buttons: [<LightboxOriginalImageButton key="original" images={filteredImages} />, "close"] }}
+        carousel={{ preload: 0 }}
         slides={filteredImages.map((img) => ({
-          src: img.path,
+          src: imagePreviewSource(img),
           image: img,
         }))}
         render={{

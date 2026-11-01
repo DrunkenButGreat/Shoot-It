@@ -5,6 +5,60 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.22.0] - 2026-11-01
+
+### Added
+- Project cover removal and positioning with mouse/touch controls and sliders.
+- Validated owner-only bulk deletion in result galleries.
+- Dedicated public selection/results pages and dashboard storage overview.
+
+### Changed
+- Show complete images and reuse existing WebP previews throughout galleries and lightboxes.
+- Keep original-image downloads available on iPhone and iPad.
+- Integrate PR #26 with the dependency updates from PR #24.
+
+### Fixed
+- Redirect authenticated users to the dashboard or a validated local return path.
+- Preserve EXIF orientation for new uploads and local-media previews.
+- Update legacy migration test fixtures for the additive cover columns and verify preserved project data/defaults.
+
+## [1.21.2+pottsblitz.20261005] - 2026-10-05
+
+### Added
+- Add a visible Download link inside image previews on iPhone and iPad, including iPadOS desktop mode. It opens the original inline for native saving and respects public selection download permissions.
+- Keep result file details available in the image actions menu and list view.
+
+### Fixed
+- Use compact responsive thumbnail grids and masonry columns; bound photo height while containing the complete frame, including public project overview thumbnails.
+- Open public overview thumbnails in the preview instead of only scrolling to the moodboard.
+- Delay browser-only direct-download detection until mount to avoid mismatched server/client markup in public selections.
+- Reuse an existing valid session on the home and login pages and redirect signed-in users to their dashboard or a safe local return path; keep the existing cookie/session policy.
+- Hide internal build metadata in the visible footer and workspace version; retain the complete internal identifier for support and rollback.
+- Open the image preview directly when clicking result thumbnails in all gallery layouts.
+- Follow the currently displayed image when opening its original after lightbox navigation; continue reusing existing upload previews without additional derivatives.
+
+## [1.21.1+pottsblitz.20261004] - 2026-10-04
+
+### Fixed
+- Preserve complete portrait and landscape images in selection, result and moodboard galleries, including public views and inspector previews; remove cropping hover zoom.
+- Reuse the single existing proportional WebP preview (maximum 2560 px) in thumbnails, inspectors and lightboxes, without additional derivatives or rewriting existing files.
+- Preserve EXIF orientation for future uploads and create the same canonical preview during local-media import.
+- Keep original files for downloads and video playback; load only the current lightbox image.
+- Avoid overlapping modal focus managers when opening a lightbox from an image menu; restore gallery accessibility after closing.
+
+## [1.21.0+pottsblitz.20261004] - 2026-10-04
+
+### Changed
+- Adopt upstream 1.21.0 while retaining the Atelier POTTsblitz customizations.
+- Keep separate public selection/results pages, result-file counts, the dashboard storage overview and all accessible projects.
+- Retain per-image deletion and project deletion from dashboard cards, including aborting database deletion when filesystem cleanup fails.
+- Retain the 100 MiB selection upload limit and prevent deletion controls on public results.
+- Patch Next.js to 16.3.8, the Prisma auth adapter to 2.11.3, sharp to 0.35.5 and Nano ID within its existing major version after dependency security review. Prisma remains 6.19.2.
+- Align reported application versions with the package version; use the supported webpack build within the server memory limit.
+- Refresh compatible transitive brace-expansion and browser mapping dependencies.
+- Dashboard project delete controls are shown only for project owners.
+- Deployment preserves the existing PostgreSQL 18 parent mount explicitly through POSTGRES_VOLUME_TARGET; the custom image is pinned and automatic updates remain disabled.
+
 ## [1.21.2] - 2026-11-01
 
 ### Fixed

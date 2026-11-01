@@ -1,5 +1,9 @@
 "use client";
 
+import { LightboxOriginalImageButton } from "@/components/LightboxOriginalImageButton";
+
+import { imagePreviewSource } from "@/lib/image-preview";
+
 import { useI18n } from "@/components/I18nProvider";
 import { Eye, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -39,7 +43,7 @@ export function ResultImageGrid({
   images: ResultFile[];
   selectedIds: Set<string>;
   onToggleSelect: (id: string) => void;
-  onDelete: (id: string) => void;
+  onDelete?: (id: string) => void;
   showDelete?: boolean;
   projectId: string;
   layout?: string;
@@ -63,13 +67,13 @@ export function ResultImageGrid({
                 onChange={() => onToggleSelect(image.id)}
               />
               <button
-                onClick={() => (onInspect ? onInspect(image.id) : setIndex(i))}
+                onClick={() => setIndex(i)}
                 className="flex min-w-0 flex-1 items-center gap-3 text-left"
               >
                 <img
-                  src={image.thumbnail || image.path}
+                  src={imagePreviewSource(image)}
                   alt=""
-                  className="h-12 w-16 rounded object-cover"
+                  className="h-12 w-16 rounded object-contain"
                 />
                 <span className="truncate text-sm">{image.filename}</span>
               </button>
@@ -79,9 +83,14 @@ export function ResultImageGrid({
               >
                 <Eye className="h-4 w-4" />
               </button>
-              {showDelete && (
+              {onInspect && (
+                <button onClick={() => onInspect(image.id)} aria-label={t("design.fileDetails")} className="text-sm">
+                  {t("common.details")}
+                </button>
+              )}
+              {showDelete && onDelete && (
                 <button
-                  onClick={() => onDelete(image.id)}
+                  onClick={() => onDelete?.(image.id)}
                   aria-label={t("common.delete")}
                   className="text-slate-400 hover:text-red-600"
                 >
@@ -94,17 +103,16 @@ export function ResultImageGrid({
       );
     if (layout === "grid") {
       return (
-        <div className="grid grid-cols-2 gap-3 2xl:grid-cols-3">
+        <div className="shootit-gallery-grid">
           {images.map((image, i) => (
             <ImageCard
               key={image.id}
               image={{ ...image, ratings: null }}
               projectId={projectId}
-              onImageClick={() =>
-                onInspect ? onInspect(image.id) : setIndex(i)
-              }
+              onImageClick={() => setIndex(i)}
               onPreview={() => setIndex(i)}
-              onDelete={showDelete ? () => onDelete(image.id) : undefined}
+              onDetails={onInspect ? () => onInspect(image.id) : undefined}
+              onDelete={showDelete && onDelete ? () => onDelete?.(image.id) : undefined}
               selected={selectedIds.has(image.id)}
               onSelect={() => onToggleSelect(image.id)}
               hideRatings={true}
@@ -116,7 +124,7 @@ export function ResultImageGrid({
 
     if (layout === "justified") {
       return (
-        <div className="flex flex-wrap gap-4">
+        <div className="shootit-gallery-justified">
           {images.map((image, i) => {
             const width = image.width || 400;
             const height = image.height || 300;
@@ -124,20 +132,19 @@ export function ResultImageGrid({
             return (
               <div
                 key={image.id}
-                className="relative group h-[240px]"
+                className="shootit-gallery-item relative group"
                 style={{
                   flexGrow: aspect * 100,
-                  flexBasis: `${aspect * 240}px`,
+                  flexBasis: `${aspect * 180}px`,
                 }}
               >
                 <ImageCard
                   image={{ ...image, ratings: null }}
                   projectId={projectId}
-                  onImageClick={() =>
-                    onInspect ? onInspect(image.id) : setIndex(i)
-                  }
+                  onImageClick={() => setIndex(i)}
                   onPreview={() => setIndex(i)}
-                  onDelete={showDelete ? () => onDelete(image.id) : undefined}
+              onDetails={onInspect ? () => onInspect(image.id) : undefined}
+                  onDelete={showDelete && onDelete ? () => onDelete?.(image.id) : undefined}
                   justified={true}
                   selected={selectedIds.has(image.id)}
                   onSelect={() => onToggleSelect(image.id)}
@@ -152,17 +159,16 @@ export function ResultImageGrid({
     }
 
     return (
-      <div className="columns-2 gap-3 2xl:columns-3">
+      <div className="shootit-gallery-masonry">
         {images.map((image, i) => (
           <div key={image.id} className="mb-3 break-inside-avoid">
             <ImageCard
               image={{ ...image, ratings: null }}
               projectId={projectId}
-              onImageClick={() =>
-                onInspect ? onInspect(image.id) : setIndex(i)
-              }
+              onImageClick={() => setIndex(i)}
               onPreview={() => setIndex(i)}
-              onDelete={showDelete ? () => onDelete(image.id) : undefined}
+              onDetails={onInspect ? () => onInspect(image.id) : undefined}
+              onDelete={showDelete && onDelete ? () => onDelete?.(image.id) : undefined}
               masonry
               selected={selectedIds.has(image.id)}
               onSelect={() => onToggleSelect(image.id)}
@@ -187,6 +193,8 @@ export function ResultImageGrid({
         index={index}
         open={index >= 0}
         close={() => setIndex(-1)}
+        toolbar={{ buttons: [<LightboxOriginalImageButton key="original" images={images} />, "close"] }}
+        carousel={{ preload: 0 }}
         plugins={[Video]}
         slides={images.map((img) =>
           img.isVideo
@@ -200,7 +208,7 @@ export function ResultImageGrid({
                 title: img.filename,
               }
             : {
-                src: img.path,
+                src: imagePreviewSource(img),
                 downloadUrl: img.path,
                 title: img.filename,
               },

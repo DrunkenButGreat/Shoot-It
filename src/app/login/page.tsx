@@ -1,3 +1,7 @@
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+import { authReturnPath } from "@/lib/auth-return-path";
+
 import { getSiteImages } from "@/lib/site-settings";
 import { Suspense } from "react";
 import LoginForm from "@/components/auth/LoginForm";
@@ -7,7 +11,12 @@ import { getRegistrationMode } from "@/lib/registration";
 import { BrandMark } from "@/components/layout/BrandMark";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
-export default async function LoginPage() {
+export default async function LoginPage({ searchParams }: {
+  searchParams: Promise<{ callbackUrl?: string | string[] }>;
+}) {
+  if ((await auth())?.user?.id) {
+    redirect(authReturnPath((await searchParams).callbackUrl));
+  }
   const siteImages = await getSiteImages();
   const mode = await getRegistrationMode();
   const dict = await getDictionary(getLocale(await cookies()));

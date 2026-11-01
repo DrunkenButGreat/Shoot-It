@@ -12,22 +12,30 @@ import {
 } from "@/components/ui/dialog";
 import { ImagePlus, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export function ProjectCover({
   projectId,
   image,
   editable = false,
   actionOnly = false,
+  positionX = 50,
+  positionY = 50,
 }: {
   projectId: string;
   image?: string | null;
   editable?: boolean;
   actionOnly?: boolean;
+  positionX?: number;
+  positionY?: number;
 }) {
   const { t } = useI18n();
   const router = useRouter();
+  const [x, setX] = useState(positionX);
+  const [y, setY] = useState(positionY);
+  const drag = useRef<{ startX: number; startY: number; x: number; y: number; overflowX: number; overflowY: number } | null>(null);
   const [open, setOpen] = useState(false);
+  useEffect(() => { setX(positionX); setY(positionY); }, [positionX, positionY, open]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [source, setSource] = useState<'upload' | 'moodboard' | 'selection' | 'results'>('upload');
@@ -48,6 +56,18 @@ export function ProjectCover({
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [open, source, page, projectId, t]);
+  const updateCover = async (remove = false) => {
+    if (busy || (remove && !confirm(t('coverControls.removeConfirm')))) return;
+    setBusy(true); setError('');
+    try {
+      const response = await fetch(`/api/projects/${projectId}/branding`, remove ? { method: 'DELETE' } : {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'position', x, y }),
+      });
+      if (!response.ok) throw new Error();
+      setOpen(false); router.refresh();
+    } catch { setError(t('common.error')); }
+    finally { setBusy(false); }
+  };
   const choose = async (imageId: string) => {
     setBusy(true); setError('');
     try {
@@ -102,14 +122,40 @@ export function ProjectCover({
             </Button>
           ))}
         </div>
+        {image && <div className="space-y-3">
+          <h3 className="text-sm font-semibold">{t('coverControls.position')}</h3>
+          <p className="text-sm text-slate-500">{t('coverControls.help')}</p>
+          <img src={image} alt={t('design.projectCover')} draggable={false}
+            className="aspect-[16/7] w-full touch-none cursor-move select-none rounded-lg object-cover"
+            style={{ objectPosition: `${x}% ${y}%` }}
+            onPointerDown={e => {
+              if (busy) return;
+              const el = e.currentTarget, rect = el.getBoundingClientRect();
+              const scale = Math.max(rect.width / el.naturalWidth, rect.height / el.naturalHeight);
+              drag.current = { startX: e.clientX, startY: e.clientY, x, y, overflowX: el.naturalWidth * scale - rect.width, overflowY: el.naturalHeight * scale - rect.height };
+              el.setPointerCapture(e.pointerId);
+            }}
+            onPointerMove={e => {
+              const d = drag.current; if (!d) return;
+              const clamp = (v: number) => Math.round(Math.min(100, Math.max(0, v)));
+              if (d.overflowX > 1) setX(clamp(d.x - (e.clientX - d.startX) / d.overflowX * 100));
+              if (d.overflowY > 1) setY(clamp(d.y - (e.clientY - d.startY) / d.overflowY * 100));
+            }}
+            onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }} />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="text-sm">{t('coverControls.horizontal')}
+              <input className="block w-full" type="range" min="0" max="100" value={x} disabled={busy} onChange={e => setX(Number(e.target.value))} />
+            </label>
+            <label className="text-sm">{t('coverControls.vertical')}
+              <input className="block w-full" type="range" min="0" max="100" value={y} disabled={busy} onChange={e => setY(Number(e.target.value))} />
+            </label>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button disabled={busy} onClick={() => void updateCover()}>{t('coverControls.save')}</Button>
+            <Button variant="outline" className="text-red-600" disabled={busy} onClick={() => void updateCover(true)}>{t('coverControls.remove')}</Button>
+          </div>
+        </div>}
         {source === 'upload' ? <>
-        {image && (
-          <img
-            src={image}
-            alt={t("design.projectCover")}
-            className="aspect-video w-full rounded-lg object-cover"
-          />
-        )}
         <input
           aria-label={t("design.changeCover")}
           type="file"
@@ -153,6 +199,7 @@ export function ProjectCover({
           src={image}
           alt={t("design.projectCover")}
           className="absolute inset-0 h-full w-full object-cover"
+          style={{ objectPosition: `${positionX}% ${positionY}%` }}
         />
       ) : (
         <div className="flex h-full items-center justify-center text-slate-400">

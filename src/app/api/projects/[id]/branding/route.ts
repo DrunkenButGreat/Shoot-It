@@ -46,7 +46,7 @@ export async function POST(
         // Update Project
         await prisma.project.update({
             where: { id },
-            data: { brandingImage: imageUrl }
+            data: { brandingImage: imageUrl, coverHidden: false, coverPositionX: 50, coverPositionY: 50 }
         })
 
         return NextResponse.json({ url: imageUrl })
@@ -91,7 +91,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const { id } = await params
     if (!await prisma.project.findFirst({ where: { id, ownerId: session.user.id } })) return new NextResponse(null, { status: 404 })
     try {
-        const input = z.object({ source: sourceSchema, imageId: z.string().min(1).max(200) }).parse(await request.json())
+        const body = await request.json()
+        if (body.action === 'position') {
+            const position = z.object({ x: z.number().int().min(0).max(100), y: z.number().int().min(0).max(100) }).parse(body)
+            await prisma.project.update({ where: { id }, data: { coverPositionX: position.x, coverPositionY: position.y } })
+            return NextResponse.json({ success: true })
+        }
+        const input = z.object({ source: sourceSchema, imageId: z.string().min(1).max(200) }).parse(body)
         const [image] = await projectImages(id, input.source, input.imageId)
         if (!image) return new NextResponse(null, { status: 404 })
         if (!image.path.startsWith('/api/uploads/')) return new NextResponse(null, { status: 400 })
@@ -105,9 +111,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         await mkdir(dir, { recursive: true })
         await generateResultPreview(source, path.join(dir, filename))
         const url = `/api/uploads/projects/${id}/branding/${filename}`
-        await prisma.project.update({ where: { id }, data: { brandingImage: url } })
+        await prisma.project.update({ where: { id }, data: { brandingImage: url, coverHidden: false, coverPositionX: 50, coverPositionY: 50 } })
         return NextResponse.json({ url })
     } catch {
         return new NextResponse(null, { status: 400 })
     }
+}
+
+// Detach the cover only; preserve gallery images and the stored cover file.
+export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    const session = await auth()
+    if (!session?.user?.id) return new NextResponse(null, { status: 401 })
+    const { id } = await params
+    if (!await prisma.project.findFirst({ where: { id, ownerId: session.user.id } })) return new NextResponse(null, { status: 404 })
+    await prisma.project.update({ where: { id }, data: { brandingImage: null, coverHidden: true, coverPositionX: 50, coverPositionY: 50 } })
+    return NextResponse.json({ success: true })
 }

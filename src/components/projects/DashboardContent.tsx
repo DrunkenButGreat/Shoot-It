@@ -16,13 +16,29 @@ export interface DashboardProject {
   location: string | null
   shortCode: string
   isArchived: boolean
+  coverPositionX: number
+  coverPositionY: number
   previewImage: string | null
   participantCount: number
   selectionCount: number
   resultCount: number
+  canDelete?: boolean
 }
 
-export function DashboardContent({ projects }: { projects: DashboardProject[] }) {
+interface StorageOverview {
+  totalBytes: number
+  projects: Array<{ id: string; name: string; isArchived: boolean; imageCount: number; bytes: number }>
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return "0 B"
+  const units = ["B", "KB", "MB", "GB", "TB"]
+  const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1)
+  const value = bytes / Math.pow(1024, index)
+  return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[index]}`
+}
+
+export function DashboardContent({ projects, storage }: { projects: DashboardProject[]; storage: StorageOverview }) {
   const router = useRouter()
   const [tab, setTab] = useState<"active" | "archived">("active")
   const [query, setQuery] = useState("")
@@ -61,6 +77,18 @@ export function DashboardContent({ projects }: { projects: DashboardProject[] })
           </div></section>
         </aside>
       </div>
+      <section className="studio-panel mt-8 overflow-hidden">
+        <div className="border-b border-[#e2e5ea] p-5">
+          <h2 className="text-lg font-bold text-slate-950">{t("dashboard.storageTitle")}</h2>
+          <p className="mt-1 text-sm text-slate-500">{t("dashboard.storageTotal")}: <span className="font-medium text-slate-700">{formatBytes(storage.totalBytes)}</span></p>
+        </div>
+        <div className="divide-y divide-[#e2e5ea]">
+          {storage.projects.map(project => <div key={project.id} className="flex items-center justify-between gap-4 px-5 py-3">
+            <div className="min-w-0"><p className="truncate font-medium text-slate-950">{project.name}{project.isArchived && <span className="ml-2 text-xs text-slate-400">({t("common.archived")})</span>}</p><p className="text-sm text-slate-500">{project.imageCount} {t(project.imageCount === 1 ? "dashboard.storageImage" : "dashboard.storageImages")}</p></div>
+            <span className="whitespace-nowrap text-sm font-medium text-slate-700">{formatBytes(project.bytes)}</span>
+          </div>)}
+        </div>
+      </section>
     </div>
   )
 }

@@ -1,0 +1,2 @@
+ALTER TABLE "Project" ADD COLUMN "coverHidden" BOOLEAN NOT NULL DEFAULT false, ADD COLUMN "coverPositionX" INTEGER NOT NULL DEFAULT 50, ADD COLUMN "coverPositionY" INTEGER NOT NULL DEFAULT 50;
+ALTER TABLE "Project" ADD CONSTRAINT "Project_cover_position_range" CHECK ("coverPositionX" BETWEEN 0 AND 100 AND "coverPositionY" BETWEEN 0 AND 100);

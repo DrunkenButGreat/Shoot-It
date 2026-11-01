@@ -1,5 +1,7 @@
 "use client"
 
+import { imagePreviewSource } from "@/lib/image-preview"
+
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
@@ -128,7 +130,7 @@ export function MoodboardPicker({ projectId, onLink }: MoodboardPickerProps) {
                   >
                     <div className="aspect-video bg-gray-100 relative">
                       {group.images?.[0] ? (
-                        <img src={group.images[0].path} className="w-full h-full object-cover" alt="" />
+                        <img src={imagePreviewSource(group.images[0])} className="w-full h-full object-contain" alt="" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">
                           {t('moodboard.noImage')}

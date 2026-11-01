@@ -95,3 +95,59 @@
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
 }
+
+/* Compact overview tiles. These selectors never affect the fullscreen portal. */
+.shootit-gallery-grid {
+  --gallery-preview-height: 200px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+.shootit-gallery-masonry {
+  columns: 168px;
+  column-gap: 12px;
+}
+.shootit-gallery-masonry > * {
+  break-inside: avoid;
+  margin-bottom: 12px;
+}
+.shootit-gallery-justified {
+  --gallery-preview-height: 180px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+}
+.shootit-gallery-justified > .shootit-gallery-item { min-width: 100px; }
+.shootit-gallery-grid .shootit-gallery-media,
+.shootit-gallery-justified .shootit-gallery-media {
+  height: var(--gallery-preview-height);
+}
+.shootit-gallery-grid .shootit-gallery-media :is(img, video),
+.shootit-gallery-justified .shootit-gallery-media :is(img, video) {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.shootit-gallery-masonry .shootit-gallery-media :is(img, video) {
+  width: 100%;
+  height: auto;
+  max-height: 220px;
+  object-fit: contain;
+}
+.shootit-gallery-overview .shootit-gallery-grid {
+  --gallery-preview-height: 160px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 639px) {
+  .shootit-gallery-grid {
+    --gallery-preview-height: 170px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .shootit-gallery-masonry { column-count: 2; column-width: auto; column-gap: 10px; }
+  .shootit-gallery-masonry .shootit-gallery-media :is(img, video) { max-height: 180px; }
+  .shootit-gallery-justified { --gallery-preview-height: 150px; gap: 10px; }
+  .shootit-gallery-overview .shootit-gallery-grid { --gallery-preview-height: 120px; }
+}

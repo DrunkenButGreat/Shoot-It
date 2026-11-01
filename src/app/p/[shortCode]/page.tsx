@@ -1,3 +1,4 @@
+import { imagePreviewSource } from "@/lib/image-preview"
 import { getParticipantPortrait } from "@/lib/participant-portrait";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
@@ -21,8 +22,6 @@ import {
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { PublicGallery } from "@/components/public/PublicGallery";
-import { PublicResults } from "@/components/public/PublicResults";
-import { PublicSelection } from "@/components/public/PublicSelection";
 import { ApplicationForm } from "@/components/projects/ApplicationForm";
 import { AppointmentPublicList } from "@/components/appointments/AppointmentPublicList";
 import { ModuleBox } from "@/components/public/ModuleBox";
@@ -133,6 +132,8 @@ export default async function PublicProjectPage({
   // Does the logged-in user have project access (owner/editor/viewer/participant)?
   // This — not merely being logged in — decides whether ratings go through the
   // authenticated path or the guest path.
+  const resultImageCount = await prisma.resultFile.count({ where: { projectId: project.id } });
+
   const userHasAccess = session?.user?.id
     ? await canAccessProject(session.user.id, project.id)
     : false;
@@ -165,7 +166,7 @@ export default async function PublicProjectPage({
   }
 
   const projectDate = project.date ? new Date(project.date) : null;
-  const brandingImage =
+  const brandingImage = project.coverHidden ? null :
     project.brandingImage ||
     project.owner.brandingImage ||
     "/images/design/coastal-editorial.webp";
@@ -205,11 +206,12 @@ export default async function PublicProjectPage({
           <div className="min-w-0 space-y-8">
             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
               <div className="h-52 overflow-hidden bg-slate-200 sm:h-72">
-                <img
+                {brandingImage && <img
                   src={brandingImage}
                   alt=""
                   className="h-full w-full object-cover"
-                />
+                  style={{ objectPosition: `${project.coverPositionX}% ${project.coverPositionY}%` }}
+                />}
               </div>
               <div className="flex flex-col gap-6 border-b border-slate-200 bg-white px-5 py-6 sm:flex-row sm:items-end sm:justify-between sm:px-8">
                 <div>
@@ -291,7 +293,7 @@ export default async function PublicProjectPage({
                 )}
                 {project.showSelectionPublicly && (
                   <a
-                    href="#selection"
+                    href={`/p/${shortCode}/selection`}
                     className="py-4 text-sm font-medium text-slate-600"
                   >
                     {dict.project.selection}
@@ -299,7 +301,7 @@ export default async function PublicProjectPage({
                 )}
                 {project.showResultsPublicly && (
                   <a
-                    href="#results"
+                    href={`/p/${shortCode}/results`}
                     className="py-4 text-sm font-medium text-slate-600"
                   >
                     {dict.project.results}
@@ -321,21 +323,8 @@ export default async function PublicProjectPage({
               className="scroll-mt-6 overflow-hidden bg-white"
             >
               {overviewImages.length > 0 && (
-                <div className="grid grid-cols-3 gap-2 p-4 pb-0">
-                  {overviewImages.map((image: any) => (
-                    <a
-                      key={image.id}
-                      href="#moodboard"
-                      aria-label={dict.project.moodboard}
-                      className="aspect-[4/3] overflow-hidden rounded-lg"
-                    >
-                      <img
-                        src={image.thumbnail || image.path}
-                        alt={image.filename}
-                        className="h-full w-full object-cover"
-                      />
-                    </a>
-                  ))}
+                <div className="shootit-gallery-overview p-4 pb-0">
+                  <PublicGallery images={overviewImages} layout="grid" />
                 </div>
               )}
               <CardHeader className="pb-0">
@@ -393,7 +382,7 @@ export default async function PublicProjectPage({
                       session
                         ? `/project/${project.id}/selection`
                         : project.showSelectionPublicly
-                          ? "#selection"
+                          ? `/p/${shortCode}/selection`
                           : "#"
                     }
                     disabled={!session && !project.showSelectionPublicly}
@@ -419,15 +408,15 @@ export default async function PublicProjectPage({
                   <ModuleBox
                     title={dict.project.results}
                     icon={<ImageIcon className="h-6 w-6" />}
-                    count={project.resultFolders.length}
-                    label={dict.project.foldersCount
+                    count={resultImageCount}
+                    label={dict.project.imagesCount
                       .replace("{count}", "")
                       .trim()}
                     href={
                       session
                         ? `/project/${project.id}/results`
                         : project.showResultsPublicly
-                          ? "#results"
+                          ? `/p/${shortCode}/results`
                           : "#"
                     }
                     disabled={!session && !project.showResultsPublicly}
@@ -494,23 +483,6 @@ export default async function PublicProjectPage({
                     </Card>
                   ))}
                 </div>
-              </section>
-            )}
-
-            {project.showResultsPublicly && (
-              <section id="results" className="space-y-6 scroll-mt-20">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="rounded-lg bg-slate-100 p-2 text-slate-600"
-                    style={brandColor ? { color: brandColor } : undefined}
-                  >
-                    <ImageIcon className="h-5 w-5" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
-                    {dict.project.results}
-                  </h2>
-                </div>
-                <PublicResults projectId={project.id} />
               </section>
             )}
 
@@ -583,39 +555,6 @@ export default async function PublicProjectPage({
                       </Card>
                     ))}
                   </div>
-                </section>
-              )}
-
-            {project.showSelectionPublicly &&
-              project.selectionImages.length > 0 && (
-                <section id="selection" className="space-y-6 scroll-mt-20">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="rounded-lg bg-slate-100 p-2 text-slate-600"
-                      style={brandColor ? { color: brandColor } : undefined}
-                    >
-                      <ImageIcon className="h-5 w-5" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
-                      {dict.project.selection}
-                    </h2>
-                  </div>
-                  <Card className="overflow-hidden bg-white">
-                    <CardContent className="pt-6">
-                      <PublicSelection
-                        projectId={project.id}
-                        images={project.selectionImages}
-                        folders={project.selectionFolders}
-                        layout={project.galleryLayout as any}
-                        userHasAccess={userHasAccess}
-                        isAuthenticated={!!session?.user?.id}
-                        allowGuestSelection={project.allowGuestSelection}
-                        showFolders={project.showSelectionFolders}
-                        allowDownload={project.allowSelectionDownload}
-                        brandColor={brandColor}
-                      />
-                    </CardContent>
-                  </Card>
                 </section>
               )}
 

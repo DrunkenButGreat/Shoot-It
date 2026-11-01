@@ -14,12 +14,13 @@ export async function generateThumbnail(
   targetPath: string
 ): Promise<void> {
   await sharp(sourcePath)
+    .rotate()
     .resize(
       appConfig.imageProcessing.thumbnailWidth,
       appConfig.imageProcessing.thumbnailHeight,
       {
-        fit: 'cover',
-        position: 'center',
+        fit: 'inside',
+        withoutEnlargement: true,
       }
     )
     .jpeg({ quality: appConfig.imageProcessing.thumbnailQuality })
@@ -31,6 +32,7 @@ export async function generateResultPreview(
   targetPath: string
 ): Promise<void> {
   await sharp(sourcePath)
+    .rotate()
     .resize(
       appConfig.imageProcessing.resultsPreviewMaxWidth,
       appConfig.imageProcessing.resultsPreviewMaxHeight,
@@ -48,8 +50,8 @@ export async function getImageMetadata(filePath: string): Promise<ImageMetadata>
   const stats = await fs.stat(filePath)
   
   return {
-    width: metadata.width || 0,
-    height: metadata.height || 0,
+    width: (metadata.orientation && metadata.orientation >= 5 ? metadata.height : metadata.width) || 0,
+    height: (metadata.orientation && metadata.orientation >= 5 ? metadata.width : metadata.height) || 0,
     size: stats.size,
   }
 }

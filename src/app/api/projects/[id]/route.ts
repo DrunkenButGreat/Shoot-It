@@ -148,7 +148,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Clean up filesystem
+    // Clean up filesystem before deleting the database record.
+    // If file cleanup fails, abort the deletion so the project is not
+    // removed from the database while its files remain on disk.
     try {
       // 1. Delete Selection images
       const selectionDir = path.join(process.cwd(), 'uploads', 'selection', id)
@@ -163,6 +165,10 @@ export async function DELETE(
       await rm(moodboardDir, { recursive: true, force: true })
     } catch (err) {
       console.error('Error cleaning up project files:', err)
+      return NextResponse.json(
+        { error: 'Could not delete project files' },
+        { status: 500 }
+      )
     }
 
     await prisma.project.delete({

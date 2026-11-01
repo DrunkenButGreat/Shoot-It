@@ -16,7 +16,7 @@ export default function Footer() {
           {t('common.madeWith')} ❤️ {t('common.forPhotographers')}
         </p>
         <p className="mt-1 text-xs opacity-70">
-          Version {packageInfo.version}
+          Version {packageInfo.version.split("+")[0]}
         </p>
       </div>
     </footer>

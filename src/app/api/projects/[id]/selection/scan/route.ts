@@ -5,6 +5,7 @@ import { canEditProject } from "@/lib/permissions"
 import { readFile, writeFile, mkdir, readdir } from "fs/promises"
 import path from "path"
 import { generateSecureFilename } from "@/lib/file-utils"
+import { getImageMetadata, generateResultPreview } from "@/lib/image-processing"
 
 export async function POST(
     request: NextRequest,
@@ -51,7 +52,6 @@ export async function POST(
         const uploadDir = path.join(process.cwd(), "uploads", relativeDir)
         await mkdir(uploadDir, { recursive: true })
 
-        const sharp = (await import("sharp")).default
         const importedImages = []
 
         for (const fileItem of imageFiles) {
@@ -64,7 +64,9 @@ export async function POST(
             await writeFile(destinationPath, buffer)
 
             // Get metadata
-            const metadata = await sharp(buffer).metadata()
+            const metadata = await getImageMetadata(destinationPath)
+            const previewFilename = `preview_${secureFilename}.webp`
+            await generateResultPreview(destinationPath, path.join(uploadDir, previewFilename))
             const dbPath = `/api/uploads/${relativeDir}/${secureFilename}`.replace(/\\/g, '/')
 
             const image = await prisma.selectionImage.create({
@@ -72,9 +74,10 @@ export async function POST(
                     filename: fileItem.name,
                     path: dbPath,
                     projectId: projectId,
-                    thumbnail: dbPath,
+                    thumbnail: `/api/uploads/${relativeDir}/${previewFilename}`,
                     width: metadata.width,
-                    height: metadata.height
+                    height: metadata.height,
+                    size: metadata.size
                 }
             })
             importedImages.push(image)

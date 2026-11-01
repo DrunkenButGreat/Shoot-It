@@ -1,9 +1,11 @@
+import packageInfo from '../../package.json'
+
 export const appConfig = {
   name: 'PhotoShoot Organizer',
-  version: '2.0.0',
+  version: packageInfo.version,
   
   limits: {
-    maxUploadSize: 10 * 1024 * 1024, // 10MB
+    maxUploadSize: 100 * 1024 * 1024, // 100MB
     maxResultsUploadSize: 100 * 1024 * 1024, // 100MB
     maxVideoUploadSize: 100 * 1024 * 1024, // 100MB (capped by next.config body limit)
     maxUploadsPerRequest: 20,

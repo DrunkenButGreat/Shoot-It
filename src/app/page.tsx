@@ -1,3 +1,6 @@
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+
 import { getSiteImages } from "@/lib/site-settings";
 import Link from "next/link";
 import { cookies } from "next/headers";
@@ -7,6 +10,7 @@ import { BrandMark } from "@/components/layout/BrandMark";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export default async function HomePage() {
+  if ((await auth())?.user?.id) redirect("/dashboard");
   const siteImages = await getSiteImages();
   const t = await getDictionary(getLocale(await cookies()));
   return (

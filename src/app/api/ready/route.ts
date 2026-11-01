@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { version } from '../../../../package.json'
+import packageInfo from '../../../../package.json'
+const { version } = packageInfo
 
 export const dynamic = 'force-dynamic'
 

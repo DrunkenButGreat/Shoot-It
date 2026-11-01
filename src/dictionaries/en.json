@@ -64,6 +64,10 @@
     "openNavigation": "Open navigation"
   },
   "dashboard": {
+    "storageTitle": "Storage overview",
+    "storageTotal": "Total Shoot-It storage",
+    "storageImage": "file",
+    "storageImages": "files",
     "title": "Dashboard",
     "welcome": "Welcome back",
     "newProject": "New Project",
@@ -87,6 +91,9 @@
     "resultsReady": "Results"
   },
   "project": {
+    "delete": "Delete project",
+    "confirmDelete": "Are you sure you want to delete this project? All associated images and files will also be deleted from the server.",
+    "deleteError": "The project could not be deleted.",
     "selection": "Selection",
     "moodboard": "Moodboard",
     "participants": "Participants",
@@ -174,8 +181,10 @@
     "selectAll": "Select All",
     "deselectAll": "Deselect All",
     "confirmDeleteImages": "Are you sure you want to delete the selected images?",
+    "confirmDeleteImage": "Are you sure you want to delete this image?",
     "confirmDeleteFolder": "Are you sure you want to delete this folder and all images within it?",
     "deletedSuccess": "Images deleted successfully",
+    "deletedImageSuccess": "Image deleted successfully",
     "movedSuccess": "Images moved successfully",
     "folderDeleted": "Folder deleted",
     "moveToRoot": "Move to Root",
@@ -235,7 +244,6 @@
     "imageHelp": "Upload an image up to 5 MB. It is saved for this project and appears on the public project page when participants are visible.",
     "profileImagePriority": "This person’s own profile photo takes precedence. Your upload is used when no profile photo is set.",
     "imageSaved": "Participant photo saved.",
-
     "title": "Participants",
     "noParticipants": "No participants yet",
     "participantsPrompt": "Add participants to start organizing your photoshoot",
@@ -575,6 +583,7 @@
     "copyLink": "Copy link",
     "openPublic": "Open public page",
     "fileDetails": "File details",
+    "originalDownload": "Download",
     "preview": "Open preview",
     "gridView": "Grid view",
     "listView": "List view",
@@ -628,5 +637,16 @@
     "useCover": "Use as cover",
     "previous": "Previous",
     "next": "Next"
-}
+  },
+  "coverControls": {
+    "remove": "Remove cover image",
+    "removeConfirm": "Remove the cover? Images in your galleries will be preserved.",
+    "position": "Reposition cover",
+    "horizontal": "Horizontal",
+    "vertical": "Vertical",
+    "save": "Save cover position",
+    "help": "Drag the image with your mouse or finger, or use the sliders.",
+    "deleteSelected": "Delete selected",
+    "confirmDeleteSelected": "Permanently delete {count} selected images? Originals and previews will be removed."
+  }
 }

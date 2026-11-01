@@ -305,8 +305,7 @@ export function PublicResults({ projectId }: { projectId: string }) {
                 images={filteredImages}
                 selectedIds={selectedImageIds}
                 onToggleSelect={toggleImageSelection}
-                onDelete={() => {}}
-                showDelete={false}
+                    showDelete={false}
                 projectId={projectId}
                 layout={galleryLayout}
               />

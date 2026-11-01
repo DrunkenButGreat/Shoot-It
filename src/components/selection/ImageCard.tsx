@@ -1,5 +1,7 @@
 "use client";
 
+import { imagePreviewSource } from "@/lib/image-preview";
+
 import { useI18n } from "@/components/I18nProvider";
 import { Card } from "@/components/ui/card";
 import {
@@ -58,6 +60,7 @@ interface ImageCardProps {
   forceSelectable?: boolean;
   onDelete?: () => void;
   onPreview?: () => void;
+  onDetails?: () => void;
 }
 
 export function ImageCard({
@@ -76,6 +79,7 @@ export function ImageCard({
   forceSelectable,
   onDelete,
   onPreview,
+  onDetails,
 }: ImageCardProps) {
   const { t } = useI18n();
   const currentRating = image.ratings;
@@ -127,8 +131,8 @@ export function ImageCard({
         </button>
       )}
 
-      {(onDelete || onPreview) && (
-        <DropdownMenu>
+      {(onDelete || onPreview || onDetails) && (
+        <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <button
               aria-label={`${t("design.imageActions")}: ${image.filename}`}
@@ -142,6 +146,11 @@ export function ImageCard({
               <DropdownMenuItem onSelect={onPreview}>
                 <Eye className="mr-2 h-4 w-4" />
                 {t("design.preview")}
+              </DropdownMenuItem>
+            )}
+            {onDetails && (
+              <DropdownMenuItem onSelect={onDetails}>
+                {t("design.fileDetails")}
               </DropdownMenuItem>
             )}
             <DropdownMenuItem asChild>
@@ -184,7 +193,7 @@ export function ImageCard({
             onImageClick?.();
           }
         }}
-        className={`${justified ? "h-[240px]" : masonry ? "" : "aspect-[4/3]"} bg-gray-100 relative overflow-hidden cursor-zoom-in group flex-shrink-0`}
+        className={`shootit-gallery-media ${justified ? "h-[240px]" : ""} bg-gray-100 relative overflow-hidden cursor-zoom-in group flex-shrink-0`}
         onClick={onImageClick}
         onMouseEnter={image.isVideo ? handleMouseEnter : undefined}
         onMouseLeave={image.isVideo ? handleMouseLeave : undefined}
@@ -199,7 +208,7 @@ export function ImageCard({
               loop
               playsInline
               preload="none"
-              className={`w-full ${justified || !masonry ? "h-full object-cover" : "h-auto"}`}
+              className={`w-full ${justified ? "h-full object-contain" : "h-auto object-contain"}`}
               draggable={false}
             />
             {/* Play overlay */}
@@ -217,11 +226,11 @@ export function ImageCard({
           </>
         ) : image.thumbnail || image.path ? (
           <img
-            src={image.thumbnail || image.path}
+            src={imagePreviewSource(image)}
             alt={image.filename}
             loading="lazy"
             decoding="async"
-            className={`w-full ${justified || !masonry ? "h-full object-cover" : "h-auto"} group-hover:scale-105 transition-transform duration-300`}
+            className={`w-full ${justified ? "h-full object-contain" : "h-auto object-contain"}`}
             draggable={false}
           />
         ) : (

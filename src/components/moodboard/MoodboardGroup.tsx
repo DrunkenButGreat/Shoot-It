@@ -1,5 +1,9 @@
 "use client";
 
+import { LightboxOriginalImageButton } from "@/components/LightboxOriginalImageButton";
+
+import { imagePreviewSource } from "@/lib/image-preview";
+
 import { useI18n } from "@/components/I18nProvider";
 import { Button } from "@/components/ui/button";
 import {
@@ -64,11 +68,9 @@ function formatDuration(seconds: number): string {
 function MoodboardMedia({
   image,
   className,
-  useFullForImage,
 }: {
   image: MoodboardImage;
   className: string;
-  useFullForImage?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -82,7 +84,7 @@ function MoodboardMedia({
           muted
           loop
           playsInline
-          preload="metadata"
+          preload="none"
           className={className}
           draggable={false}
           onMouseEnter={() => videoRef.current?.play().catch(() => {})}
@@ -110,8 +112,10 @@ function MoodboardMedia({
 
   return (
     <img
-      src={useFullForImage ? image.path : image.thumbnail || image.path}
+      src={imagePreviewSource(image)}
       alt={image.filename}
+      loading="lazy"
+      decoding="async"
       className={className}
     />
   );
@@ -480,8 +484,8 @@ export function MoodboardGroup({
             <div
               className={
                 galleryLayout === "grid"
-                  ? "grid grid-cols-2 gap-2 2xl:grid-cols-3"
-                  : "columns-2 gap-2 2xl:columns-3"
+                  ? "shootit-gallery-grid"
+                  : "shootit-gallery-masonry"
               }
             >
               {group.images.map((image, i) => (
@@ -490,7 +494,7 @@ export function MoodboardGroup({
                   className={`group relative mb-2 break-inside-avoid overflow-hidden rounded-lg ${selectedImageIds.includes(image.id) ? "ring-2 ring-blue-600" : ""}`}
                 >
                   <button
-                    className="block w-full"
+                    className="shootit-gallery-media block w-full"
                     onClick={() => setIndex(i)}
                     aria-label={`${t("design.preview")}: ${image.filename}`}
                   >
@@ -498,7 +502,7 @@ export function MoodboardGroup({
                       image={image}
                       className={
                         galleryLayout === "grid"
-                          ? "aspect-[4/5] w-full object-cover"
+                          ? "h-auto w-full object-contain"
                           : "h-auto w-full"
                       }
                     />
@@ -661,6 +665,8 @@ export function MoodboardGroup({
         index={index}
         open={index >= 0}
         close={() => setIndex(-1)}
+        toolbar={{ buttons: [<LightboxOriginalImageButton key="original" images={group.images} />, "close"] }}
+        carousel={{ preload: 0 }}
         plugins={[Video]}
         slides={group.images.map((img) =>
           img.isVideo
@@ -671,7 +677,7 @@ export function MoodboardGroup({
                 height: img.height || undefined,
                 sources: [{ src: img.path, type: videoMimeFor(img.path) }],
               }
-            : { src: img.path },
+            : { src: imagePreviewSource(img) },
         )}
       />
     </div>

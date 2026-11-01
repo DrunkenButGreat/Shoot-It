@@ -1,5 +1,7 @@
 "use client";
 
+import { imagePreviewSource } from "@/lib/image-preview";
+
 import { useI18n } from "@/components/I18nProvider";
 import {
   Dialog,
@@ -161,9 +163,9 @@ export function MoodboardCollection({
                     .map((image) => (
                       <img
                         key={image.id}
-                        src={image.thumbnail || image.path}
+                        src={imagePreviewSource(image)}
                         alt=""
-                        className="min-w-0 flex-1 object-cover"
+                        className="min-w-0 flex-1 object-contain"
                       />
                     ))
                 ) : (

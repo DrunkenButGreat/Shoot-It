@@ -10,6 +10,7 @@ interface SelectionImageGridProps {
   onRatingUpdated: () => void;
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string | string[]) => void;
+  onDelete?: (id: string) => void;
 }
 
 export function SelectionImageGrid({
@@ -20,19 +21,22 @@ export function SelectionImageGrid({
   onRatingUpdated,
   selectedIds,
   onToggleSelect,
+  onDelete,
 }: SelectionImageGridProps) {
   if (images.length === 0) return null;
 
   if (layout === "grid") {
     return (
-      <div className="grid grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
+      <div className="shootit-gallery-grid">
         {images.map((image, i) => (
           <ImageCard
             key={image.id}
             image={image}
             projectId={projectId}
+            onDelete={onDelete ? () => onDelete(image.id) : undefined}
             onRatingUpdated={onRatingUpdated}
             onImageClick={() => onImageClick(i)}
+            onPreview={() => onImageClick(i)}
             selected={selectedIds?.has(image.id)}
             onSelect={
               onToggleSelect ? () => onToggleSelect(image.id) : undefined
@@ -46,7 +50,7 @@ export function SelectionImageGrid({
 
   if (layout === "justified") {
     return (
-      <div className="flex flex-wrap gap-4">
+      <div className="shootit-gallery-justified">
         {images.map((image, i) => {
           const width = image.width || 400;
           const height = image.height || 300;
@@ -54,17 +58,19 @@ export function SelectionImageGrid({
           return (
             <div
               key={image.id}
-              className="relative group h-[340px]"
+              className="shootit-gallery-item relative group"
               style={{
                 flexGrow: aspect * 100,
-                flexBasis: `${aspect * 240}px`,
+                flexBasis: `${aspect * 180}px`,
               }}
             >
               <ImageCard
                 image={image}
                 projectId={projectId}
+                onDelete={onDelete ? () => onDelete(image.id) : undefined}
                 onRatingUpdated={onRatingUpdated}
                 onImageClick={() => onImageClick(i)}
+            onPreview={() => onImageClick(i)}
                 justified={true}
                 selected={selectedIds?.has(image.id)}
                 onSelect={
@@ -81,14 +87,16 @@ export function SelectionImageGrid({
   }
 
   return (
-    <div className="columns-2 gap-3 xl:columns-3 2xl:columns-4">
+    <div className="shootit-gallery-masonry">
       {images.map((image, index) => (
         <div key={image.id} className="mb-3 break-inside-avoid">
           <ImageCard
             image={image}
             projectId={projectId}
+            onDelete={onDelete ? () => onDelete(image.id) : undefined}
             onRatingUpdated={onRatingUpdated}
             onImageClick={() => onImageClick(index)}
+            onPreview={() => onImageClick(index)}
             masonry
             selected={selectedIds?.has(image.id)}
             onSelect={

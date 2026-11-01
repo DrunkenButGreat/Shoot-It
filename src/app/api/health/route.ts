@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { rm } from 'fs/promises'
 import path from 'path'
-import { version } from '../../../../package.json'
+import packageInfo from '../../../../package.json'
+const { version } = packageInfo
 
 export async function GET() {
   // Background cleanup for old applications

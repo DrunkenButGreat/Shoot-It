@@ -1,5 +1,9 @@
 "use client"
 
+import { OriginalImageButton } from "@/components/OriginalImageButton"
+
+import { imagePreviewSource } from "@/lib/image-preview"
+
 import { useState, useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
 import { X, ChevronLeft, ChevronRight, ZoomIn, Play } from "lucide-react"
@@ -61,7 +65,7 @@ function PublicMedia({ image, className }: { image: Image; className: string }) 
 
     return (
         <img
-            src={image.thumbnail || image.path}
+            src={imagePreviewSource(image)}
             alt={image.filename}
             loading="lazy"
             decoding="async"
@@ -82,7 +86,6 @@ interface PublicGalleryProps {
 
 export function PublicGallery({
     images,
-    columns = 4,
     aspectRatio = "square",
     layout = "masonry"
 }: PublicGalleryProps) {
@@ -105,7 +108,6 @@ export function PublicGallery({
         return () => window.removeEventListener("keydown", handleKeyDown)
     }, [selectedIndex])
 
-    const aspectClass = aspectRatio === "square" ? "aspect-square" : "aspect-[2/3]"
 
     const openLightbox = (index: number) => {
         setSelectedIndex(index)
@@ -131,15 +133,6 @@ export function PublicGallery({
         }
     }
 
-    // Distribute images into columns for masonry-balanced
-    const getColumnsData = () => {
-        const cols: { image: Image; index: number }[][] = Array.from({ length: columns }, () => [])
-        images.forEach((image, index) => {
-            cols[index % columns].push({ image, index })
-        })
-        return cols
-    }
-
     const lightbox = selectedIndex !== null && mounted ? createPortal(
         <div
             className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 md:p-12 animate-in fade-in duration-300"
@@ -147,16 +140,19 @@ export function PublicGallery({
         >
             {/* Glass Navigation Bar */}
             <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black/60 to-transparent z-[10000] flex items-center justify-between px-6 md:px-10">
-                <div className="text-white/80">
-                    <p className="text-sm font-bold uppercase tracking-widest">{images[selectedIndex].filename}</p>
+                <div className="min-w-0 flex-1 text-white/80">
+                    <p className="truncate text-sm font-bold uppercase tracking-widest">{images[selectedIndex].filename}</p>
                     <p className="text-xs text-white/50">{selectedIndex + 1} / {images.length}</p>
                 </div>
+                <div className="flex shrink-0 items-center gap-2">
+                <OriginalImageButton image={images[selectedIndex]} />
                 <button
                     className="p-3 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-2xl transition-all shadow-xl backdrop-blur-md border border-white/10"
                     onClick={closeLightbox}
                 >
                     <X className="h-6 w-6" />
                 </button>
+                </div>
             </div>
 
             {/* Navigation Buttons */}
@@ -190,7 +186,7 @@ export function PublicGallery({
                     />
                 ) : (
                     <img
-                        src={images[selectedIndex].path}
+                        src={imagePreviewSource(images[selectedIndex])}
                         alt={images[selectedIndex].filename}
                         className="max-w-full max-h-full object-contain shadow-2xl rounded-lg animate-in zoom-in-95 duration-500"
                     />
@@ -203,16 +199,16 @@ export function PublicGallery({
     return (
         <>
             {layout === "grid" ? (
-                <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-${columns} gap-4`}>
+                <div className="shootit-gallery-grid">
                     {images.map((image, index) => (
                         <div
                             key={image.id}
-                            className={`${aspectClass} relative rounded-xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all border border-gray-100 bg-gray-50`}
+                            className={`shootit-gallery-media relative rounded-xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all border border-gray-100 bg-gray-50`}
                             onClick={() => openLightbox(index)}
                         >
                             <PublicMedia
                                 image={image}
-                                className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
+                                className="object-contain w-full h-auto"
                             />
                             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                 <ZoomIn className="text-white h-8 w-8" />
@@ -221,16 +217,16 @@ export function PublicGallery({
                     ))}
                 </div>
             ) : layout === "columns" ? (
-                <div className={`columns-2 sm:columns-3 md:columns-${columns} gap-4 space-y-4`}>
+                <div className="shootit-gallery-masonry">
                     {images.map((image, index) => (
                         <div
                             key={image.id}
-                            className="relative break-inside-avoid rounded-xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all border border-gray-100 bg-gray-50 mb-4"
+                            className="shootit-gallery-media relative break-inside-avoid rounded-xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all border border-gray-100 bg-gray-50 mb-4"
                             onClick={() => openLightbox(index)}
                         >
                             <PublicMedia
                                 image={image}
-                                className="w-full h-auto transition-transform duration-500 group-hover:scale-110 block"
+                                className="w-full h-auto block"
                             />
                             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                 <ZoomIn className="text-white h-8 w-8" />
@@ -240,7 +236,7 @@ export function PublicGallery({
                 </div>
             ) : layout === "justified" ? (
                 /* Justified Layout (Google Photos style) */
-                <div className="flex flex-wrap gap-4">
+                <div className="shootit-gallery-justified">
                     {images.map((image, index) => {
                         // Use stored dimensions or fallback to 4:3
                         const width = image.width || 400
@@ -250,17 +246,17 @@ export function PublicGallery({
                         return (
                             <div
                                 key={image.id}
-                                className="relative rounded-xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all border border-gray-100 bg-gray-50 mb-0"
+                                className="shootit-gallery-item shootit-gallery-media relative rounded-xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all border border-gray-100 bg-gray-50 mb-0"
                                 style={{
                                     flexGrow: aspect * 100,
-                                    flexBasis: `${aspect * 200}px`,
-                                    height: '280px'
+                                    flexBasis: `${aspect * 180}px`,
+                                    height: 'var(--gallery-preview-height)'
                                 }}
                                 onClick={() => openLightbox(index)}
                             >
                                 <PublicMedia
                                     image={image}
-                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 block"
+                                    className="w-full h-full object-contain block"
                                 />
                                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                     <ZoomIn className="text-white h-8 w-8" />
@@ -272,25 +268,17 @@ export function PublicGallery({
                     <div className="flex-[1000] h-0" />
                 </div>
             ) : (
-                /* Balanced Masonry */
-                <div className={`flex gap-4 items-start`}>
-                    {getColumnsData().map((column, colIdx) => (
-                        <div key={colIdx} className="flex-1 flex flex-col gap-4">
-                            {column.map(({ image, index }) => (
-                                <div
-                                    key={image.id}
-                                    className="relative rounded-xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all border border-gray-100 bg-gray-50 h-fit"
-                                    onClick={() => openLightbox(index)}
-                                >
-                                    <PublicMedia
-                                        image={image}
-                                        className="w-full h-auto transition-transform duration-500 group-hover:scale-110 block"
-                                    />
-                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                        <ZoomIn className="text-white h-8 w-8" />
-                                    </div>
-                                </div>
-                            ))}
+                <div className="shootit-gallery-masonry">
+                    {images.map((image, index) => (
+                        <div
+                            key={image.id}
+                            className="shootit-gallery-media relative break-inside-avoid rounded-xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all border border-gray-100 bg-gray-50"
+                            onClick={() => openLightbox(index)}
+                        >
+                            <PublicMedia image={image} className="w-full h-auto block" />
+                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <ZoomIn className="text-white h-8 w-8" />
+                            </div>
                         </div>
                     ))}
                 </div>
