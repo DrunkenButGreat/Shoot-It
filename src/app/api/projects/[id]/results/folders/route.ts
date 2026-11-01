@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { resultFolderSchema } from '@/lib/validations'
-import { canEditProject } from '@/lib/permissions'
+import { canAccessProject, canEditProject } from '@/lib/permissions'
 
 // POST /api/projects/[id]/results/folders - Create a folder
 export async function POST(
@@ -28,12 +28,9 @@ export async function POST(
 
     let path = `/${validatedData.name}`
     if (validatedData.parentId) {
-      const parent = await prisma.resultFolder.findUnique({
-        where: { id: validatedData.parentId },
-      })
-      if (parent) {
-        path = `${parent.path}/${validatedData.name}`
-      }
+      const parent = await prisma.resultFolder.findFirst({ where: { id: validatedData.parentId, projectId: id } })
+      if (!parent) return NextResponse.json({ error: 'Parent folder not found' }, { status: 404 })
+      path = `${parent.path}/${validatedData.name}`
     }
 
     const folder = await prisma.resultFolder.create({
@@ -52,6 +49,7 @@ export async function POST(
     if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json({ error: 'Invalid input data' }, { status: 400 })
     }
+    if ((error as { code?: string }).code === 'P2002') return NextResponse.json({ error: 'Folder already exists' }, { status: 409 })
     console.error('Error creating folder:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

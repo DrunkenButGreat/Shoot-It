@@ -31,7 +31,7 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import ImageUpload from "../moodboard/ImageUpload";
 import { FolderForm } from "./FolderForm";
@@ -81,6 +81,7 @@ export function ResultsContent({
   const [selectedImageIds, setSelectedImageIds] = useState<Set<string>>(
     new Set(),
   );
+  const [visibleLimit, setVisibleLimit] = useState(100);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [view, setView] = useState(
     layout === "justified" ? "justified" : "grid",
@@ -109,6 +110,8 @@ export function ResultsContent({
           new Date(a.createdAt || 0).getTime(),
     );
   }, [allImages, selectedFolderId, sort, locale]);
+  const visibleImages = filteredImages.slice(0, visibleLimit);
+  useEffect(() => setVisibleLimit(100), [selectedFolderId, sort]);
   const detail = filteredImages.find((img) => img.id === detailId);
   const currentFolder = folders.find(
     (folder) => folder.id === selectedFolderId,
@@ -377,15 +380,27 @@ export function ResultsContent({
                 </span>
               </div>
               {filteredImages.length ? (
-                <ResultImageGrid
-                  images={filteredImages}
-                  selectedIds={selectedImageIds}
-                  onToggleSelect={toggleImage}
-                  onInspect={setDetailId}
-                  onDelete={deleteImage}
-                  projectId={projectId}
-                  layout={view}
-                />
+                <>
+                  <ResultImageGrid
+                    images={visibleImages}
+                    allImages={filteredImages}
+                    selectedIds={selectedImageIds}
+                    onToggleSelect={toggleImage}
+                    onInspect={setDetailId}
+                    onDelete={deleteImage}
+                    projectId={projectId}
+                    layout={view}
+                  />
+                  {visibleImages.length < filteredImages.length && (
+                    <Button
+                      variant="outline"
+                      className="mt-3 w-full"
+                      onClick={() => setVisibleLimit((limit) => limit + 100)}
+                    >
+                      {t("common.loadMore")}
+                    </Button>
+                  )}
+                </>
               ) : (
                 <div className="studio-panel flex min-h-64 flex-col items-center justify-center gap-3 p-6 text-center">
                   <FolderOpen className="h-9 w-9 text-slate-300" />

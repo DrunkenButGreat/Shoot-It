@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
-import { moodboardGroupSchema } from '@/lib/validations'
 import { canAccessProject } from '@/lib/permissions'
+import { queueFileCleanup } from '@/lib/file-cleanup'
 
 // PUT /api/projects/[id]/moodboard/groups/[groupId] - Update a group
 export async function PUT(
@@ -21,6 +21,12 @@ export async function PUT(
     const hasAccess = await canAccessProject(session.user.id, id)
     if (!hasAccess) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    if (!await prisma.projectMoodboardLink.findUnique({
+      where: { projectId_groupId: { projectId: id, groupId } }, select: { id: true }
+    })) {
+      return NextResponse.json({ error: 'Group not found' }, { status: 404 })
     }
 
     const body = await request.json()
@@ -94,8 +100,6 @@ export async function PUT(
   }
 }
 
-import { unlink, rm } from 'fs/promises'
-import path from 'path'
 
 // DELETE /api/projects/[id]/moodboard/groups/[groupId] - Delete a group
 export async function DELETE(
@@ -116,6 +120,12 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    if (!await prisma.projectMoodboardLink.findUnique({
+      where: { projectId_groupId: { projectId: id, groupId } }, select: { id: true }
+    })) {
+      return NextResponse.json({ error: 'Group not found' }, { status: 404 })
+    }
+
     // Fetch the group to see if it's a library group
     const group = await prisma.moodboardGroup.findUnique({
       where: { id: groupId },
@@ -126,24 +136,19 @@ export async function DELETE(
       return NextResponse.json({ error: 'Group not found' }, { status: 404 })
     }
 
-    // If it's NOT a library group, delete the group entirely
-    if (!group.isLibrary) {
-      // Only the owner of the group (or project owner) should be able to delete it?
-      // For now, let's just delete it since it's project-specific
-      await prisma.moodboardGroup.delete({
-        where: { id: groupId }
+    await prisma.$transaction(async tx => {
+      await tx.projectMoodboardLink.delete({
+        where: { projectId_groupId: { projectId: id, groupId } },
       })
-    } else {
-      // If it's a library group, ONLY delete the link
-      await prisma.projectMoodboardLink.delete({
-        where: {
-          projectId_groupId: {
-            projectId: id,
-            groupId: groupId,
-          },
-        },
-      })
-    }
+      // A project-created group may also be linked elsewhere; preserve those shares.
+      if (!group.isLibrary) {
+        const images = await tx.moodboardImage.findMany({ where: { groupId }, select: { path: true, thumbnail: true } })
+        const deleted = await tx.moodboardGroup.deleteMany({
+          where: { id: groupId, projectLinks: { none: {} } },
+        })
+        if (deleted.count) await queueFileCleanup(tx, images.flatMap(image => [image.path, image.thumbnail]).filter(url => url?.startsWith('/api/uploads/')), 'moodboard')
+      }
+    }, { isolationLevel: 'Serializable' })
 
     return NextResponse.json({ success: true })
   } catch (error) {

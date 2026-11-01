@@ -32,6 +32,15 @@ def main(app_image, updater_image):
             return json.loads(run('docker', 'inspect', container))[0]
         def sql(query):
             return run('docker', 'exec', name + '-db', 'psql', '-U', 'postgres', '-d', 'shootit_container_test', '-Atc', query)
+        def remove_new_schema():
+            indexes = [f'{model}_{field}_idx' for model in
+                       ['SelectionImage', 'ResultFile', 'MoodboardImage', 'ParticipantImage', 'ApplicationImage']
+                       for field in ['path', 'thumbnail']]
+            indexes += [f'{model}_{kind}_name_key' for model in ['SelectionFolder', 'ResultFolder']
+                        for kind in ['root', 'child']]
+            sql('DROP TABLE IF EXISTS "FileCleanupJob"; '
+                'ALTER TABLE "Project" DROP COLUMN IF EXISTS "coverHidden", DROP COLUMN IF EXISTS "coverPositionX", DROP COLUMN IF EXISTS "coverPositionY"; ' +
+                ' '.join(f'DROP INDEX IF EXISTS "{index}";' for index in indexes))
         def update(mode='run', target=None, success=True):
             target = target or app_image
             # Only release lookup/pull are substituted, for a locally built image
@@ -88,6 +97,7 @@ m.main()
             run('docker', 'run', '--rm', '--network', name, '-e', 'DATABASE_URL=' + address,
                 '--entrypoint', 'node', app_image, 'scripts/migrate.cjs', 'deploy')
             sql('INSERT INTO "User" (id,email,"updatedAt") VALUES (\'preserve\',\'preserved@example.test\',NOW());')
+            remove_new_schema()
             sql('DROP TABLE "_prisma_migrations"; DROP TABLE "RegistrationInvite"; DROP TABLE "RegistrationSettings"; '
                 'DROP TABLE "ProjectVisit", "SiteSettings"; DROP TYPE "RegistrationMode"; ALTER TABLE "User" DROP COLUMN "isAdmin", DROP COLUMN "isOwner";')
             legacy = derived('USER root\nRUN node -e "let p=require(\'./package.json\');p.version=\'1.10.1\';require(\'fs\').writeFileSync(\'package.json\',JSON.stringify(p))"\n'
@@ -136,6 +146,7 @@ m.main()
             assert info(name + '-app')['Id'] == migration_app['Id']
             # Return to the original legacy fixture to test the full update path.
             run('docker', 'rm', name + '-app')
+            remove_new_schema()
             sql('DROP TABLE "_prisma_migrations"; DROP TABLE "RegistrationInvite"; DROP TABLE "RegistrationSettings"; '
                 'DROP TABLE "ProjectVisit", "SiteSettings"; DROP TYPE "RegistrationMode"; ALTER TABLE "User" DROP COLUMN "isAdmin", DROP COLUMN "isOwner";')
             run('docker', 'run', '-d', '--name', name + '-app', '--restart', 'unless-stopped', '--network', name,
@@ -181,6 +192,7 @@ m.main()
             # A failed manual upgrade can already have the latest image, but still
             # lack a baseline. Repair without requiring another release.
             run('docker', 'stop', name + '-app')
+            remove_new_schema()
             sql('DROP TABLE "ProjectVisit", "SiteSettings"; DROP TABLE "_prisma_migrations"; ALTER TABLE "User" DROP COLUMN "isOwner"; UPDATE "RegistrationSettings" SET mode=\'CLOSED\'; UPDATE "User" SET "isAdmin"=true;')
             update()
             assert state()['phase'] == 'complete'

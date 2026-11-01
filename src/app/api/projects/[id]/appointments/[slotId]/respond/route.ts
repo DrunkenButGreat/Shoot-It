@@ -20,6 +20,11 @@ export async function POST(
     }
 
     try {
+    if (!await prisma.appointmentSlot.findUnique({ where: { id: slotId, projectId: id }, select: { id: true } })) {
+      return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
+    }
+
+
         const body = await request.json()
         const { status } = body as { status: AppointmentStatus }
 

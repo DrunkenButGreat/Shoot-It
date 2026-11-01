@@ -490,6 +490,13 @@ upgrade described below instead of `db push`.
 
 The app automatically backs up and migrates supported legacy databases at startup.
 Existing accounts retain their data.
+
+Version 1.22.1 adds media lookup indexes, unique sibling-folder names and a persistent
+file-cleanup queue. Existing duplicate folder names receive an ID suffix; folder IDs,
+images and hierarchy are preserved. File deletions retry every minute after the
+database change commits. Files still referenced elsewhere are retained. Project
+storage totals may lag by up to 30 seconds. Use migrations rather than `db push`
+to install the partial unique indexes.
 See [updates and recovery](deploy/UPDATES.md) for the current Docker workflow.
 
 Grant access to a specific existing account from the trusted server environment:

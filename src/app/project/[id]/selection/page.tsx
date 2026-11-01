@@ -11,10 +11,8 @@ import { cookies } from "next/headers"
 
 export default async function SelectionPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const session = await auth()
   const cookieStore = await cookies()
@@ -26,31 +24,10 @@ export default async function SelectionPage({
   }
 
   const { id } = await params
-  const sParams = await searchParams
-  const starsParam = sParams.stars
-  const colorParam = sParams.color
-
-  const stars = Array.isArray(starsParam) 
-    ? starsParam.map(s => parseInt(s)).filter(n => !isNaN(n))
-    : (starsParam && !isNaN(parseInt(starsParam)) ? [parseInt(starsParam)] : [])
-  
-  const colors = Array.isArray(colorParam)
-    ? colorParam as string[]
-    : (colorParam ? [colorParam as string] : [])
-
   // Check access
   const hasAccess = await canAccessProject(session.user.id, id)
   if (!hasAccess) {
     redirect("/dashboard")
-  }
-
-  // Build filter
-  const where: any = { projectId: id }
-  if (stars.length > 0 || colors.length > 0) {
-    where.ratings = {
-      ...(stars.length > 0 ? { stars: { in: stars } } : {}),
-      ...(colors.length > 0 ? { color: { in: colors } } : {}),
-    }
   }
 
   // Fetch project, folders and selection images
@@ -67,17 +44,12 @@ export default async function SelectionPage({
     prisma.selectionFolder.findMany({
       where: { projectId: id },
       include: {
-        images: {
-          include: { ratings: true }
-        },
         _count: { select: { images: true } }
       }
     }),
     prisma.selectionImage.findMany({
-      where,
-      include: {
-        ratings: true,
-      },
+      where: { projectId: id },
+      select: { id: true, filename: true, path: true, thumbnail: true, width: true, height: true, folderId: true, ratings: { select: { id: true, stars: true, color: true } } },
       orderBy: { importedAt: 'desc' },
     }),
   ])
@@ -101,7 +73,7 @@ export default async function SelectionPage({
               </Link>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">{project.name}</h1>
-                <p className="text-sm text-gray-500">Selection Gallery</p>
+                <p className="text-sm text-gray-500">{dict.project.selection}</p>
               </div>
             </div>
           </div>
@@ -113,7 +85,7 @@ export default async function SelectionPage({
         <SelectionContent
           projectId={id}
           initialImages={images as any}
-          initialFolders={folders as any}
+          initialFolders={folders.map(folder => ({ ...folder, images: [] }))}
           userId={session.user.id}
           galleryLayout={project.galleryLayout}
           hasLocalMedia={!!process.env.LOCAL_MEDIA_PATH}

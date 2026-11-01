@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import { canAccessProject } from '@/lib/permissions';
 import path from 'path';
 import { archiveResponse } from '@/lib/zip';
+import { z } from 'zod';
 
 export async function POST(
   request: NextRequest,
@@ -35,7 +36,13 @@ export async function POST(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { imageIds = [], folderIds = [], mode } = await request.json();
+    const parsed = z.object({
+      imageIds: z.array(z.string()).default([]),
+      folderIds: z.array(z.string()).default([]),
+      mode: z.enum(['manifest']).optional(),
+    }).safeParse(await request.json());
+    if (!parsed.success) return NextResponse.json({ error: 'Invalid selection' }, { status: 400 });
+    const { imageIds, folderIds, mode } = parsed.data;
 
     if (imageIds.length === 0 && folderIds.length === 0) {
       return NextResponse.json({ error: 'No items selected' }, { status: 400 });
@@ -44,43 +51,39 @@ export async function POST(
     // Fetch all selection folders to build the directory structure inside the zip.
     const folders = await prisma.selectionFolder.findMany({
       where: { projectId },
+      select: { id: true, parentId: true, name: true },
     });
     const folderMap = new Map(folders.map(f => [f.id, f]));
 
     const getFolderPath = (folderId: string): string => {
-      const folder = folderMap.get(folderId);
-      if (!folder) return '';
-      if (folder.parentId) {
-        return path.join(getFolderPath(folder.parentId), folder.name);
+      const parts: string[] = [];
+      const seen = new Set<string>();
+      let folder = folderMap.get(folderId);
+      while (folder && !seen.has(folder.id)) {
+        seen.add(folder.id);
+        parts.unshift(folder.name);
+        folder = folder.parentId ? folderMap.get(folder.parentId) : undefined;
       }
-      return folder.name;
+      return path.join(...parts);
     };
 
-    const isFolderSelectedRecursively = (folderId: string | null): boolean => {
-      if (!folderId) return false;
-      if (folderIds.includes(folderId)) return true;
-      const folder = folderMap.get(folderId);
-      if (folder?.parentId) {
-        return isFolderSelectedRecursively(folder.parentId);
+    const selectedFolders = new Set<string>(folderIds.filter((id: string) => folderMap.has(id)));
+    // Expand descendants once, then let PostgreSQL filter the selected records.
+    let expanded = true;
+    while (expanded) {
+      expanded = false;
+      for (const folder of folders) {
+        if (folder.parentId && selectedFolders.has(folder.parentId) && !selectedFolders.has(folder.id)) {
+          selectedFolders.add(folder.id);
+          expanded = true;
+        }
       }
-      return false;
-    };
-
-    const explicitImages = await prisma.selectionImage.findMany({
-      where: { id: { in: imageIds } },
+    }
+    const images = await prisma.selectionImage.findMany({
+      where: { projectId, OR: [{ id: { in: imageIds } }, { folderId: { in: [...selectedFolders] } }] },
+      select: { id: true, folderId: true, filename: true, path: true },
     });
-
-    const allProjectImages = await prisma.selectionImage.findMany({
-      where: { projectId },
-    });
-
-    const finalImagesToInclude = new Map<string, any>();
-    explicitImages.forEach(img => finalImagesToInclude.set(img.id, img));
-    allProjectImages.forEach(img => {
-      if (img.folderId && isFolderSelectedRecursively(img.folderId)) {
-        finalImagesToInclude.set(img.id, img);
-      }
-    });
+    const finalImagesToInclude = new Map(images.map(image => [image.id, image]));
 
     if (finalImagesToInclude.size === 0) {
       return NextResponse.json({ error: 'No images found in selection' }, { status: 404 });

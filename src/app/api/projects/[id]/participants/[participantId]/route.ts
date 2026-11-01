@@ -3,6 +3,7 @@ import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { participantSchema } from '@/lib/validations'
 import { canEditProject } from '@/lib/permissions'
+import { queueFileCleanup } from '@/lib/file-cleanup'
 
 // PUT /api/projects/[id]/participants/[participantId] - Update a participant
 export async function PUT(
@@ -67,11 +68,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    await prisma.participant.delete({
-      where: {
-        id: participantId,
-        projectId: id,
-      },
+    await prisma.$transaction(async tx => {
+      await tx.participant.delete({ where: { id: participantId, projectId: id } })
+      await queueFileCleanup(tx, [`projects/${id}/participants/${participantId}`])
     })
 
     return NextResponse.json({ success: true })

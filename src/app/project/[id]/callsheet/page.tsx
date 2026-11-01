@@ -7,9 +7,12 @@ import Link from 'next/link';
 import { CallsheetContent } from '@/components/callsheet/CallsheetContent';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cookies } from 'next/headers';
+import { getDictionary, getLocale } from '@/lib/i18n';
 
 export default async function CallsheetPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const dict = await getDictionary(getLocale(await cookies()));
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -58,18 +61,18 @@ export default async function CallsheetPage({ params }: { params: Promise<{ id: 
             <Link href={`/project/${id}`}>
               <Button variant="ghost" size="sm" className="gap-2">
                 <ArrowLeft className="w-4 h-4" />
-                Zurück zum Projekt
+                {dict.common.backToProject}
               </Button>
             </Link>
             <h1 className="text-xl font-semibold text-gray-900 line-clamp-1">
-              Callsheet - {project.name}
+              {dict.callsheet.title} - {project.name}
             </h1>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Suspense fallback={<div className="flex items-center justify-center min-h-[400px]">Lädt...</div>}>
+        <Suspense fallback={<div className="flex items-center justify-center min-h-[400px]">{dict.common.loading}</div>}>
           <CallsheetContent
             projectId={id}
             initialCallsheet={transformedCallsheet}

@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useI18n } from '@/components/I18nProvider';
+import { toast } from 'sonner';
 
 type Folder = {
   id: string;
@@ -73,9 +74,11 @@ export function SelectionFolderForm({
         setParentId('');
         onSuccess();
         onClose();
+      } else {
+        toast.error(t('selection.folderSaveError'));
       }
     } catch (error) {
-      console.error('Failed to create folder:', error);
+      toast.error(t('selection.folderSaveError'));
     } finally {
       setIsSubmitting(false);
     }

@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
     ],
   },
   images: {
+    // Upload previews are pre-generated; the optimizer cache cannot enforce project revocation.
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',

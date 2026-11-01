@@ -1,0 +1,42 @@
+// Run inside the disposable smoke container, never against an application database.
+const assert = require('node:assert/strict')
+const fs = require('node:fs/promises')
+const path = require('node:path')
+const { PrismaClient } = require('@prisma/client')
+const db = new PrismaClient()
+async function main() {
+ assert.match(new URL(process.env.DATABASE_URL).pathname, /_test$/)
+ const owner = await db.user.findUniqueOrThrow({where:{email:'preserved@example.test'}})
+ const project = await db.project.create({data:{name:'Media smoke',shortCode:'media-smoke',ownerId:owner.id,isPublic:false,showSelectionPublicly:true,allowSelectionDownload:false,allowGuestSelection:true}})
+ const dir = path.join(process.cwd(),'uploads','selection',project.id)
+ const url = `/api/uploads/selection/${project.id}/sample.jpg`
+ const preview = `/api/uploads/selection/${project.id}/preview_sample.jpg.webp`
+ try {
+  await fs.mkdir(dir,{recursive:true})
+  await fs.writeFile(path.join(dir,'sample.jpg'),'0123456789')
+  await fs.writeFile(path.join(dir,'preview_sample.jpg.webp'),'preview-only')
+  const image=await db.selectionImage.create({data:{projectId:project.id,path:url,thumbnail:preview,filename:'sample.jpg'}})
+  const get = p=>fetch('http://localhost:3000'+p)
+  assert.equal((await get(preview)).status,403)
+  const rate=()=>fetch(`http://localhost:3000/api/projects/${project.id}/selection/${image.id}/rating`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({guestId:'synthetic-http-guest',stars:3,color:null})})
+  assert.equal((await rate()).status,401)
+  await db.project.update({where:{id:project.id},data:{isPublic:true}})
+  const visible=await get(preview)
+  assert.equal(visible.status,200)
+  assert.equal(await visible.text(),'preview-only')
+  assert.match(visible.headers.get('cache-control'),/private.*no-store/)
+  assert.equal((await get(url)).status,403)
+  assert.equal((await rate()).status,200)
+  assert.equal((await get('/p/media-smoke/selection')).status,200)
+  await db.project.update({where:{id:project.id},data:{allowSelectionDownload:true}})
+  const range=await fetch('http://localhost:3000'+url,{headers:{Range:'bytes=-3'}})
+  assert.equal(range.status,206);assert.equal(range.headers.get('content-range'),'bytes 7-9/10');assert.equal(await range.text(),'789')
+  await db.project.update({where:{id:project.id},data:{showSelectionPublicly:false}})
+  assert.equal((await get(preview)).status,403);assert.equal((await rate()).status,401)
+  await db.project.update({where:{id:project.id},data:{isPublic:false,showSelectionPublicly:true}})
+  assert.equal((await get(preview)).status,403)
+  assert.equal((await fetch('http://localhost:3000/dashboard',{redirect:'manual'})).status,307)
+  console.log('PASS: live HTTP media privacy, guest rating visibility, revocation, suffix streaming and public selection rendering.')
+ } finally {await db.project.delete({where:{id:project.id}});await fs.rm(dir,{recursive:true,force:true})}
+}
+main().catch(e=>{console.error(e);process.exitCode=1}).finally(()=>db.$disconnect())

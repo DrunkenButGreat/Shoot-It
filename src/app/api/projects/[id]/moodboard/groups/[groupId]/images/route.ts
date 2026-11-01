@@ -26,6 +26,12 @@ export async function POST(
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 
+    if (!await prisma.projectMoodboardLink.findUnique({
+      where: { projectId_groupId: { projectId: id, groupId } }, select: { id: true }
+    })) {
+      return NextResponse.json({ error: 'Group not found' }, { status: 404 })
+    }
+
         // Check if group is project-specific or library
         const group = await prisma.moodboardGroup.findUnique({
             where: { id: groupId },

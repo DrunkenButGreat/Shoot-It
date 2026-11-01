@@ -8,7 +8,7 @@ export const proxy = auth((req) => {
 
   // Public routes that don't require authentication
   const publicRoutes = ["/", "/login", "/signup", "/api/health", "/api/auth/register"]
-  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
+  const isPublicRoute = publicRoutes.some(route => pathname === route || (route !== "/" && pathname.startsWith(`${route}/`)))
 
   // Public short URLs (e.g., /p/abc12345)
   const isPublicShortUrl = pathname.startsWith("/p/")

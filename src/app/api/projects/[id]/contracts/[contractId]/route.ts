@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { contractSchema } from '@/lib/validations'
-import { canEditProject } from '@/lib/permissions'
+import { canEditProject, canAccessProject } from '@/lib/permissions'
 
 // GET /api/projects/[id]/contracts/[contractId] - Get a single contract
 export async function GET(
@@ -15,10 +15,13 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { contractId } = await params
+    const { id, contractId } = await params
+    if (!await canAccessProject(session.user.id, id)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
     const contract = await prisma.contract.findUnique({
-      where: { id: contractId },
+      where: { id: contractId, projectId: id },
       include: {
         signatures: {
           include: {

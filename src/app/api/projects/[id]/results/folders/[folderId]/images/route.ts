@@ -9,74 +9,7 @@ import { appConfig } from "@/config/app.config"
 import { getImageMetadata, generateResultPreview } from "@/lib/image-processing"
 import { getVideoMetadata, generateVideoPoster } from "@/lib/video-processing"
 
-// In-memory lock for folder creation
-const folderCreationLocks = new Map<string, Promise<string>>();
-
-async function ensureFolderStructure(projectId: string, relativePath: string, startingFolderId: string) {
-    const parts = relativePath.replace(/\\/g, '/').split('/').filter(p => p)
-    if (parts.length <= 1) return startingFolderId // No subfolders, just filename
-
-    // Remove filename
-    parts.pop()
-    const folderKey = `${projectId}:${startingFolderId}:${parts.join('/')}`;
-
-    if (folderCreationLocks.has(folderKey)) {
-        return await folderCreationLocks.get(folderKey)!;
-    }
-
-    const creationPromise = (async () => {
-        let parentId: string = startingFolderId
-        
-        // Get starting folder path
-        const startingFolder = await prisma.resultFolder.findUnique({
-            where: { id: startingFolderId }
-        })
-        let currentPath = startingFolder?.path || ""
-
-        for (const part of parts) {
-            currentPath = `${currentPath}/${part}`
-            
-            let folder: any = await prisma.resultFolder.findFirst({
-                where: {
-                    name: part,
-                    projectId,
-                    parentId
-                }
-            })
-
-            if (!folder) {
-                try {
-                    folder = await prisma.resultFolder.create({
-                        data: {
-                            name: part,
-                            projectId,
-                            parentId,
-                            path: currentPath
-                        }
-                    })
-                } catch (e) {
-                    folder = await prisma.resultFolder.findFirst({
-                        where: {
-                            name: part,
-                            projectId,
-                            parentId
-                        }
-                    })
-                    if (!folder) throw new Error(`Failed to ensure folder: ${part}`)
-                }
-            }
-            parentId = folder.id
-        }
-        return parentId
-    })();
-
-    folderCreationLocks.set(folderKey, creationPromise);
-    try {
-        return await creationPromise;
-    } finally {
-        setTimeout(() => folderCreationLocks.delete(folderKey), 5000);
-    }
-}
+import { ensureFolderStructure } from '@/lib/folders'
 
 export async function POST(
     request: NextRequest,
@@ -96,6 +29,9 @@ export async function POST(
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 
+        const target = await prisma.resultFolder.findFirst({ where: { id: folderId, projectId: id } })
+        if (!target) return NextResponse.json({ error: "Folder not found" }, { status: 404 })
+
         const formData = await request.formData()
         const file = formData.get("file") as File
         const relativePath = formData.get("relativePath") as string | null
@@ -113,7 +49,7 @@ export async function POST(
         // Handle subfolder structure
         let targetFolderId = folderId
         if (relativePath) {
-            targetFolderId = await ensureFolderStructure(id, relativePath, folderId)
+            targetFolderId = (await ensureFolderStructure('results', id, relativePath, folderId))!
         }
 
         const bytes = await file.arrayBuffer()

@@ -34,21 +34,7 @@ export default async function PublicSelectionPage({
                     brandingImage: true,
                 },
             },
-            selectionImages: {
-                include: {
-                    ratings: true,
-                },
-                orderBy: { importedAt: "desc" },
-            },
-            selectionFolders: {
-                include: {
-                    images: {
-                        include: {
-                            ratings: true,
-                        },
-                    },
-                },
-            },
+
         },
     }) as any
 
@@ -102,6 +88,11 @@ export default async function PublicSelectionPage({
         )
     }
 
+    const [images, folders] = await Promise.all([
+        prisma.selectionImage.findMany({ where: { projectId: project.id }, select: { id: true, filename: true, path: true, thumbnail: true, width: true, height: true, folderId: true, ratings: { select: { id: true, stars: true, color: true } } }, orderBy: { importedAt: "desc" } }),
+        prisma.selectionFolder.findMany({ where: { projectId: project.id }, include: { _count: { select: { images: true } } } }),
+    ])
+
     const brandColor = project.brandingColor || project.owner.brandingColor
 
     return (
@@ -142,8 +133,8 @@ export default async function PublicSelectionPage({
                     <CardContent className="pt-6">
                         <PublicSelection
                             projectId={project.id}
-                            images={project.selectionImages}
-                            folders={project.selectionFolders}
+                            images={images}
+                            folders={folders.map(folder => ({ ...folder, images: [] }))}
                             layout={project.galleryLayout as any}
                             userHasAccess={userHasAccess}
                             isAuthenticated={!!session?.user?.id}

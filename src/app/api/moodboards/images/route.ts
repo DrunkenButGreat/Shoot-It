@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
-import { unlink } from "fs/promises"
-import path from "path"
+import { queueFileCleanup } from "@/lib/file-cleanup"
 
 export async function DELETE(request: NextRequest) {
     try {
@@ -40,30 +39,10 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ error: "Forbidden: You don't own some of these images" }, { status: 403 })
         }
 
-        // Delete from DB
-        await prisma.moodboardImage.deleteMany({
-            where: {
-                id: { in: imageIds },
-            },
+        await prisma.$transaction(async tx => {
+            await queueFileCleanup(tx, images.flatMap(image => [image.path, image.thumbnail]).filter(url => url?.startsWith('/api/uploads/')), 'moodboard')
+            await tx.moodboardImage.deleteMany({ where: { id: { in: images.map(image => image.id) } } })
         })
-
-        // Delete from filesystem
-        for (const image of images) {
-            try {
-                const relativePath = image.path.replace("/api/uploads/", "")
-                const fullPath = path.join(process.cwd(), "uploads", relativePath)
-                await unlink(fullPath)
-                
-                // Also delete thumbnail if it's different
-                if (image.thumbnail && image.thumbnail !== image.path) {
-                    const thumbRelativePath = image.thumbnail.replace("/api/uploads/", "")
-                    const thumbFullPath = path.join(process.cwd(), "uploads", thumbRelativePath)
-                    await unlink(thumbFullPath)
-                }
-            } catch (fileError) {
-                console.error(`Failed to delete physical file for image ${image.id}:`, fileError)
-            }
-        }
 
         return NextResponse.json({ success: true, count: images.length })
     } catch (error) {

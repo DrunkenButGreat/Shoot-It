@@ -118,8 +118,7 @@ export async function PUT(
   }
 }
 
-import { rm } from 'fs/promises'
-import path from 'path'
+import { queueFileCleanup } from '@/lib/file-cleanup'
 
 // DELETE /api/projects/[id] - Delete a project
 export async function DELETE(
@@ -148,32 +147,18 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Clean up filesystem before deleting the database record.
-    // If file cleanup fails, abort the deletion so the project is not
-    // removed from the database while its files remain on disk.
-    try {
-      // 1. Delete Selection images
-      const selectionDir = path.join(process.cwd(), 'uploads', 'selection', id)
-      await rm(selectionDir, { recursive: true, force: true })
-
-      // 2. Delete Results images
-      const resultsDir = path.join(process.cwd(), 'uploads', 'results', id)
-      await rm(resultsDir, { recursive: true, force: true })
-
-      // 3. Delete Moodboard images
-      const moodboardDir = path.join(process.cwd(), 'uploads', 'moodboard', id)
-      await rm(moodboardDir, { recursive: true, force: true })
-    } catch (err) {
-      console.error('Error cleaning up project files:', err)
-      return NextResponse.json(
-        { error: 'Could not delete project files' },
-        { status: 500 }
-      )
-    }
-
-    await prisma.project.delete({
-      where: { id },
-    })
+    await prisma.$transaction(async tx => {
+      const groups = await tx.moodboardGroup.findMany({
+        where: { isLibrary: false, projectLinks: { some: { projectId: id } } },
+        select: { id: true, images: { select: { path: true, thumbnail: true } } },
+      })
+      await queueFileCleanup(tx, ['selection', 'results', 'applications', 'projects'].map(category => `${category}/${id}`))
+      await tx.project.delete({ where: { id } })
+      for (const group of groups) {
+        const deleted = await tx.moodboardGroup.deleteMany({ where: { id: group.id, projectLinks: { none: {} } } })
+        if (deleted.count) await queueFileCleanup(tx, group.images.flatMap(image => [image.path, image.thumbnail]).filter(url => url?.startsWith('/api/uploads/')), 'moodboard')
+      }
+    }, { isolationLevel: 'Serializable' })
 
     return NextResponse.json({ success: true })
   } catch (error) {

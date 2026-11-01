@@ -23,6 +23,10 @@ export async function POST(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    if (!await prisma.contract.findUnique({ where: { id: contractId, projectId: id }, select: { id: true } })) {
+      return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
+    }
+
     const body = await request.json()
     const validatedData = signatureSchema.parse(body)
 

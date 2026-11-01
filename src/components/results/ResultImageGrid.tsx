@@ -32,6 +32,7 @@ function videoMimeFor(path: string): string {
 
 export function ResultImageGrid({
   images,
+  allImages = images,
   selectedIds,
   onToggleSelect,
   onDelete,
@@ -41,6 +42,7 @@ export function ResultImageGrid({
   layout = "masonry",
 }: {
   images: ResultFile[];
+  allImages?: ResultFile[];
   selectedIds: Set<string>;
   onToggleSelect: (id: string) => void;
   onDelete?: (id: string) => void;
@@ -193,10 +195,10 @@ export function ResultImageGrid({
         index={index}
         open={index >= 0}
         close={() => setIndex(-1)}
-        toolbar={{ buttons: [<LightboxOriginalImageButton key="original" images={images} />, "close"] }}
+        toolbar={{ buttons: [<LightboxOriginalImageButton key="original" images={allImages} />, "close"] }}
         carousel={{ preload: 0 }}
         plugins={[Video]}
-        slides={images.map((img) =>
+        slides={allImages.map((img) =>
           img.isVideo
             ? {
                 type: "video" as const,

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
-import { rm } from 'fs/promises'
-import path from 'path'
+import { queueFileCleanup } from '@/lib/file-cleanup'
 
 // PUT /api/user/moodboards/[id] - Update private group (name, archived)
 export async function PUT(
@@ -66,17 +65,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Physical deletion of all images
-    // Wait, since images could be in various project folders (based on our previous route implementation),
-    // this is tricky. But since we used project ID in paths earlier...
-    
-    // For now, delete from the DB. Filesystem management could be improved by using user_id in paths.
-    // In our current routes, images were stored under `uploads/moodboard/[projectId]/[groupId]`.
-    // Since a group can be in multiple projects, we'd need to track all those projects.
-    
-    // Simplified: Delete the group record (cascade will handle images in DB)
-    await prisma.moodboardGroup.delete({
-      where: { id: groupId }
+    await prisma.$transaction(async tx => {
+      await queueFileCleanup(tx, group.images.flatMap(image => [image.path, image.thumbnail]), 'moodboard')
+      await tx.moodboardGroup.delete({ where: { id: groupId } })
     })
 
     return new NextResponse(null, { status: 204 })
