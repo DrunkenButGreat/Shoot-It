@@ -13,7 +13,7 @@ Optional Pocket ID sign-in can be configured in the administration UI. See the [
 
 PhotoShoot Organizer is a self-hosted platform designed specifically for photographers and creative teams to manage all aspects of photoshoots, from initial planning to final delivery.
 
-**Current version: 1.27.0.** See [CHANGELOG.md](CHANGELOG.md) for release changes and the [upgrade guide](deploy/UPDATES.md) for deployment and recovery.
+**Current version: 1.27.1.** See [CHANGELOG.md](CHANGELOG.md) for release changes and the [upgrade guide](deploy/UPDATES.md) for deployment and recovery.
 
 ## ✨ Features
 
