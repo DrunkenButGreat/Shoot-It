@@ -40,7 +40,15 @@ export function pocketIdUrl(value: string) {
   return url.href.replace(/\/$/, "")
 }
 
+const discoveryPath = "/.well-known/openid-configuration"
+
+export function pocketIdIssuer(value: string) {
+  const url = pocketIdUrl(value)
+  return url.endsWith(discoveryPath) ? url.slice(0, -discoveryPath.length) : url
+}
+
 export const pocketIdInput = z.object({
+  publicUrl: z.string().trim().max(2048).optional(),
   enabled: z.boolean(),
   issuer: z.string().trim().max(2048),
   clientId: z.string().trim().max(512),
@@ -49,7 +57,9 @@ export const pocketIdInput = z.object({
 
 export async function getPocketIdSettings() {
   const settings = await prisma.pocketIdSettings.findUnique({ where: { id: "global" } })
+  const site = await prisma.siteSettings.findUnique({ where: { id: "global" }, select: { publicUrl: true } })
   return {
+    publicUrl: site?.publicUrl ?? "",
     enabled: settings?.enabled ?? false,
     issuer: settings?.issuer ?? "",
     clientId: settings?.clientId ?? "",
@@ -66,7 +76,14 @@ export async function getPocketIdConfig() {
 }
 
 export async function savePocketIdSettings(input: z.infer<typeof pocketIdInput>) {
-  const issuer = input.issuer ? pocketIdUrl(input.issuer) : ""
+  const issuer = input.issuer ? pocketIdIssuer(input.issuer) : ""
+  let publicUrl = input.publicUrl
+  if (publicUrl) {
+    try {
+      publicUrl = pocketIdUrl(publicUrl)
+      if (new URL(publicUrl).pathname !== "/") throw new Error()
+    } catch { throw new PocketIdError("invalidPublicUrl") }
+  }
   return prisma.$transaction(async tx => {
     const current = await tx.pocketIdSettings.upsert({ where: { id: "global" }, create: { id: "global" }, update: { id: "global" } })
     if (issuer !== current.issuer && await tx.account.findFirst({ where: { provider: "pocket-id" } })) {
@@ -78,11 +95,14 @@ export async function savePocketIdSettings(input: z.infer<typeof pocketIdInput>)
       decryptPocketIdSecret(clientSecret)
     }
     await tx.pocketIdSettings.update({ where: { id: "global" }, data: { enabled: input.enabled, issuer, clientId: input.clientId, clientSecret } })
+    if (publicUrl !== undefined) await tx.siteSettings.upsert({
+      where: { id: "global" }, create: { id: "global", publicUrl: publicUrl || null }, update: { publicUrl: publicUrl || null },
+    })
   })
 }
 
 export async function checkPocketIdDiscovery(issuerInput: string) {
-  const issuer = pocketIdUrl(issuerInput)
+  const issuer = pocketIdIssuer(issuerInput)
   try {
     const response = await fetch(`${issuer}/.well-known/openid-configuration`, {
       signal: AbortSignal.timeout(5000), redirect: "error", cache: "no-store",

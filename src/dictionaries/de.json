@@ -680,13 +680,13 @@
   "pocketId": {
     "title": "Pocket ID",
     "description": "Optional mit Pocket ID anmelden. Passwort und Google bleiben verfügbar.",
-    "setup": "Erstelle in Pocket ID einen vertraulichen OIDC-Client, hinterlege diese Callback-URL und erlaube den gewünschten Nutzern den Zugriff. Trage hier die Issuer-Basisadresse (ohne /.well-known/openid-configuration), Client-ID und das Secret ein.",
+    "setup": "Erstelle in Pocket ID einen vertraulichen OIDC-Client, hinterlege diese Callback-URL und erlaube den gewünschten Nutzern den Zugriff. Füge die OIDC-Discovery-URL aus Pocket ID, Client-ID und das Secret ein. Eine bisherige Issuer-Basisadresse wird weiterhin unterstützt.",
     "callback": "Callback-URL",
     "copy": "URL kopieren",
     "copied": "URL kopiert.",
     "copyFailed": "Kopieren fehlgeschlagen. Bitte die URL markieren und kopieren.",
     "enabled": "Pocket ID aktivieren",
-    "issuer": "Issuer-URL",
+    "issuer": "OIDC-Discovery-URL",
     "clientId": "Client-ID",
     "clientSecret": "Client-Secret",
     "secretStored": "Secret gespeichert. Leer lassen, um es beizubehalten; zur Rotation ein neues Secret eingeben.",
@@ -696,11 +696,11 @@
     "test": "Discovery prüfen",
     "discoveryOk": "Discovery erfolgreich. Client-Secret und Anmeldung sind damit noch nicht geprüft.",
     "saved": "Einstellungen gespeichert.",
-    "forbidden": "Keine Berechtigung oder ungültiger Anfrage-Ursprung.",
+    "forbidden": "Für diese Einstellung sind Administratorrechte erforderlich.",
     "invalidInput": "Bitte die Eingaben prüfen.",
     "invalidIssuer": "Eine gültige HTTPS-Adresse ohne Zugangsdaten, Suchparameter oder Fragment eingeben.",
     "issuerLocked": "Die Pocket-ID-Instanz kann nach einer Kontoverknüpfung nicht gewechselt werden.",
-    "incomplete": "Zum Aktivieren sind Issuer-URL, Client-ID und Client-Secret erforderlich.",
+    "incomplete": "Zum Aktivieren sind Discovery-URL, Client-ID und Client-Secret erforderlich.",
     "secretUnavailable": "Das gespeicherte Secret ist nicht lesbar. Bitte erneut eingeben oder Pocket ID deaktivieren.",
     "discoveryFailed": "Discovery fehlgeschlagen. Adresse, Erreichbarkeit und OIDC-Konfiguration prüfen.",
     "unverifiedEmail": "Pocket ID muss eine gültige, bestätigte E-Mail-Adresse bereitstellen.",
@@ -708,6 +708,11 @@
     "configurationChanged": "Die Pocket-ID-Einstellungen wurden geändert. Bitte die Anmeldung erneut starten.",
     "errorOccurred": "Die Pocket-ID-Anfrage ist fehlgeschlagen. Bitte erneut versuchen.",
     "unavailable": "Die Pocket-ID-Anmeldung ist derzeit nicht verfügbar.",
-    "signIn": "Mit Pocket ID anmelden"
+    "signIn": "Mit Pocket ID anmelden",
+    "publicUrl": "Öffentliche Shoot-It-URL",
+    "publicUrlHelp": "Die Hauptadresse im Browser, z. B. https://shoot-it.example. Sie hat Vorrang vor AUTH_URL und gilt für Anmeldung, Callback-URLs und App-Links. Leer lassen nutzt AUTH_URL. Nach einem Wechsel kann eine erneute Anmeldung nötig sein.",
+    "useBrowserUrl": "Aktuelle Browser-URL übernehmen",
+    "invalidPublicUrl": "Bitte eine öffentliche HTTPS-Hauptadresse ohne Pfad, Zugangsdaten, Suchparameter oder Fragment eingeben.",
+    "invalidOrigin": "Die Anfrage stammt nicht von dieser Website. Öffne die Administration direkt über deine Shoot-It-Adresse."
   }
 }

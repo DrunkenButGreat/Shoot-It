@@ -544,6 +544,7 @@ model ProjectVisit {
 }
 
 model SiteSettings {
+  publicUrl    String?
   id String @id @default("global")
   landingImage String?
   loginImage String?
