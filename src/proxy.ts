@@ -10,13 +10,15 @@ export const proxy = auth((req) => {
   const publicRoutes = ["/", "/login", "/signup", "/api/health", "/api/auth/register"]
   const isPublicRoute = publicRoutes.some(route => pathname === route || (route !== "/" && pathname.startsWith(`${route}/`)))
 
+  const isPublicAsset = pathname.startsWith("/images/") || pathname === "/robots.txt"
+
   // Public short URLs (e.g., /p/abc12345)
   const isPublicShortUrl = pathname.startsWith("/p/")
 
   // API routes are handled separately
   const isApiRoute = pathname.startsWith("/api/")
 
-  if (isPublicRoute || isPublicShortUrl) {
+  if (isPublicRoute || isPublicAsset || isPublicShortUrl) {
     return NextResponse.next()
   }
 
