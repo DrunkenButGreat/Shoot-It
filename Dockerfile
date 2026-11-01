@@ -75,4 +75,4 @@ CMD ["sh", "-c", "node scripts/migrate.cjs start && exec node server.js"]
 
 ARG SOURCE_REVISION
 LABEL org.opencontainers.image.revision=$SOURCE_REVISION
-LABEL org.opencontainers.image.version="1.22.1"
+LABEL org.opencontainers.image.version="1.22.2"

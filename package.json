@@ -1,6 +1,6 @@
 {
   "name": "photoshoot-organizer",
-  "version": "1.22.1",
+  "version": "1.22.2",
   "private": true,
   "scripts": {
     "devdb": "docker compose up -d db && next dev --turbopack",
@@ -22,7 +22,7 @@
     "test:migrations": "node scripts/test-migrations.cjs",
     "test:design": "node scripts/test-design.cjs",
     "test:workspace": "node scripts/test-workspace-features.cjs",
-    "test:audit": "node scripts/test-project-security.cjs && node scripts/test-folder-integrity.cjs && node scripts/test-rating-controls.cjs && node scripts/test-public-loading.cjs",
+    "test:audit": "node scripts/test-project-security.cjs && node scripts/test-folder-integrity.cjs && node scripts/test-rating-controls.cjs && node scripts/test-public-loading.cjs && node scripts/test-dependency-compatibility.cjs",
     "test:audit:integration": "node scripts/test-audit-integration.cjs"
   },
   "dependencies": {
@@ -50,9 +50,9 @@
     "framer-motion": "^12.24.10",
     "lucide-react": "^0.468.0",
     "nanoid": "^5.1.16",
-    "next": "16.3.8",
+    "next": "16.4.3",
     "next-auth": "^5.0.0-beta.32",
-    "nodemailer": "^8.0.11",
+    "nodemailer": "10.1.4",
     "prisma": "6.19.3",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
@@ -60,7 +60,7 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^2.6.0",
     "yet-another-react-lightbox": "^3.28.0",
-    "zod": "^3.24.1"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.15",
@@ -73,10 +73,28 @@
     "@types/react-dom": "^19.0.3",
     "autoprefixer": "^10.4.23",
     "eslint": "^9.17.0",
-    "eslint-config-next": "16.3.8",
+    "eslint-config-next": "16.4.3",
     "postcss": "^8.4.49",
     "prettier": "^3.4.2",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.0"
+  },
+  "overrides": {
+    "@prisma/config": {
+      "deepmerge-ts": "8.0.2"
+    },
+    "archiver-utils": {
+      "glob": "14.0.3"
+    },
+    "readdir-glob": {
+      "minimatch": "11.0.3"
+    },
+    "source-map-js": "1.2.2",
+    "next-auth": {
+      "nodemailer": "10.1.4"
+    },
+    "@auth/core": {
+      "nodemailer": "10.1.4"
+    }
   }
 }

@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.22.2] - 2026-11-01
+
+### Fixed
+- Patch Next.js to 16.4.3 and align its ESLint configuration.
+- Update Zod and Nodemailer and target compatible transitive dependency fixes; the production dependency audit reports no known vulnerabilities.
+- Preserve validation error responses with Zod 4 and add offline compatibility checks for validation, mail generation, ZIP downloads and Prisma configuration.
+- Include all audit repairs from the unreleased 1.22.1 candidate below.
+
 ## [1.22.1] - 2026-11-01
 
 ### Added

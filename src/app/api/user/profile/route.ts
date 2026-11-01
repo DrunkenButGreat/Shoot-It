@@ -78,7 +78,7 @@ export async function PUT(request: NextRequest) {
         return NextResponse.json(user)
     } catch (error) {
         if (error instanceof z.ZodError) {
-            return NextResponse.json({ error: 'Invalid input data', details: error.errors }, { status: 400 })
+            return NextResponse.json({ error: 'Invalid input data', details: error.issues }, { status: 400 })
         }
         console.error('Error updating profile:', error)
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
