@@ -83,10 +83,12 @@ async function handlers() {
     assert.equal((await route.PUT(req({ stars: 5, guestId: 'guest' }), ctx({ imageId: 'image' }))).status, 401)
   }
   route = load('src/proxy.ts', { '@/auth': { auth: fn => fn } })
-  for (const pathname of ['/', '/login', '/signup', '/p/share', '/api/auth/callback/google']) {
+  for (const pathname of ['/', '/login', '/signup', '/p/share', '/api/auth/callback/google', '/images/design/coastal-editorial.webp', '/robots.txt']) {
     assert.equal(route.proxy({ nextUrl: new URL(`http://localhost${pathname}`), url: `http://localhost${pathname}`, auth: null }).headers.get('x-middleware-next'), '1')
   }
-  assert.equal(route.proxy({ nextUrl: new URL('http://localhost/project/private'), url: 'http://localhost/project/private', auth: null }).status, 307)
+  for (const pathname of ['/project/private', '/images-private/secret', '/robots.txt-private', '/images/../project/private']) {
+    assert.equal(route.proxy({ nextUrl: new URL(`http://localhost${pathname}`), url: `http://localhost${pathname}`, auth: null }).status, 307)
+  }
 }
 async function policy() {
   let project = { id: 'project-a', ownerId: 'owner', isPublic: false, showMoodboardPublicly: true, showSelectionPublicly: true, showResultsPublicly: true, showParticipantsPublicly: true, allowSelectionDownload: false }
