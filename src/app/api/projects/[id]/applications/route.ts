@@ -1,3 +1,4 @@
+import { getPublicUrl } from "@/lib/public-url"
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
@@ -182,7 +183,7 @@ export async function POST(
             <p>Es ist eine neue Bewerbung für dein Projekt <strong>${project.name}</strong> eingegangen.</p>
             <p><strong>Bewerber:</strong> ${session?.user?.name || name}</p>
             <p><strong>Nachricht:</strong><br/>${message || 'Keine Nachricht hinterlassen.'}</p>
-            <p><a href="${process.env.AUTH_URL}/project/${projectId}">Projekt ansehen</a></p>
+            <p><a href="${await getPublicUrl()}/project/${projectId}">Projekt ansehen</a></p>
         `
     })
 

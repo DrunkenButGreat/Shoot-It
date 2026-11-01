@@ -1,0 +1,3 @@
+BEGIN;
+ALTER TABLE "SiteSettings" ADD COLUMN "publicUrl" TEXT;
+COMMIT;

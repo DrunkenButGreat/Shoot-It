@@ -55,6 +55,17 @@ async function main() {
   try {
     const fresh = database()
     fresh.command([migrate, 'deploy'])
+    await fresh.db.siteSettings.create({ data: { id: 'global', landingImage: '/preserved.webp' } })
+    await fresh.db.pocketIdSettings.create({ data: { id: 'global', issuer: 'https://id.example', clientSecret: 'preserved-ciphertext' } })
+    await fresh.db.$executeRawUnsafe('ALTER TABLE "SiteSettings" DROP COLUMN "publicUrl"')
+    await fresh.db.$executeRawUnsafe('DELETE FROM "_prisma_migrations" WHERE migration_name = \'20261101220000_public_url\'')
+    fresh.command([migrate, 'deploy'])
+    assert.equal((await fresh.db.siteSettings.findUnique({ where: { id: 'global' } })).landingImage, '/preserved.webp')
+    assert.equal((await fresh.db.siteSettings.findUnique({ where: { id: 'global' } })).publicUrl, null)
+    assert.equal((await fresh.db.pocketIdSettings.findUnique({ where: { id: 'global' } })).clientSecret, 'preserved-ciphertext')
+    await fresh.db.siteSettings.update({ where: { id: 'global' }, data: { publicUrl: 'https://shoot.example' } })
+    fresh.command([migrate, 'deploy'])
+    assert.equal((await fresh.db.siteSettings.findUnique({ where: { id: 'global' } })).publicUrl, 'https://shoot.example')
     const user = await fresh.db.user.create({ data: { email: 'preserved@example.test', name: 'Preserved', isAdmin: true } })
     await fresh.db.$transaction(async tx => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(1397247828, hashtext(current_schema()))`

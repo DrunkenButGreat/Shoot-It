@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.24.1] - 2026-11-01
+
+### Added
+- Public Shoot-It URL in the Pocket ID admin settings, with a button to use the current browser address; stored through an additive migration that preserves existing data.
+
+### Fixed
+- Pocket ID settings can be saved behind a reverse proxy even when the container has an internal `AUTH_URL`; cross-origin requests remain blocked.
+- OAuth callbacks, login redirects, secure session cookies and emailed project links use the saved public URL without restarting the container.
+- Accept the OIDC discovery URL copied from Pocket ID directly, while preserving existing issuer configuration and account links.
+- Cover proxy setup, canonical callbacks, password login and data-preserving upgrades with regression tests.
+
 ## [1.24.0] - 2026-11-01
 
 ### Added

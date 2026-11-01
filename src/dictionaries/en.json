@@ -667,13 +667,13 @@
   "pocketId": {
     "title": "Pocket ID",
     "description": "Optionally sign in with Pocket ID. Password and Google sign-in remain available.",
-    "setup": "Create a confidential OIDC client in Pocket ID, register this callback URL and grant access to the intended users. Enter the issuer base URL (without /.well-known/openid-configuration), client ID and secret here.",
+    "setup": "Create a confidential OIDC client in Pocket ID, register this callback URL and grant access to the intended users. Paste the OIDC discovery URL from Pocket ID, client ID and secret. Existing issuer base URLs remain supported.",
     "callback": "Callback URL",
     "copy": "Copy URL",
     "copied": "URL copied.",
     "copyFailed": "Copy failed. Please select and copy the URL.",
     "enabled": "Enable Pocket ID",
-    "issuer": "Issuer URL",
+    "issuer": "OIDC discovery URL",
     "clientId": "Client ID",
     "clientSecret": "Client secret",
     "secretStored": "Secret stored. Leave blank to keep it; enter a new secret to rotate it.",
@@ -683,11 +683,11 @@
     "test": "Check discovery",
     "discoveryOk": "Discovery succeeded. This does not verify the client secret or sign-in.",
     "saved": "Settings saved.",
-    "forbidden": "Access denied or invalid request origin.",
+    "forbidden": "Administrator access is required for this setting.",
     "invalidInput": "Please check your input.",
     "invalidIssuer": "Enter a valid HTTPS URL without credentials, query parameters or a fragment.",
     "issuerLocked": "The Pocket ID instance cannot be changed after an account has been linked.",
-    "incomplete": "Issuer URL, client ID and client secret are required to enable Pocket ID.",
+    "incomplete": "Discovery URL, client ID and client secret are required to enable Pocket ID.",
     "secretUnavailable": "The stored secret cannot be read. Please enter it again or disable Pocket ID.",
     "discoveryFailed": "Discovery failed. Check the URL, connectivity and OIDC configuration.",
     "unverifiedEmail": "Pocket ID must provide a valid, verified email address.",
@@ -695,6 +695,11 @@
     "configurationChanged": "Pocket ID settings changed. Please start sign-in again.",
     "errorOccurred": "The Pocket ID request failed. Please try again.",
     "unavailable": "Pocket ID sign-in is currently unavailable.",
-    "signIn": "Sign in with Pocket ID"
+    "signIn": "Sign in with Pocket ID",
+    "publicUrl": "Public Shoot-It URL",
+    "publicUrlHelp": "The main browser address, e.g. https://shoot-it.example. Overrides AUTH_URL for sign-in, callback URLs and app links. Leave blank to use AUTH_URL. Changing it may require signing in again.",
+    "useBrowserUrl": "Use current browser URL",
+    "invalidPublicUrl": "Enter a public HTTPS root URL without a path, credentials, query parameters or fragment.",
+    "invalidOrigin": "The request did not originate from this website. Open administration directly at your Shoot-It address."
   }
 }

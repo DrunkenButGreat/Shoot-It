@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { getAdmin } from "@/lib/admin"
+import { getPublicUrl, validSettingsOrigin } from "@/lib/public-url"
 import { checkPocketIdDiscovery, getPocketIdSettings, pocketIdInput, PocketIdError, savePocketIdSettings } from "@/lib/pocket-id"
 
 const json = (body: object, status = 200) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } })
@@ -12,8 +13,7 @@ export async function GET() {
 
 async function mutate(request: Request, test: boolean) {
   if (!await getAdmin()) return json({ error: "forbidden" }, 403)
-  const origin = new URL(process.env.AUTH_URL || request.url).origin
-  if (request.headers.get("origin") !== origin) return json({ error: "forbidden" }, 403)
+  if (!validSettingsOrigin(request, await getPublicUrl())) return json({ error: "invalidOrigin" }, 403)
   if (request.headers.get("content-type")?.split(";")[0] !== "application/json") return json({ error: "invalidInput" }, 415)
   try {
     const body = await request.json()
