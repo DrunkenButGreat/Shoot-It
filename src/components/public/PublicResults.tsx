@@ -1,5 +1,7 @@
 "use client";
 
+import { GalleryLoadMore } from "@/components/GalleryLoadMore";
+
 import { useI18n } from "@/components/I18nProvider";
 import { Button } from "@/components/ui/button";
 import {
@@ -314,13 +316,10 @@ export function PublicResults({ projectId }: { projectId: string }) {
                 layout={galleryLayout}
               />
               {visibleImages.length < filteredImages.length && (
-                <Button
-                  variant="outline"
+                <GalleryLoadMore
                   className="w-full"
-                  onClick={() => setVisibleLimit((limit) => limit + 100)}
-                >
-                  {t("common.loadMore")}
-                </Button>
+                  onLoadMore={() => setVisibleLimit((limit) => limit + 100)}
+                />
               )}
             </>
           )}
