@@ -14,12 +14,17 @@ export async function canAccessProject(
 
   const project = await prisma.project.findUnique({
     where: { id: projectId },
-    include: {
+    select: {
+      ownerId: true,
       access: {
         where: { userId },
+        select: { role: true },
+        take: 1,
       },
       participants: {
         where: { email: user.email },
+        select: { id: true },
+        take: 1,
       },
     },
   })
@@ -38,9 +43,12 @@ export async function canEditProject(
 ): Promise<boolean> {
   const project = await prisma.project.findUnique({
     where: { id: projectId },
-    include: {
+    select: {
+      ownerId: true,
       access: {
         where: { userId },
+        select: { role: true },
+        take: 1,
       },
     },
   })
@@ -65,12 +73,17 @@ export async function getUserRole(
 
   const project = await prisma.project.findUnique({
     where: { id: projectId },
-    include: {
+    select: {
+      ownerId: true,
       access: {
         where: { userId },
+        select: { role: true },
+        take: 1,
       },
       participants: {
         where: { email: user.email },
+        select: { id: true },
+        take: 1,
       },
     },
   })

@@ -3,23 +3,7 @@ import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { canEditProject } from '@/lib/permissions'
 import { selectionFolderSchema } from '@/lib/validations'
-import { rm, unlink } from 'fs/promises'
-import path from 'path'
-
-// Helper function to get all subfolder IDs recursively
-async function getAllSubfolderIds(folderId: string): Promise<string[]> {
-  const children = await prisma.selectionFolder.findMany({
-    where: { parentId: folderId } as any,
-    select: { id: true },
-  })
-
-  let ids = children.map((c) => c.id)
-  for (const id of ids) {
-    const subIds = await getAllSubfolderIds(id)
-    ids = [...ids, ...subIds]
-  }
-  return ids
-}
+import { queueFileCleanup } from '@/lib/file-cleanup'
 
 // DELETE /api/projects/[id]/selection/folders/[folderId] - Delete a folder
 export async function DELETE(
@@ -39,42 +23,21 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Get all subfolder IDs
-    const subfolderIds = await getAllSubfolderIds(folderId)
-    const allFolderIds = [folderId, ...subfolderIds]
-
-    // Find all images in these folders to delete files
-    const images = await prisma.selectionImage.findMany({
-      where: {
-        folderId: { in: allFolderIds }
+    const deleted = await prisma.$transaction(async tx => {
+      const folder = await tx.selectionFolder.findFirst({ where: { id: folderId, projectId: id } })
+      if (!folder) return false
+      const folders = await tx.selectionFolder.findMany({ where: { projectId: id }, select: { id: true, parentId: true } })
+      const ids = [folderId]
+      for (let i = 0; i < ids.length; i++) {
+        for (const child of folders) if (child.parentId === ids[i] && !ids.includes(child.id)) ids.push(child.id)
       }
-    })
-
-    // Delete files from filesystem
-    for (const img of images) {
-      // img.path is /api/uploads/selection/[projectId]/[filename]
-      // We need to convert it to a relative path from the 'uploads' directory
-      const relativePath = img.path.replace('/api/uploads/', '')
-      const fullPath = path.join(process.cwd(), 'uploads', relativePath)
-      
-      try {
-        await unlink(fullPath)
-        if (img.thumbnail) {
-          const thumbRelativePath = img.thumbnail.replace('/api/uploads/', '')
-          const thumbFullPath = path.join(process.cwd(), 'uploads', thumbRelativePath)
-          await unlink(thumbFullPath)
-        }
-      } catch (err) {
-        console.error(`Error deleting file ${fullPath}:`, err)
-      }
-    }
-
-    await prisma.selectionFolder.delete({
-      where: {
-        id: folderId,
-        projectId: id,
-      },
-    })
+      const images = await tx.selectionImage.findMany({ where: { projectId: id, folderId: { in: ids } } })
+      await queueFileCleanup(tx, images.flatMap(image => [image.path, image.thumbnail]), `selection/${id}`)
+      await tx.selectionImage.deleteMany({ where: { projectId: id, folderId: { in: ids } } })
+      await tx.selectionFolder.delete({ where: { id: folderId, projectId: id } })
+      return true
+    }, { isolationLevel: 'Serializable' })
+    if (!deleted) return NextResponse.json({ error: 'Folder not found' }, { status: 404 })
 
     return NextResponse.json({ success: true })
   } catch (error) {
@@ -104,42 +67,35 @@ export async function PATCH(
     const body = await request.json()
     const validatedData = selectionFolderSchema.parse(body)
 
-    const existing = await prisma.selectionFolder.findUnique({
-      where: { id: folderId }
-    }) as any
-
-    if (!existing) {
-      return NextResponse.json({ error: 'Folder not found' }, { status: 404 })
-    }
-
-    // Update path if name changes or parent changes
-    let newPath = existing.path
-    if (validatedData.name !== existing.name || validatedData.parentId !== existing.parentId) {
-      if (validatedData.parentId) {
-        const parent = await prisma.selectionFolder.findUnique({
-          where: { id: validatedData.parentId }
-        }) as any
-        if (parent) {
-          newPath = `${parent.path}/${validatedData.name}`
-        }
-      } else {
-        newPath = `/${validatedData.name}`
+    const result = await prisma.$transaction(async tx => {
+      const existing = await tx.selectionFolder.findFirst({ where: { id: folderId, projectId: id } })
+      if (!existing) return { error: 'Folder not found', status: 404 } as const
+      const folders = await tx.selectionFolder.findMany({ where: { projectId: id } })
+      const descendants = [existing]
+      for (let i = 0; i < descendants.length; i++) {
+        for (const child of folders) if (child.parentId === descendants[i].id && !descendants.some(f => f.id === child.id)) descendants.push(child)
       }
-    }
-
-    const folder = await prisma.selectionFolder.update({
-      where: { id: folderId },
-      data: {
-        ...validatedData,
-        path: newPath
-      } as any
-    })
+      const parentId = validatedData.parentId ?? null
+      if (parentId && descendants.some(f => f.id === parentId)) return { error: 'Invalid parent folder', status: 400 } as const
+      const parent = parentId ? folders.find(f => f.id === parentId) : null
+      if (parentId && !parent) return { error: 'Parent folder not found', status: 404 } as const
+      const newPath = `${parent?.path ?? ''}/${validatedData.name}`
+      const paths = new Map([[folderId, newPath]])
+      for (const child of descendants.slice(1)) paths.set(child.id, `${paths.get(child.parentId!)}/${child.name}`)
+      const folder = await tx.selectionFolder.update({ where: { id: folderId, projectId: id }, data: { name: validatedData.name, parentId, path: newPath } })
+      for (const child of descendants.slice(1)) await tx.selectionFolder.update({ where: { id: child.id }, data: { path: paths.get(child.id)! } })
+      return { folder } as const
+    }, { isolationLevel: 'Serializable' })
+    if ('error' in result) return NextResponse.json({ error: result.error }, { status: result.status })
+    const { folder } = result
 
     return NextResponse.json(folder)
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json({ error: 'Invalid input data' }, { status: 400 })
     }
+    if ((error as { code?: string }).code === 'P2034') return NextResponse.json({ error: 'Folder changed concurrently; please retry' }, { status: 409 })
+    if ((error as { code?: string }).code === 'P2002') return NextResponse.json({ error: 'Folder already exists' }, { status: 409 })
     console.error('Error updating selection folder:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
-import { unlink } from 'fs/promises'
-import path from 'path'
+import { queueFileCleanup } from '@/lib/file-cleanup'
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
@@ -18,22 +17,11 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const images = await prisma.$transaction(async tx => {
       const found = await tx.resultFile.findMany({ where: { id: { in: ids }, projectId } })
       if (found.length !== ids.length) return null
+      await queueFileCleanup(tx, found.flatMap(image => [image.path, image.thumbnail]).filter(url => url?.startsWith('/api/uploads/')), `results/${projectId}`)
       await tx.resultFile.deleteMany({ where: { id: { in: ids }, projectId } })
       return found
     })
     if (!images) return NextResponse.json({ error: 'Images not found in project' }, { status: 404 })
-    const root = path.resolve(process.cwd(), 'uploads')
-    for (const image of images) {
-      for (const url of new Set([image.path, image.thumbnail].filter((v): v is string => !!v))) {
-        // Local-media sources are external references: never delete their originals.
-        if (!url.startsWith('/api/uploads/')) continue
-        const file = path.resolve(root, url.slice('/api/uploads/'.length))
-        if (!file.startsWith(root + path.sep)) continue
-        await unlink(file).catch(error => {
-          if (error.code !== 'ENOENT') console.error('Result file cleanup failed', error)
-        })
-      }
-    }
     return NextResponse.json({ success: true, count: images.length })
   } catch (error) {
     console.error('Bulk result deletion failed', error)

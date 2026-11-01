@@ -234,7 +234,7 @@ export function FolderTree({
           <DialogHeader>
             <DialogTitle>{t("results.deleteTitle")}</DialogTitle>
             <DialogDescription>
-              {t("results.deleteConfirm")} ("{folderToDelete?.name}")
+              {t("results.deleteConfirm")} (&quot;{folderToDelete?.name}&quot;)
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

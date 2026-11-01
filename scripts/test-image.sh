@@ -37,6 +37,7 @@ docker run -d --name "$name-app" --network "$name" -v "$name-uploads:/app/upload
 wait_ready
 docker exec "$name-app" node scripts/migrate.cjs deploy
 docker exec "$name-app" node -e 'const {PrismaClient}=require("@prisma/client");const p=new PrismaClient();p.user.create({data:{email:"preserved@example.test",isAdmin:true}}).finally(()=>p.$disconnect())'
+docker exec -i "$name-app" node < scripts/test-media-http.cjs
 docker exec "$name-app" sh -c 'printf "synthetic-upload\n" > /app/uploads/smoke.txt'
 docker stop "$name-app" >/dev/null
 docker exec "$name-db" pg_dump -U postgres -d shootit_smoke_test -Fc > "$work/database.dump"
@@ -51,8 +52,11 @@ tar -xf "$work/uploads.tar" -C "$work/restored"
 [ "$(cat "$work/restored/smoke.txt")" = synthetic-upload ]
 # Recreate the stock 1.8 schema, retaining the existing user and uploads.
 sql 'DROP TABLE "_prisma_migrations"; DROP TABLE "RegistrationInvite"; DROP TABLE "RegistrationSettings";
-DROP TABLE "ProjectVisit", "SiteSettings";
+DROP TABLE "ProjectVisit", "SiteSettings", "FileCleanupJob";
+DROP INDEX "SelectionFolder_root_name_key", "SelectionFolder_child_name_key", "ResultFolder_root_name_key", "ResultFolder_child_name_key";
+DROP INDEX "SelectionImage_path_idx"; DROP INDEX "SelectionImage_thumbnail_idx"; DROP INDEX "ResultFile_path_idx"; DROP INDEX "ResultFile_thumbnail_idx"; DROP INDEX "MoodboardImage_path_idx"; DROP INDEX "MoodboardImage_thumbnail_idx"; DROP INDEX "ParticipantImage_path_idx"; DROP INDEX "ParticipantImage_thumbnail_idx"; DROP INDEX "ApplicationImage_path_idx"; DROP INDEX "ApplicationImage_thumbnail_idx";
 DROP TYPE "RegistrationMode"; ALTER TABLE "User" DROP COLUMN "isAdmin", DROP COLUMN "isOwner", DROP COLUMN "brandingColor", DROP COLUMN "brandingImage";
+ALTER TABLE "Project" DROP COLUMN IF EXISTS "coverHidden", DROP COLUMN IF EXISTS "coverPositionX", DROP COLUMN IF EXISTS "coverPositionY";
 ALTER TABLE "Project" DROP COLUMN "brandingColor", DROP COLUMN "brandingImage", DROP COLUMN "allowSelectionDownload", DROP COLUMN "showSelectionFolders";
 ALTER TABLE "MoodboardImage" DROP COLUMN "isVideo", DROP COLUMN "duration";
 ALTER TABLE "ResultFile" DROP COLUMN "isVideo", DROP COLUMN "duration";' >/dev/null
@@ -72,7 +76,7 @@ docker exec -i "$name-db" pg_restore -U postgres -d shootit_legacy_restore_test 
 [ "$(docker exec "$name-db" psql -U postgres -d shootit_legacy_restore_test -Atc "SELECT COUNT(*) FROM information_schema.columns WHERE table_name='User' AND column_name='isAdmin'")" = 0 ]
 # Backups are private even with guessed paths or a symlink alias.
 docker exec "$name-app" node -e 'const fs=require("fs");fs.symlinkSync(process.argv[1],"/app/uploads/backup-alias.dump");' "$backup"
-docker exec "$name-app" node -e 'const assert=require("assert");(async()=>{for(const p of [process.argv[1].replace("/app/uploads/",""),"backup-alias.dump"]){assert.equal((await fetch("http://localhost:3000/api/uploads/"+p)).status,403)}assert.equal(await(await fetch("http://localhost:3000/api/uploads/smoke.txt")).text(),"synthetic-upload\n")})().catch(e=>{console.error(e);process.exit(1)})' "$backup"
+docker exec "$name-app" node -e 'const assert=require("assert");(async()=>{for(const p of [process.argv[1].replace("/app/uploads/",""),"backup-alias.dump"]){assert.equal((await fetch("http://localhost:3000/api/uploads/"+p)).status,403)}assert.equal((await fetch("http://localhost:3000/api/uploads/smoke.txt")).status,403)})().catch(e=>{console.error(e);process.exit(1)})' "$backup"
 docker restart "$name-app" >/dev/null
 wait_ready
 docker exec "$name-app" node -e 'if(require("fs").readdirSync("/app/uploads/.shoot-it-migrations").length!==1)throw Error("Repeated backup")'

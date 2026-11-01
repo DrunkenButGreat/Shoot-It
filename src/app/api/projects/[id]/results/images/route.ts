@@ -9,73 +9,7 @@ import { appConfig } from "@/config/app.config"
 import { getImageMetadata, generateResultPreview } from "@/lib/image-processing"
 import { getVideoMetadata, generateVideoPoster } from "@/lib/video-processing"
 
-// In-memory lock for folder creation to prevent race conditions during parallel uploads
-const folderCreationLocks = new Map<string, Promise<string | null>>();
-
-async function ensureFolderStructure(projectId: string, relativePath: string) {
-    const parts = relativePath.replace(/\\/g, '/').split('/').filter(p => p)
-    if (parts.length <= 1) return null // No folders, just filename
-
-    // Remove filename to get only the folder path
-    parts.pop()
-    const folderKey = `${projectId}:${parts.join('/')}`;
-
-    if (folderCreationLocks.has(folderKey)) {
-        return await folderCreationLocks.get(folderKey)!;
-    }
-
-    const creationPromise = (async () => {
-        let parentId: string | null = null
-        let currentPath = ""
-
-        for (const part of parts) {
-            currentPath = `${currentPath}/${part}`
-            
-            // Try to find existing folder first
-            let folder: any = await prisma.resultFolder.findFirst({
-                where: {
-                    name: part,
-                    projectId,
-                    parentId
-                }
-            })
-
-            if (!folder) {
-                try {
-                    folder = await prisma.resultFolder.create({
-                        data: {
-                            name: part,
-                            projectId,
-                            parentId,
-                            path: currentPath
-                        }
-                    })
-                } catch (e) {
-                    // Parallel request might have created it
-                    folder = await prisma.resultFolder.findFirst({
-                        where: {
-                            name: part,
-                            projectId,
-                            parentId
-                        }
-                    })
-                    if (!folder) throw new Error(`Failed to ensure folder: ${part}`)
-                }
-            }
-            parentId = folder.id
-        }
-        return parentId
-    })();
-
-    folderCreationLocks.set(folderKey, creationPromise);
-    
-    try {
-        return await creationPromise;
-    } finally {
-        // Clear lock after a short delay to allow all parallel requests to finish
-        setTimeout(() => folderCreationLocks.delete(folderKey), 5000);
-    }
-}
+import { ensureFolderStructure } from '@/lib/folders'
 
 export async function POST(
     request: NextRequest,
@@ -112,7 +46,7 @@ export async function POST(
         // Handle folder structure
         let folderId: string | null = null
         if (relativePath) {
-            folderId = await ensureFolderStructure(id, relativePath)
+            folderId = await ensureFolderStructure('results', id, relativePath)
         }
 
         const bytes = await file.arrayBuffer()

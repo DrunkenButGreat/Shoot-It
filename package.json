@@ -1,13 +1,13 @@
 {
   "name": "photoshoot-organizer",
-  "version": "1.22.0",
+  "version": "1.22.1",
   "private": true,
   "scripts": {
     "devdb": "docker compose up -d db && next dev --turbopack",
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint src next.config.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
@@ -21,7 +21,9 @@
     "test:updater": "python3 scripts/test-updater.py && python3 scripts/test-container-update.py",
     "test:migrations": "node scripts/test-migrations.cjs",
     "test:design": "node scripts/test-design.cjs",
-    "test:workspace": "node scripts/test-workspace-features.cjs"
+    "test:workspace": "node scripts/test-workspace-features.cjs",
+    "test:audit": "node scripts/test-project-security.cjs && node scripts/test-folder-integrity.cjs && node scripts/test-rating-controls.cjs && node scripts/test-public-loading.cjs",
+    "test:audit:integration": "node scripts/test-audit-integration.cjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "2.11.3",
@@ -71,7 +73,7 @@
     "@types/react-dom": "^19.0.3",
     "autoprefixer": "^10.4.23",
     "eslint": "^9.17.0",
-    "eslint-config-next": "^15.1.0",
+    "eslint-config-next": "16.3.8",
     "postcss": "^8.4.49",
     "prettier": "^3.4.2",
     "tailwindcss": "^3.4.17",

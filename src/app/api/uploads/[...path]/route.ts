@@ -1,161 +1,87 @@
-import { NextRequest, NextResponse } from "next/server"
-import { readFile, stat, open, realpath } from "fs/promises"
-import path from "path"
-import { auth } from "@/auth"
-import { generateResultPreview } from "@/lib/image-processing"
+import { NextRequest, NextResponse } from 'next/server'
+import { stat, open, realpath } from 'node:fs/promises'
+import path from 'node:path'
+import { Readable } from 'node:stream'
+import { auth } from '@/auth'
+import { canReadUpload } from '@/lib/upload-access'
+import { generateResultPreview } from '@/lib/image-processing'
 
 function getContentType(filePath: string): string {
-    const ext = path.extname(filePath).toLowerCase()
-    if (ext === ".jpg" || ext === ".jpeg") return "image/jpeg"
-    if (ext === ".png") return "image/png"
-    if (ext === ".webp") return "image/webp"
-    if (ext === ".gif") return "image/gif"
-    if (ext === ".mp4") return "video/mp4"
-    if (ext === ".webm") return "video/webm"
-    if (ext === ".mov") return "video/quicktime"
-    return "application/octet-stream"
+  const types: Record<string, string> = {
+    '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
+    '.webp': 'image/webp', '.gif': 'image/gif', '.mp4': 'video/mp4',
+    '.webm': 'video/webm', '.mov': 'video/quicktime',
+  }
+  return types[path.extname(filePath).toLowerCase()] || 'application/octet-stream'
 }
 
-export async function GET(
-    request: NextRequest,
-    { params }: { params: Promise<{ path: string[] }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
+  try {
+    const { path: parts } = await params
+    if (!parts.length || parts.some(part => !part || part.startsWith('.') || /[/\\\0]/.test(part))) {
+      return new NextResponse('Forbidden', { status: 403 })
+    }
+    const url = `/api/uploads/${parts.join('/')}`
+    const session = await auth()
+    if (!await canReadUpload(url, session?.user?.id)) {
+      return new NextResponse('Forbidden', { status: 403 })
+    }
+    const root = await realpath(path.join(process.cwd(), 'uploads'))
+    const filePath = path.join(root, ...parts)
+    // Resolve existing parents before generating a missing preview through a symlink.
+    const inside = async (file: string) => {
+      const resolved = await realpath(file)
+      const relative = path.relative(root, resolved)
+      if (!relative || path.isAbsolute(relative) || relative.split(path.sep).some(part => part.startsWith('.'))) {
+        throw Object.assign(new Error('Forbidden'), { code: 'EACCES' })
+      }
+      return resolved
+    }
+    await inside(path.dirname(filePath) === root ? filePath : path.dirname(filePath))
     try {
-        const { path: pathParts } = await params
-        const relativePath = path.join(...pathParts)
-        console.log(`[UploadServer] Requesting: ${relativePath}`)
-
-        // Path traversal protection
-        if (relativePath.includes('..') || relativePath.startsWith('/') || relativePath.startsWith('\\') ||
-            relativePath.split(path.sep).some(part => part.startsWith('.'))) {
-            console.error(`[UploadServer] Forbidden path: ${relativePath}`)
-            return new NextResponse("Forbidden", { status: 403 })
-        }
-
-        const uploadsDir = path.join(process.cwd(), "uploads")
-        const filePath = path.join(uploadsDir, relativePath)
-        
-        // Handle on-the-fly preview generation
-        const filename = path.basename(filePath)
-        if (filename.startsWith('preview_') && filename.endsWith('.webp')) {
-            try {
-                // Check if already exists using stat instead of readFile
-                await stat(filePath)
-                console.log(`[UploadServer] Preview exists: ${filename}`)
-            } catch (error: any) {
-                if (error.code === 'ENOENT') {
-                    console.log(`[UploadServer] Preview missing, generating for: ${filename}`)
-                    
-                    // Extract basename: preview_123.jpg.webp -> 123.jpg
-                    const basename = filename.slice('preview_'.length, filename.lastIndexOf('.webp'))
-                    const dir = path.dirname(filePath)
-                    
-                    let originalPath = null
-                    const directPath = path.join(dir, basename)
-                    
-                    try {
-                        await stat(directPath)
-                        originalPath = directPath
-                    } catch (e) {
-                        // Try common extensions if direct didn't work
-                        const nameWithoutExt = path.parse(basename).name
-                        const extensions = ['.jpg', '.jpeg', '.png', '.webp', '.tiff', '.heic', '.HEIC', '.JPG', '.PNG']
-                        
-                        for (const ext of extensions) {
-                            const potentialPath = path.join(dir, nameWithoutExt + ext)
-                            try {
-                                await stat(potentialPath)
-                                originalPath = potentialPath
-                                break
-                            } catch (e) {}
-                        }
-                    }
-
-                    if (originalPath) {
-                        try {
-                            await generateResultPreview(originalPath, filePath)
-                            console.log(`[PreviewGen] Success: ${path.basename(originalPath)} -> ${filename}`)
-                        } catch (genError) {
-                            console.error(`[PreviewGen] Failed to generate:`, genError)
-                            // IMPORTANT: Fallback to original if generation fails
-                            console.log(`[PreviewGen] Falling back to original: ${originalPath}`)
-                            return await serveFile(originalPath, request)
-                        }
-                    } else {
-                        console.warn(`[PreviewGen] Original not found for: ${filename} (tried basename: ${basename})`)
-                        // If it's a preview request and we can't find original, we still can't serve anything
-                        return new NextResponse("Original not found", { status: 404 })
-                    }
-                } else {
-                    throw error
-                }
-            }
-        }
-
-        return await serveFile(filePath, request)
-
-    } catch (error: any) {
-        if (error.code === 'ENOENT') {
-            console.error(`[UploadServer] File not found: ${error.path}`)
-            return new NextResponse("File not found", { status: 404 })
-        }
-        console.error("[UploadServer] Error serving file:", error)
-        return new NextResponse("Internal server error", { status: 500 })
+      await stat(filePath)
+    } catch (error) {
+      const filename = path.basename(filePath)
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT' || !filename.startsWith('preview_') || !filename.endsWith('.webp')) throw error
+      const original = await inside(path.join(path.dirname(filePath), filename.slice(8, -5)))
+      await generateResultPreview(original, filePath)
     }
-}
-
-async function serveFile(filePath: string, request: NextRequest) {
-    // Never expose startup database backups, including through a symlink alias.
-    const relative = path.relative(path.join(process.cwd(), 'uploads'), await realpath(filePath))
-    if (path.isAbsolute(relative) || relative.split(path.sep).some(part => part.startsWith('.'))) {
-        return new NextResponse("Forbidden", { status: 403 })
-    }
-    const contentType = getContentType(filePath)
-    const { size } = await stat(filePath)
-    const rangeHeader = request.headers.get("range")
-
-    // HTTP Range support — required for <video> seeking.
-    if (rangeHeader) {
-        const match = /^bytes=(\d*)-(\d*)$/.exec(rangeHeader)
-        if (match) {
-            const start = match[1] ? parseInt(match[1], 10) : 0
-            const end = Math.min(match[2] ? parseInt(match[2], 10) : size - 1, size - 1)
-
-            if (start > end || start >= size) {
-                return new NextResponse("Range Not Satisfiable", {
-                    status: 416,
-                    headers: { "Content-Range": `bytes */${size}` },
-                })
-            }
-
-            const chunkSize = end - start + 1
-            const fh = await open(filePath, "r")
-            try {
-                const buffer = Buffer.alloc(chunkSize)
-                await fh.read(buffer, 0, chunkSize, start)
-                return new NextResponse(buffer, {
-                    status: 206,
-                    headers: {
-                        "Content-Type": contentType,
-                        "Content-Range": `bytes ${start}-${end}/${size}`,
-                        "Accept-Ranges": "bytes",
-                        "Content-Length": String(chunkSize),
-                        "Cache-Control": "public, max-age=31536000, immutable",
-                    },
-                })
-            } finally {
-                await fh.close()
-            }
+    const resolved = await inside(filePath)
+    const handle = await open(resolved, 'r')
+    try {
+      const info = await handle.stat()
+      const { size } = info
+      if (!info.isFile()) { await handle.close(); return new NextResponse('Not found', { status: 404 }) }
+      let start = 0
+      let end = size - 1
+      const range = request.headers.get('range')
+      if (range) {
+        const match = /^bytes=(\d*)-(\d*)$/.exec(range)
+        if (!match || (!match[1] && !match[2])) {
+          await handle.close()
+          return new NextResponse(null, { status: 416, headers: { 'Content-Range': `bytes */${size}` } })
         }
-    }
-
-    const fileBuffer = await readFile(filePath)
-    return new NextResponse(fileBuffer, {
-        headers: {
-            "Content-Type": contentType,
-            "Accept-Ranges": "bytes",
-            "Content-Length": String(size),
-            "Cache-Control": "public, max-age=31536000, immutable",
-        },
-    })
+        if (!match[1]) start = Math.max(size - Number(match[2]), 0)
+        else { start = Number(match[1]); if (match[2]) end = Math.min(Number(match[2]), end) }
+        if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start > end || start >= size) {
+          await handle.close()
+          return new NextResponse(null, { status: 416, headers: { 'Content-Range': `bytes */${size}` } })
+        }
+      }
+      const headers: Record<string, string> = {
+        'Content-Type': getContentType(resolved), 'Accept-Ranges': 'bytes',
+        'Content-Length': String(Math.max(end - start + 1, 0)),
+        'Cache-Control': 'private, no-store', 'Vary': 'Cookie', 'X-Content-Type-Options': 'nosniff',
+      }
+      if (range) headers['Content-Range'] = `bytes ${start}-${end}/${size}`
+      const stream = handle.createReadStream({ ...(size ? { start, end } : {}), autoClose: true, signal: request.signal })
+      return new NextResponse(Readable.toWeb(stream) as ReadableStream, { status: range ? 206 : 200, headers })
+    } catch (error) { await handle.close(); throw error }
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code
+    if (code === 'ENOENT') return new NextResponse('File not found', { status: 404 })
+    if (code === 'EACCES') return new NextResponse('Forbidden', { status: 403 })
+    console.error('Error serving file:', error)
+    return new NextResponse('Internal server error', { status: 500 })
+  }
 }

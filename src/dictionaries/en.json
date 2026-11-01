@@ -37,6 +37,9 @@
     "accept": "Accept",
     "reject": "Reject",
     "close": "Close",
+    "loadMore": "Load more",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
     "deleteTitle": "Confirm Delete",
     "deleteConfirm": "Are you sure? This action cannot be undone.",
     "error": "Error",
@@ -191,6 +194,7 @@
     "moveTo": "Move to",
     "folderDescription": "Create or edit a folder for your image selection.",
     "folderName": "Folder Name",
+    "folderSaveError": "The folder could not be saved.",
     "importToGroup": "Import Folder into Group"
   },
   "moodboard": {
@@ -530,6 +534,7 @@
     "loginToRate": "Login to rate images",
     "noPermissionToRate": "You don't have permission to rate images in this project",
     "loginNow": "Login now",
+    "contractsEmpty": "No contracts yet.",
     "projectOwner": "Project Owner",
     "privateProject": "Private project",
     "noProjectAccess": "You do not have permission to view this project. Please contact the project owner."

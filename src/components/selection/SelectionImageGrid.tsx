@@ -1,13 +1,14 @@
 "use client";
 
 import { ImageCard } from "./ImageCard";
+import type { RatingUpdateHandler } from "./RatingControls";
 
 interface SelectionImageGridProps {
   images: any[];
   layout: "grid" | "masonry" | "justified";
   projectId: string;
   onImageClick: (index: number) => void;
-  onRatingUpdated: () => void;
+  onRatingUpdated: RatingUpdateHandler;
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string | string[]) => void;
   onDelete?: (id: string) => void;

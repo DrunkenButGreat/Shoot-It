@@ -7,6 +7,8 @@ import { imagePreviewSource } from "@/lib/image-preview"
 import { useState, useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
 import { X, ChevronLeft, ChevronRight, ZoomIn, Play } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { useI18n } from "@/components/I18nProvider"
 
 interface Image {
     id: string
@@ -91,6 +93,9 @@ export function PublicGallery({
 }: PublicGalleryProps) {
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
     const [mounted, setMounted] = useState(false)
+    const [visibleLimit, setVisibleLimit] = useState(100)
+    const { t } = useI18n()
+    const visibleImages = images.slice(0, visibleLimit)
 
     useEffect(() => {
         setMounted(true)
@@ -200,7 +205,7 @@ export function PublicGallery({
         <>
             {layout === "grid" ? (
                 <div className="shootit-gallery-grid">
-                    {images.map((image, index) => (
+                    {visibleImages.map((image, index) => (
                         <div
                             key={image.id}
                             className={`shootit-gallery-media relative rounded-xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all border border-gray-100 bg-gray-50`}
@@ -218,7 +223,7 @@ export function PublicGallery({
                 </div>
             ) : layout === "columns" ? (
                 <div className="shootit-gallery-masonry">
-                    {images.map((image, index) => (
+                    {visibleImages.map((image, index) => (
                         <div
                             key={image.id}
                             className="shootit-gallery-media relative break-inside-avoid rounded-xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all border border-gray-100 bg-gray-50 mb-4"
@@ -237,7 +242,7 @@ export function PublicGallery({
             ) : layout === "justified" ? (
                 /* Justified Layout (Google Photos style) */
                 <div className="shootit-gallery-justified">
-                    {images.map((image, index) => {
+                    {visibleImages.map((image, index) => {
                         // Use stored dimensions or fallback to 4:3
                         const width = image.width || 400
                         const height = image.height || 300
@@ -269,7 +274,7 @@ export function PublicGallery({
                 </div>
             ) : (
                 <div className="shootit-gallery-masonry">
-                    {images.map((image, index) => (
+                    {visibleImages.map((image, index) => (
                         <div
                             key={image.id}
                             className="shootit-gallery-media relative break-inside-avoid rounded-xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all border border-gray-100 bg-gray-50"
@@ -282,6 +287,12 @@ export function PublicGallery({
                         </div>
                     ))}
                 </div>
+            )}
+
+            {visibleImages.length < images.length && (
+                <Button variant="outline" className="mt-4 w-full" onClick={() => setVisibleLimit(limit => limit + 100)}>
+                    {t("common.loadMore")}
+                </Button>
             )}
 
             {images.length === 0 && (

@@ -2,7 +2,7 @@
 
 import { useI18n } from "@/components/I18nProvider";
 import { Star } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface Rating {
   id: string;
@@ -14,11 +14,13 @@ interface RatingControlsProps {
   projectId: string;
   imageId: string;
   initialRating?: Rating;
-  onRatingUpdated?: () => void;
+  onRatingUpdated?: RatingUpdateHandler;
   disabled?: boolean;
   className?: string;
   isGuest?: boolean;
 }
+
+export type RatingUpdateHandler = (imageId: string, rating: Rating) => void;
 
 export function RatingControls({
   projectId,
@@ -36,6 +38,16 @@ export function RatingControls({
   );
   const [isUpdating, setIsUpdating] = useState(false);
   const [guestId, setGuestId] = useState<string | null>(null);
+  const requestId = useRef(0);
+  const busy = useRef(false);
+
+  useEffect(() => {
+    requestId.current++;
+    busy.current = false;
+    setIsUpdating(false);
+    setStars(initialRating?.stars || 0);
+    setColor(initialRating?.color || null);
+  }, [imageId, initialRating?.stars, initialRating?.color]);
 
   useEffect(() => {
     if (isGuest) {
@@ -54,12 +66,14 @@ export function RatingControls({
   const disabled = externalDisabled || isUpdating || (isGuest && !guestId);
 
   const handleStarClick = async (rating: number) => {
+    if (busy.current) return;
     const newStars = stars === rating ? 0 : rating;
     setStars(newStars);
     await updateRating({ stars: newStars > 0 ? newStars : null, color });
   };
 
   const handleColorClick = async (newColor: string) => {
+    if (busy.current) return;
     const selectedColor = color === newColor ? null : newColor;
     setColor(selectedColor);
     await updateRating({
@@ -72,10 +86,14 @@ export function RatingControls({
     stars: number | null;
     color: string | null;
   }) => {
+    const id = imageId;
+    const currentRequest = ++requestId.current;
+    const previous = { stars, color };
+    busy.current = true;
     setIsUpdating(true);
     try {
       const response = await fetch(
-        `/api/projects/${projectId}/selection/${imageId}/rating`,
+        `/api/projects/${projectId}/selection/${id}/rating`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -86,16 +104,30 @@ export function RatingControls({
         },
       );
 
-      if (response.ok) {
-        onRatingUpdated?.();
-      } else {
+      if (!response.ok) {
         const error = await response.json();
         alert(error.error || t("common.error"));
+        if (requestId.current === currentRequest) {
+          setStars(previous.stars);
+          setColor(previous.color);
+        }
+        return;
       }
+      const rating: Rating = await response.json();
+      if (requestId.current === currentRequest) {
+        setStars(rating.stars || 0);
+        setColor(rating.color || null);
+      }
+      onRatingUpdated?.(id, rating);
     } catch (error) {
       alert(t("common.error"));
+      if (requestId.current === currentRequest) {
+        setStars(previous.stars);
+        setColor(previous.color);
+      }
     } finally {
-      setIsUpdating(false);
+      if (requestId.current === currentRequest) busy.current = false;
+      if (requestId.current === currentRequest) setIsUpdating(false);
     }
   };
 

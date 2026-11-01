@@ -4,15 +4,14 @@ import { OriginalImageButton, useIOSDevice } from "@/components/OriginalImageBut
 
 import { imagePreviewSource } from "@/lib/image-preview"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { createPortal } from "react-dom"
-import { useRouter } from "next/navigation"
 import { X, ChevronLeft, ChevronRight, Star, Folder as FolderIcon, Download, Loader2 } from "lucide-react"
 import { FilterBar } from "../selection/FilterBar"
 import { Button } from "@/components/ui/button"
 import { matchesSelectionFilters } from "@/lib/selection-filters"
 import { ImageCard } from "../selection/ImageCard"
-import { RatingControls } from "../selection/RatingControls"
+import { RatingControls, type RatingUpdateHandler } from "../selection/RatingControls"
 import { useI18n } from "@/components/I18nProvider"
 import { supportsDirectDownload, directDownloadViaManifest } from "@/lib/direct-download"
 
@@ -69,7 +68,9 @@ export function PublicSelection({
   brandColor
 }: PublicSelectionProps) {
   const isIOS = useIOSDevice()
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
+  const [selectedImageId, setSelectedImageId] = useState<string | null>(null)
+  const [selectionImages, setSelectionImages] = useState(images)
+  const [visibleLimit, setVisibleLimit] = useState(100)
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const [stars, setStars] = useState<string[]>([])
   const [colors, setColors] = useState<string[]>([])
@@ -80,21 +81,22 @@ export function PublicSelection({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [canDirectDownload, setCanDirectDownload] = useState(false)
   useEffect(() => { setCanDirectDownload(supportsDirectDownload()) }, [])
-  const router = useRouter()
   const { t } = useI18n()
-
-  const handleRatingUpdated = () => {
-    router.refresh()
-  }
 
   // Project members rate as themselves; everyone else (true guests OR logged-in
   // users without project access) rates as a guest when guest selection is on.
   const isGuest = !userHasAccess && !!allowGuestSelection
   const canRate = !!userHasAccess || !!allowGuestSelection
 
-  const filteredImages = images.filter(image => matchesSelectionFilters(image, {
+  const filteredImages = useMemo(() => selectionImages.filter(image => matchesSelectionFilters(image, {
     folderId: selectedFolderId, stars, colors, unrated,
-  }))
+  })), [selectionImages, selectedFolderId, stars, colors, unrated])
+  const selectedIndex = filteredImages.findIndex(image => image.id === selectedImageId)
+  const setActiveImage = (id: string | null) => setSelectedImageId(id)
+  const visibleImages = filteredImages.slice(0, visibleLimit)
+  const handleRatingUpdated: RatingUpdateHandler = (imageId, rating) => {
+    setSelectionImages(current => current.map(item => item.id === imageId ? { ...item, ratings: rating } : item))
+  }
   const handleFilterChange = (type: string, value: string | null) => {
     const update = (previous: string[]) => value === null ? []
       : previous.includes(value) ? previous.filter(item => item !== value) : [...previous, value]
@@ -103,15 +105,10 @@ export function PublicSelection({
   }
   useEffect(() => {
     setSelectedIds(new Set())
-    setSelectedIndex(null)
+    setActiveImage(null)
+    setVisibleLimit(100)
     document.body.style.overflow = 'unset'
   }, [selectedFolderId, stars, colors, unrated])
-
-  // A rating change can remove the open image from the filtered set.
-  useEffect(() => {
-    setSelectedIndex(null)
-    document.body.style.overflow = 'unset'
-  }, [images])
 
   // Organize folders into a tree structure
   const folderTree = folders.filter(f => !f.parentId).map(folder => {
@@ -129,36 +126,42 @@ export function PublicSelection({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (selectedIndex === null) return
+      if (selectedIndex < 0) return
       if (e.key === "Escape") closeLightbox()
       if (e.key === "ArrowRight") nextImage()
       if (e.key === "ArrowLeft") prevImage()
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [selectedIndex])
+  }, [selectedIndex, filteredImages])
 
   const openLightbox = (index: number) => {
-    setSelectedIndex(index)
+    setActiveImage(filteredImages[index]?.id ?? null)
     document.body.style.overflow = 'hidden'
   }
 
   const closeLightbox = () => {
-    setSelectedIndex(null)
+    setActiveImage(null)
     document.body.style.overflow = 'unset'
   }
 
+  useEffect(() => setSelectionImages(images), [images])
+
+  useEffect(() => {
+    if (selectedImageId && selectedIndex < 0) closeLightbox()
+  }, [selectedImageId, selectedIndex])
+
   const nextImage = (e?: React.MouseEvent) => {
     e?.stopPropagation()
-    if (selectedIndex !== null) {
-      setSelectedIndex((selectedIndex + 1) % filteredImages.length)
+    if (selectedIndex >= 0 && filteredImages.length) {
+      setActiveImage(filteredImages[(selectedIndex + 1) % filteredImages.length].id)
     }
   }
 
   const prevImage = (e?: React.MouseEvent) => {
     e?.stopPropagation()
-    if (selectedIndex !== null) {
-      setSelectedIndex((selectedIndex - 1 + filteredImages.length) % filteredImages.length)
+    if (selectedIndex >= 0 && filteredImages.length) {
+      setActiveImage(filteredImages[(selectedIndex - 1 + filteredImages.length) % filteredImages.length].id)
     }
   }
 
@@ -250,7 +253,7 @@ export function PublicSelection({
 
   const flatFolders = getFlatFolders(folderTree)
 
-  const lightbox = selectedIndex !== null && filteredImages[selectedIndex] && mounted ? createPortal(
+  const lightbox = selectedIndex >= 0 && mounted ? createPortal(
     <div
       className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-xl flex flex-col animate-in fade-in duration-300"
       onClick={closeLightbox}
@@ -315,6 +318,7 @@ export function PublicSelection({
           {canRate ? (
             <div className="bg-black/40 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/10 shadow-2xl transition-all hover:bg-black/60">
               <RatingControls
+                key={filteredImages[selectedIndex].id}
                 projectId={projectId}
                 imageId={filteredImages[selectedIndex].id}
                 initialRating={filteredImages[selectedIndex].ratings || undefined}
@@ -453,7 +457,7 @@ export function PublicSelection({
           <>
             {layout === "grid" ? (
               <div className="shootit-gallery-grid">
-                {filteredImages.map((image, index) => (
+                {visibleImages.map((image, index) => (
                   <ImageCard
                     key={image.id}
                     image={image}
@@ -471,7 +475,7 @@ export function PublicSelection({
               </div>
             ) : layout === "justified" ? (
               <div className="shootit-gallery-justified">
-                {filteredImages.map((image, index) => {
+                {visibleImages.map((image, index) => {
                   const width = image.width || 400
                   const height = image.height || 300
                   const aspect = width / height
@@ -504,7 +508,7 @@ export function PublicSelection({
               </div>
             ) : (
               <div className="shootit-gallery-masonry">
-                {filteredImages.map((image, index) => (
+                {visibleImages.map((image, index) => (
                   <ImageCard
                     key={image.id}
                     image={image}
@@ -521,6 +525,15 @@ export function PublicSelection({
                   />
                 ))}
               </div>
+            )}
+            {visibleImages.length < filteredImages.length && (
+              <Button
+                variant="outline"
+                className="mt-4 w-full"
+                onClick={() => setVisibleLimit(limit => limit + 100)}
+              >
+                {t('common.loadMore')}
+              </Button>
             )}
           </>
         )}

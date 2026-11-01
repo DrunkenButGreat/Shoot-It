@@ -54,10 +54,10 @@ export async function PUT(
     // Guest path (true guests and logged-in users without project access)
     const project = await prisma.project.findUnique({
       where: { id },
-      select: { allowGuestSelection: true }
+      select: { isPublic: true, showSelectionPublicly: true, allowGuestSelection: true }
     })
 
-    if (!project?.allowGuestSelection) {
+    if (!project?.isPublic || !project.showSelectionPublicly || !project.allowGuestSelection) {
       // Logged-in users without access get 403, true guests get 401.
       return NextResponse.json(
         { error: userId ? 'Forbidden' : 'Unauthorized' },

@@ -20,7 +20,7 @@ COPY . .
 RUN npx prisma generate
 
 # Build Next.js
-RUN npm run test:design && node scripts/test-pottsblitz.cjs && node scripts/test-gallery-previews.cjs && node scripts/test-ios-device.cjs
+RUN npm run test:audit && npm run test:design && node scripts/test-pottsblitz.cjs && node scripts/test-gallery-previews.cjs && node scripts/test-ios-device.cjs
 RUN NODE_OPTIONS=--max-old-space-size=1024 npm run build -- --webpack
 
 # Keep the locked production dependencies, including the migration CLI.
@@ -75,4 +75,4 @@ CMD ["sh", "-c", "node scripts/migrate.cjs start && exec node server.js"]
 
 ARG SOURCE_REVISION
 LABEL org.opencontainers.image.revision=$SOURCE_REVISION
-LABEL org.opencontainers.image.version="1.22.0"
+LABEL org.opencontainers.image.version="1.22.1"

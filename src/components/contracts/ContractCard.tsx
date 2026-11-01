@@ -125,7 +125,7 @@ export function ContractCard({
           <DialogHeader>
             <DialogTitle>{t("contracts.deleteContract")}</DialogTitle>
             <DialogDescription>
-              {t("common.deleteConfirm")} ("{contract.title}")
+              {t("common.deleteConfirm")} (&quot;{contract.title}&quot;)
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

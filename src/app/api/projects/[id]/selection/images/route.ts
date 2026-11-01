@@ -4,76 +4,10 @@ import prisma from "@/lib/prisma"
 import { canEditProject } from "@/lib/permissions"
 import { writeFile, mkdir } from "fs/promises"
 import path from "path"
-import { generateSecureFilename, validateUpload } from "@/lib/file-utils"
+import { generateSecureFilename, validateUpload, isVideoFile } from "@/lib/file-utils"
 import { getImageMetadata, generateResultPreview } from "@/lib/image-processing"
 
-// In-memory lock for folder creation to prevent race conditions during parallel uploads
-const folderCreationLocks = new Map<string, Promise<string | null>>();
-
-async function ensureFolderStructure(projectId: string, relativePath: string) {
-    const parts = relativePath.replace(/\\/g, '/').split('/').filter(p => p)
-    if (parts.length <= 1) return null // No folders, just filename or flat list
-
-    // Remove filename to get only the folder path
-    parts.pop()
-    const folderKey = `${projectId}:${parts.join('/')}`;
-
-    if (folderCreationLocks.has(folderKey)) {
-        return await folderCreationLocks.get(folderKey)!;
-    }
-
-    const creationPromise = (async () => {
-        let parentId: string | null = null
-        let currentPath = ""
-
-        for (const part of parts) {
-            currentPath = `${currentPath}/${part}`
-            
-            // Try to find existing folder first
-            let folder: any = await (prisma.selectionFolder as any).findFirst({
-                where: {
-                    name: part,
-                    projectId,
-                    parentId
-                }
-            })
-
-            if (!folder) {
-                try {
-                    folder = await (prisma.selectionFolder as any).create({
-                        data: {
-                            name: part,
-                            projectId,
-                            parentId,
-                            path: currentPath
-                        }
-                    })
-                } catch (e) {
-                    // Parallel request might have created it
-                    folder = await (prisma.selectionFolder as any).findFirst({
-                        where: {
-                            name: part,
-                            projectId,
-                            parentId
-                        }
-                    })
-                    if (!folder) throw new Error(`Failed to ensure folder: ${part}`)
-                }
-            }
-            parentId = folder.id
-        }
-        return parentId
-    })();
-
-    folderCreationLocks.set(folderKey, creationPromise);
-    
-    try {
-        return await creationPromise;
-    } finally {
-        // Clear lock after a short delay
-        setTimeout(() => folderCreationLocks.delete(folderKey), 5000);
-    }
-}
+import { ensureFolderStructure } from '@/lib/folders'
 
 export async function POST(
     request: NextRequest,
@@ -102,16 +36,19 @@ export async function POST(
             return NextResponse.json({ error: "No file uploaded" }, { status: 400 })
         }
 
+        const validation = validateUpload(file)
+        if (!validation.valid || isVideoFile(file)) {
+            return NextResponse.json({ error: validation.error || "Videos are not supported in selections" }, { status: 400 })
+        }
+
+        if (explicitFolderId && !await prisma.selectionFolder.findFirst({ where: { id: explicitFolderId, projectId: id } })) {
+            return NextResponse.json({ error: "Folder not found" }, { status: 404 })
+        }
+
         // Handle folder structure from relativePath if provided
         let folderId = explicitFolderId || null
         if (!folderId && relativePath) {
-            folderId = await ensureFolderStructure(id, relativePath)
-        }
-
-        // Validate file
-        const validation = validateUpload(file)
-        if (!validation.valid) {
-            return NextResponse.json({ error: validation.error }, { status: 400 })
+            folderId = await ensureFolderStructure('selection', id, relativePath)
         }
 
         const bytes = await file.arrayBuffer()

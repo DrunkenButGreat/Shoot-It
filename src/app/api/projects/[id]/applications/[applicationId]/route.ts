@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { sendMail } from '@/lib/mail'
-import { rm } from 'fs/promises'
-import path from 'path'
+import { queueFileCleanup } from '@/lib/file-cleanup'
 
 // PATCH /api/projects/[id]/applications/[applicationId] - Manage application
 export async function PATCH(
@@ -19,6 +18,7 @@ export async function PATCH(
     const { id: projectId, applicationId } = await params
     const body = await request.json()
     const { status } = body // ACCEPTED, REJECTED, WITHDRAWN
+    if (!['ACCEPTED', 'REJECTED', 'WITHDRAWN'].includes(status)) return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
 
     // Fetch the application and project to check ownership
     const application = await prisma.projectApplication.findUnique({
@@ -57,7 +57,7 @@ export async function PATCH(
       where: { id: applicationId },
       data: { 
           status,
-          ...(status === 'REJECTED' && { deletedAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }) // 30 days cleanup
+          deletedAt: status === 'REJECTED' ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null
       }
     })
 
@@ -142,16 +142,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Physically delete images
-    const uploadDir = path.join(process.cwd(), 'uploads', 'applications', projectId, applicationId)
-    try {
-        await rm(uploadDir, { recursive: true, force: true })
-    } catch (e) {
-        console.warn('Could not delete application folder:', e)
-    }
-
-    await prisma.projectApplication.delete({
-      where: { id: applicationId }
+    await prisma.$transaction(async tx => {
+      await queueFileCleanup(tx, [`applications/${projectId}/${applicationId}`])
+      await tx.projectApplication.delete({ where: { id: applicationId } })
     })
 
     return new NextResponse(null, { status: 204 })

@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { canEditProject } from '@/lib/permissions'
-import { unlink } from 'fs/promises'
-import path from 'path'
+import { queueFileCleanup } from '@/lib/file-cleanup'
 
 // PATCH /api/projects/[id]/selection/images/bulk - Bulk update images (e.g. move to folder)
 export async function PATCH(
@@ -32,7 +31,7 @@ export async function PATCH(
     }
 
     // Verify folder belongs to project if provided
-    if (folderId) {
+    if (folderId && folderId !== 'root') {
       const folder = await prisma.selectionFolder.findUnique({
         where: { id: folderId, projectId }
       })
@@ -83,38 +82,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'No IDs provided' }, { status: 400 })
     }
 
-    // Get images to delete from disk
-    const images = await prisma.selectionImage.findMany({
-      where: {
-        id: { in: ids },
-        projectId
-      }
-    })
-
-    // Delete files
-    for (const img of images) {
-      const relativePath = img.path.replace('/api/uploads/', '')
-      const fullPath = path.join(process.cwd(), 'uploads', relativePath)
-      
-      try {
-        await unlink(fullPath).catch(() => {})
-        if (img.thumbnail) {
-          const thumbRelativePath = img.thumbnail.replace('/api/uploads/', '')
-          const thumbFullPath = path.join(process.cwd(), 'uploads', thumbRelativePath)
-          await unlink(thumbFullPath).catch(() => {})
-        }
-      } catch (err) {
-        console.error(`Error deleting file ${fullPath}:`, err)
-      }
-    }
-
-    // Delete from DB
-    const deleted = await prisma.selectionImage.deleteMany({
-      where: {
-        id: { in: ids },
-        projectId
-      }
-    })
+    const deleted = await prisma.$transaction(async tx => {
+      const images = await tx.selectionImage.findMany({ where: { id: { in: ids }, projectId } })
+      await queueFileCleanup(tx, images.flatMap(image => [image.path, image.thumbnail]).filter(url => url?.startsWith('/api/uploads/')), `selection/${projectId}`)
+      return tx.selectionImage.deleteMany({ where: { id: { in: ids }, projectId } })
+    }, { isolationLevel: 'Serializable' })
 
     return NextResponse.json({ success: true, count: deleted.count })
   } catch (error) {

@@ -88,15 +88,18 @@ async function main() {
   assert.equal(load('src/config/app.config').appConfig.limits.maxUploadSize, 100 * 1024 * 1024)
 
   let session = { user: { id: 'owner' } }
-  let failed = false, deleted = 0, removed = 0
+  let deleted = 0
+  const queued = []
+  const db = { moodboardGroup: { findMany: async () => [] }, project: {
+    findUnique: async () => ({ id: 'test-project', ownerId: 'owner', moodboardLinks: [] }),
+    delete: async () => { deleted++ },
+  } }
+  db.$transaction = fn => fn(db)
   const api = loader({
     '@/auth': { auth: async () => session },
-    '@/lib/prisma': { __esModule: true, default: { project: {
-      findUnique: async () => ({ id: 'test-project', ownerId: 'owner', moodboardLinks: [] }),
-      delete: async () => { deleted++ },
-    } } },
+    '@/lib/prisma': { __esModule: true, default: db },
     '@/lib/permissions': {},
-    'fs/promises': { rm: async () => { removed++; if (failed) throw new Error('Synthetic filesystem failure') } },
+    '@/lib/file-cleanup': { queueFileCleanup: async (_, paths) => queued.push(...paths) },
   })('src/app/api/projects/[id]/route')
   const params = { params: Promise.resolve({ id: 'test-project' }) }
   session = null
@@ -104,19 +107,11 @@ async function main() {
   session = { user: { id: 'viewer' } }
   assert.equal((await api.DELETE(null, params)).status, 403)
   assert.equal(deleted, 0)
-  assert.equal(removed, 0)
+  assert.deepEqual(queued, [])
   session = { user: { id: 'owner' } }
-  failed = true
-  const log = console.error
-  try {
-    console.error = () => {}
-    assert.equal((await api.DELETE(null, params)).status, 500)
-  } finally { console.error = log }
-  assert.equal(deleted, 0, 'Filesystem failure must retain the database record')
-  failed = false
   assert.equal((await api.DELETE(null, params)).status, 200)
   assert.equal(deleted, 1)
-  assert.equal(removed, 4)
-  console.log('PASS: retained delete actions in all gallery layouts, public results read-only, owner-only project controls, localized storage overview, 100 MiB upload limit and deletion failure/authorization boundaries.')
+  assert.deepEqual(queued, ['selection/test-project', 'results/test-project', 'applications/test-project', 'projects/test-project'])
+  console.log('PASS: retained delete actions in all gallery layouts, public results read-only, owner-only project controls, localized storage overview, 100 MiB upload limit and durable cleanup/authorization boundaries.')
 }
 main().catch(error => { console.error(error); process.exitCode = 1 })

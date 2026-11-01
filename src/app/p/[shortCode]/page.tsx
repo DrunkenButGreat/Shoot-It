@@ -1,4 +1,3 @@
-import { imagePreviewSource } from "@/lib/image-preview"
 import { getParticipantPortrait } from "@/lib/participant-portrait";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
@@ -41,98 +40,17 @@ export default async function PublicProjectPage({
   const locale = getLocale(cookieStore);
   const dict = await getDictionary(locale);
 
-  const project = (await prisma.project.findUnique({
+  let project: any = await prisma.project.findUnique({
     where: { shortCode },
     include: {
-      owner: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          image: true,
-          brandingColor: true,
-          brandingImage: true,
-        },
-      },
-      moodboardLinks: {
-        include: {
-          group: {
-            include: {
-              images: {
-                orderBy: { createdAt: "desc" },
-              },
-            },
-          },
-        },
-        orderBy: { order: "asc" },
-      },
-      participants: {
-        include: {
-          images: { take: 1, orderBy: [{ createdAt: "desc" }, { id: "desc" }] },
-          user: {
-            select: {
-              id: true,
-              name: true,
-              image: true,
-            },
-          },
-        },
-        orderBy: { name: "asc" },
-      },
-      selectionImages: {
-        include: {
-          ratings: true,
-        },
-        orderBy: { importedAt: "desc" },
-      },
-      selectionFolders: {
-        include: {
-          images: {
-            include: { ratings: true },
-          },
-          _count: { select: { images: true } },
-        },
-      },
-      resultFolders: true,
-      appointmentSlots: {
-        include: {
-          responses: true,
-        },
-        orderBy: { startTime: "asc" },
-      },
-      callsheet: {
-        include: {
-          scheduleItems: {
-            orderBy: { time: "asc" },
-          },
-        },
-      },
-      _count: {
-        select: {
-          moodboardLinks: true,
-          participants: true,
-          contracts: true,
-          selectionImages: true,
-          appointmentSlots: true,
-        },
-      },
+      owner: { select: { id: true, name: true, email: true, image: true, brandingColor: true, brandingImage: true } },
+      _count: { select: { moodboardLinks: true, participants: true, contracts: true, selectionImages: true, appointmentSlots: true, resultImages: true } },
     },
-  })) as any;
+  });
 
   if (!project) {
     notFound();
   }
-
-  const moodboardGroups = (project.moodboardLinks || []).map((link: any) => ({
-    ...link.group,
-    status: link.status,
-    order: link.order,
-  }));
-
-  // Does the logged-in user have project access (owner/editor/viewer/participant)?
-  // This — not merely being logged in — decides whether ratings go through the
-  // authenticated path or the guest path.
-  const resultImageCount = await prisma.resultFile.count({ where: { projectId: project.id } });
 
   const userHasAccess = session?.user?.id
     ? await canAccessProject(session.user.id, project.id)
@@ -164,6 +82,28 @@ export default async function PublicProjectPage({
       );
     }
   }
+
+  // Load only visible modules, after checking the project's access boundary.
+  const visible = await prisma.project.findUnique({
+    where: { id: project.id },
+    include: {
+      moodboardLinks: project.showMoodboardPublicly ? {
+        include: { group: { include: { images: { orderBy: { createdAt: "desc" } } } } },
+        orderBy: { order: "asc" },
+      } : false,
+      participants: project.showParticipantsPublicly ? {
+        include: { images: { take: 1, orderBy: [{ createdAt: "desc" }, { id: "desc" }] }, user: { select: { id: true, name: true, image: true } } },
+        orderBy: { name: "asc" },
+      } : false,
+      appointmentSlots: project.showAppointmentsPublicly ? { include: { responses: true }, orderBy: { startTime: "asc" } } : false,
+      callsheet: project.showCallsheetPublicly ? { include: { scheduleItems: { orderBy: { time: "asc" } } } } : false,
+      contracts: project.showContractsPublicly ? { select: { id: true, title: true, content: true }, orderBy: { createdAt: "asc" } } : false,
+    },
+  });
+  if (!visible) notFound();
+  project = { ...project, ...visible };
+  const moodboardGroups = (project.moodboardLinks || []).map((link: any) => ({ ...link.group, status: link.status, order: link.order }));
+  const resultImageCount = project._count.resultImages;
 
   const projectDate = project.date ? new Date(project.date) : null;
   const brandingImage = project.coverHidden ? null :
@@ -291,6 +231,7 @@ export default async function PublicProjectPage({
                     {dict.project.participants}
                   </a>
                 )}
+                {project.showContractsPublicly && <a href="#contracts" className="py-4 text-sm font-medium text-slate-600">{dict.project.contracts}</a>}
                 {project.showSelectionPublicly && (
                   <a
                     href={`/p/${shortCode}/selection`}
@@ -342,16 +283,16 @@ export default async function PublicProjectPage({
                   <ModuleBox
                     title={dict.project.moodboard}
                     icon={<ImageIcon className="h-6 w-6" />}
-                    count={moodboardGroups.length}
+                    count={project._count.moodboardLinks}
                     label={dict.project.groups.replace("{count}", "").trim()}
                     href={
-                      session
+                      userHasAccess
                         ? `/project/${project.id}/moodboard`
                         : project.showMoodboardPublicly
                           ? "#moodboard"
                           : "#"
                     }
-                    disabled={!session && !project.showMoodboardPublicly}
+                    disabled={!userHasAccess && !project.showMoodboardPublicly}
                     dict={dict}
                     brandColor={brandColor}
                   />
@@ -361,13 +302,13 @@ export default async function PublicProjectPage({
                     count={project._count.participants}
                     label={dict.project.people.replace("{count}", "").trim()}
                     href={
-                      session
+                      userHasAccess
                         ? `/project/${project.id}/participants`
                         : project.showParticipantsPublicly
                           ? "#participants"
                           : "#"
                     }
-                    disabled={!session && !project.showParticipantsPublicly}
+                    disabled={!userHasAccess && !project.showParticipantsPublicly}
                     dict={dict}
                     brandColor={brandColor}
                   />
@@ -379,13 +320,13 @@ export default async function PublicProjectPage({
                       .replace("{count}", "")
                       .trim()}
                     href={
-                      session
+                      userHasAccess
                         ? `/project/${project.id}/selection`
                         : project.showSelectionPublicly
                           ? `/p/${shortCode}/selection`
                           : "#"
                     }
-                    disabled={!session && !project.showSelectionPublicly}
+                    disabled={!userHasAccess && !project.showSelectionPublicly}
                     dict={dict}
                     brandColor={brandColor}
                   />
@@ -395,13 +336,13 @@ export default async function PublicProjectPage({
                     count={project.callsheet ? 1 : 0}
                     label={dict.project.callsheet}
                     href={
-                      session
+                      userHasAccess
                         ? `/project/${project.id}/callsheet`
                         : project.showCallsheetPublicly
                           ? "#callsheet"
                           : "#"
                     }
-                    disabled={!session && !project.showCallsheetPublicly}
+                    disabled={!userHasAccess && !project.showCallsheetPublicly}
                     dict={dict}
                     brandColor={brandColor}
                   />
@@ -413,13 +354,13 @@ export default async function PublicProjectPage({
                       .replace("{count}", "")
                       .trim()}
                     href={
-                      session
+                      userHasAccess
                         ? `/project/${project.id}/results`
                         : project.showResultsPublicly
                           ? `/p/${shortCode}/results`
                           : "#"
                     }
-                    disabled={!session && !project.showResultsPublicly}
+                    disabled={!userHasAccess && !project.showResultsPublicly}
                     dict={dict}
                     brandColor={brandColor}
                   />
@@ -429,13 +370,13 @@ export default async function PublicProjectPage({
                     count={project._count.appointmentSlots}
                     label={dict.project.appointmentsLabel || "Optionen"}
                     href={
-                      session
+                      userHasAccess
                         ? `/project/${project.id}/appointments`
                         : project.showAppointmentsPublicly
                           ? "#appointments"
                           : "#"
                     }
-                    disabled={!session && !project.showAppointmentsPublicly}
+                    disabled={!userHasAccess && !project.showAppointmentsPublicly}
                     dict={dict}
                     brandColor={brandColor}
                   />
@@ -557,6 +498,18 @@ export default async function PublicProjectPage({
                   </div>
                 </section>
               )}
+
+            {project.showContractsPublicly && (
+              <section id="contracts" className="space-y-6 scroll-mt-20">
+                <h2 className="text-2xl font-bold text-gray-900">{dict.project.contracts}</h2>
+                {project.contracts.length ? project.contracts.map((contract: { id: string; title: string; content: string }) => (
+                  <Card key={contract.id}>
+                    <CardHeader><CardTitle>{contract.title}</CardTitle></CardHeader>
+                    <CardContent><div className="whitespace-pre-wrap break-words">{contract.content}</div></CardContent>
+                  </Card>
+                )) : <p>{dict.publicProject.contractsEmpty}</p>}
+              </section>
+            )}
 
             {project.showCallsheetPublicly && project.callsheet && (
               <section id="callsheet" className="space-y-6 scroll-mt-20">

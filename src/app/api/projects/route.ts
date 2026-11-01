@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     const where = {
-      OR: [
+      AND: [{ OR: [
         { ownerId: session.user.id },
         {
           access: {
@@ -27,12 +27,12 @@ export async function GET(request: NextRequest) {
           },
         },
       ],
-      ...(search && {
+      }, ...(search ? [{
         OR: [
           { name: { contains: search, mode: 'insensitive' as const } },
           { location: { contains: search, mode: 'insensitive' as const } },
         ],
-      }),
+      }] : [])],
     }
 
     const [projects, total] = await Promise.all([

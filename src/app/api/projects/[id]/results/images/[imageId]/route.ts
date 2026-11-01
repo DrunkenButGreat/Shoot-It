@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
 import { canEditProject } from "@/lib/permissions"
-import { unlink } from "fs/promises"
-import path from "path"
+import { queueFileCleanup } from "@/lib/file-cleanup"
 
 export async function DELETE(
     request: NextRequest,
@@ -37,26 +36,10 @@ export async function DELETE(
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 
-        // Delete from DB
-        await prisma.resultFile.delete({
-            where: { id: imageId },
+        await prisma.$transaction(async tx => {
+            await queueFileCleanup(tx, [image.path, image.thumbnail].filter(url => url?.startsWith('/api/uploads/')), `results/${projectId}`)
+            await tx.resultFile.delete({ where: { id: imageId, projectId } })
         })
-
-        // Delete from filesystem
-        try {
-            const relativePath = image.path.replace("/api/uploads/", "")
-            const fullPath = path.join(process.cwd(), "uploads", relativePath)
-            await unlink(fullPath)
-
-            // Delete thumbnail/preview if it exists and is different from the original
-            if (image.thumbnail && image.thumbnail !== image.path) {
-                const thumbRelativePath = image.thumbnail.replace("/api/uploads/", "")
-                const thumbFullPath = path.join(process.cwd(), "uploads", thumbRelativePath)
-                await unlink(thumbFullPath).catch(() => {}) // Ignore if preview doesn't exist
-            }
-        } catch (fileError) {
-            console.error("Failed to delete physical files:", fileError)
-        }
 
         return NextResponse.json({ success: true })
     } catch (error) {

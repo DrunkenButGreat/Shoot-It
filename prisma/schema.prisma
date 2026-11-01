@@ -202,6 +202,8 @@ model MoodboardImage {
   group     MoodboardGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   @@index([groupId])
+  @@index([path])
+  @@index([thumbnail])
 }
 
 model Comment {
@@ -251,6 +253,8 @@ model ParticipantImage {
   participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
 
   @@index([participantId])
+  @@index([path])
+  @@index([thumbnail])
 }
 
 model ParticipantField {
@@ -346,6 +350,8 @@ model SelectionImage {
   @@index([projectId])
   @@index([folderId])
   @@index([filename])
+  @@index([path])
+  @@index([thumbnail])
 }
 
 model SelectionFolder {
@@ -414,6 +420,8 @@ model ResultFile {
 
   @@index([folderId])
   @@index([projectId])
+  @@index([path])
+  @@index([thumbnail])
 }
 
 model ProjectApplication {
@@ -451,6 +459,8 @@ model ApplicationImage {
   application   ProjectApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
   @@index([applicationId])
+  @@index([path])
+  @@index([thumbnail])
 }
 
 model AppointmentSlot {
@@ -529,4 +539,9 @@ model SiteSettings {
   landingImage String?
   loginImage String?
   signupImage String?
+}
+
+model FileCleanupJob {
+  path      String   @id
+  createdAt DateTime @default(now())
 }

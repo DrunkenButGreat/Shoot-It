@@ -3,23 +3,7 @@ import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { canEditProject } from '@/lib/permissions'
 
-import { rm } from 'fs/promises'
-import path from 'path'
-
-// Helper function to get all subfolder IDs recursively
-async function getAllSubfolderIds(folderId: string): Promise<string[]> {
-  const children = await prisma.resultFolder.findMany({
-    where: { parentId: folderId },
-    select: { id: true },
-  })
-
-  let ids = children.map((c) => c.id)
-  for (const id of ids) {
-    const subIds = await getAllSubfolderIds(id)
-    ids = [...ids, ...subIds]
-  }
-  return ids
-}
+import { queueFileCleanup } from '@/lib/file-cleanup'
 
 // DELETE /api/projects/[id]/results/folders/[folderId] - Delete a folder
 export async function DELETE(
@@ -40,26 +24,21 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Get all subfolder IDs to delete their directories too
-    const subfolderIds = await getAllSubfolderIds(folderId)
-    const allFolderIds = [folderId, ...subfolderIds]
-
-    // Delete folder directories from filesystem
-    for (const fid of allFolderIds) {
-      const folderDir = path.join(process.cwd(), 'uploads', 'results', id, fid)
-      try {
-        await rm(folderDir, { recursive: true, force: true })
-      } catch (err) {
-        console.error(`Error deleting folder directory ${fid}:`, err)
+    const deleted = await prisma.$transaction(async tx => {
+      const folder = await tx.resultFolder.findFirst({ where: { id: folderId, projectId: id } })
+      if (!folder) return false
+      const folders = await tx.resultFolder.findMany({ where: { projectId: id }, select: { id: true, parentId: true } })
+      const ids = [folderId]
+      for (let i = 0; i < ids.length; i++) {
+        for (const child of folders) if (child.parentId === ids[i] && !ids.includes(child.id)) ids.push(child.id)
       }
-    }
-
-    await prisma.resultFolder.delete({
-      where: {
-        id: folderId,
-        projectId: id,
-      },
-    })
+      const images = await tx.resultFile.findMany({ where: { projectId: id, folderId: { in: ids } } })
+      await queueFileCleanup(tx, images.flatMap(image => [image.path, image.thumbnail]), `results/${id}`)
+      await tx.resultFile.deleteMany({ where: { projectId: id, folderId: { in: ids } } })
+      await tx.resultFolder.delete({ where: { id: folderId, projectId: id } })
+      return true
+    }, { isolationLevel: 'Serializable' })
+    if (!deleted) return NextResponse.json({ error: 'Folder not found' }, { status: 404 })
 
     return NextResponse.json({ success: true })
   } catch (error) {

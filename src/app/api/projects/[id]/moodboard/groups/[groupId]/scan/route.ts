@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
 import { canEditProject } from "@/lib/permissions"
-import { readFile, writeFile, mkdir, readdir } from "fs/promises"
+import { copyFile, mkdir, readdir, realpath } from "fs/promises"
 import path from "path"
+import { generateResultPreview, getImageMetadata } from "@/lib/image-processing"
 import { generateSecureFilename } from "@/lib/file-utils"
 
 export async function POST(
@@ -23,6 +24,12 @@ export async function POST(
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 
+    if (!await prisma.projectMoodboardLink.findUnique({
+      where: { projectId_groupId: { projectId: projectId, groupId } }, select: { id: true }
+    })) {
+      return NextResponse.json({ error: 'Group not found' }, { status: 404 })
+    }
+
         // Check if group is project-specific or library
         const group = await prisma.moodboardGroup.findUnique({
             where: { id: groupId },
@@ -40,13 +47,14 @@ export async function POST(
         }
 
         const { folderName } = await request.json()
-        if (!folderName) {
+        if (typeof folderName !== "string" || !folderName) {
             return NextResponse.json({ error: "Folder name is required" }, { status: 400 })
         }
 
-        const localMediaPath = path.join("/app/local_media", folderName)
+        const root = await realpath("/app/local_media")
+        const localMediaPath = await realpath(path.resolve(root, folderName))
 
-        if (!localMediaPath.startsWith("/app/local_media")) {
+        if (!localMediaPath.startsWith(root + path.sep)) {
             return NextResponse.json({ error: "Invalid path" }, { status: 400 })
         }
 
@@ -65,7 +73,6 @@ export async function POST(
         const uploadDir = path.join(process.cwd(), "uploads", relativeDir)
         await mkdir(uploadDir, { recursive: true })
 
-        const sharp = (await import("sharp")).default
         const importedImages = []
 
         // Get highest order
@@ -77,14 +84,15 @@ export async function POST(
 
         for (const fileItem of imageFiles) {
             const filePath = path.join(localMediaPath, fileItem.name)
-            const buffer = await readFile(filePath)
 
             const secureFilename = generateSecureFilename(fileItem.name)
             const destinationPath = path.join(uploadDir, secureFilename)
 
-            await writeFile(destinationPath, buffer)
+            await copyFile(filePath, destinationPath)
 
-            const metadata = await sharp(buffer).metadata()
+            const metadata = await getImageMetadata(destinationPath)
+            const previewName = `preview_${secureFilename}.webp`
+            await generateResultPreview(destinationPath, path.join(uploadDir, previewName))
             const dbPath = `/api/uploads/${relativeDir}/${secureFilename}`.replace(/\\/g, '/')
 
             const image = await prisma.moodboardImage.create({
@@ -92,7 +100,7 @@ export async function POST(
                     filename: fileItem.name,
                     path: dbPath,
                     groupId: groupId,
-                    thumbnail: dbPath,
+                    thumbnail: `/api/uploads/${relativeDir}/${previewName}`.replace(/\\/g, "/"),
                     width: metadata.width,
                     height: metadata.height,
                     order: currentOrder++

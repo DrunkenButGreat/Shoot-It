@@ -19,7 +19,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useRef } from "react";
-import { RatingControls } from "./RatingControls";
+import { RatingControls, type RatingUpdateHandler } from "./RatingControls";
 
 interface Rating {
   id: string;
@@ -47,7 +47,7 @@ function formatDuration(seconds: number): string {
 interface ImageCardProps {
   image: SelectionImage;
   projectId: string;
-  onRatingUpdated?: () => void;
+  onRatingUpdated?: RatingUpdateHandler;
   onImageClick?: () => void;
   masonry?: boolean;
   justified?: boolean;
@@ -258,6 +258,7 @@ export function ImageCard({
       {!hideRatings && (
         <div className="px-2 pb-2 pt-1">
           <RatingControls
+            key={image.id}
             projectId={projectId}
             imageId={image.id}
             initialRating={currentRating || undefined}

@@ -31,7 +31,7 @@ import {
   X,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
@@ -39,7 +39,7 @@ import ImageUpload from "../moodboard/ImageUpload";
 import { ExportDialog } from "./ExportDialog";
 import { FilterBar } from "./FilterBar";
 import { LocalMediaPicker } from "./LocalMediaPicker";
-import { RatingControls } from "./RatingControls";
+import { RatingControls, type RatingUpdateHandler } from "./RatingControls";
 import { SelectionFolderForm } from "./SelectionFolderForm";
 import { SelectionFolderTree } from "./SelectionFolderTree";
 import { SelectionImageGrid } from "./SelectionImageGrid";
@@ -99,7 +99,7 @@ export function SelectionContent({
       : "grid",
   );
   const [unrated, setUnrated] = useState(false);
-  const [index, setIndex] = useState(-1);
+  const [lightboxImageId, setLightboxImageId] = useState<string | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedImageIds, setSelectedImageIds] = useState<Set<string>>(
     new Set(),
@@ -108,20 +108,33 @@ export function SelectionContent({
   const [editingFolder, setEditingFolder] = useState<SelectionFolder | null>(
     null,
   );
+  const [visibleLimit, setVisibleLimit] = useState(100);
+  const [images, setImages] = useState(initialImages);
+
+  useEffect(() => setImages(initialImages), [initialImages]);
+  useEffect(() => setVisibleLimit(100), [selectedFolderId, unrated, searchParams]);
 
   const filteredImages = useMemo(() => {
-    return initialImages.filter(
+    const stars = searchParams.getAll("stars");
+    const colors = searchParams.getAll("color");
+    return images.filter(
       (img) =>
         (selectedFolderId === "unassigned"
           ? !img.folderId
           : !selectedFolderId || img.folderId === selectedFolderId) &&
-        (!unrated || (!img.ratings?.stars && !img.ratings?.color)),
+        (!unrated || (!img.ratings?.stars && !img.ratings?.color)) &&
+        (!stars.length || stars.includes(String(img.ratings?.stars))) &&
+        (!colors.length || colors.includes(img.ratings?.color || "")),
     );
-  }, [initialImages, selectedFolderId, unrated]);
+  }, [images, searchParams, selectedFolderId, unrated]);
+  const index = filteredImages.findIndex((image) => image.id === lightboxImageId);
+  useEffect(() => {
+    if (lightboxImageId && index < 0) setLightboxImageId(null);
+  }, [lightboxImageId, index]);
 
-  const handleRatingUpdated = () => {
-    router.refresh();
-  };
+  const handleRatingUpdated: RatingUpdateHandler = (imageId, rating) =>
+    setImages((current) => current.map((image) => image.id === imageId ? { ...image, ratings: rating } : image));
+  const visibleImages = filteredImages.slice(0, visibleLimit);
 
   const handleToggleSelectAll = () => {
     if (
@@ -226,7 +239,7 @@ export function SelectionContent({
 
     try {
       const res = await fetch(
-        `/api/projects/${projectId}/selection/folders?folderId=${folderId}`,
+        `/api/projects/${projectId}/selection/folders/${folderId}`,
         {
           method: "DELETE",
         },
@@ -267,7 +280,7 @@ export function SelectionContent({
         <div>
           <h2 className="studio-page-title">{t("selection.title")}</h2>
           <p className="studio-page-subtitle">
-            {initialImages.length} {t("selection.images")}
+            {images.length} {t("selection.images")}
           </p>
         </div>
 
@@ -279,7 +292,7 @@ export function SelectionContent({
           <ExportDialog
             images={
               selectedImageIds.size
-                ? initialImages.filter((img) => selectedImageIds.has(img.id))
+                ? images.filter((img) => selectedImageIds.has(img.id))
                 : filteredImages
             }
           />
@@ -439,15 +452,24 @@ export function SelectionContent({
               </div>
 
               <SelectionImageGrid
-                images={filteredImages}
+                images={visibleImages}
                 projectId={projectId}
                 layout={view}
                 selectedIds={selectedImageIds}
                 onToggleSelect={handleToggleImage}
                 onDelete={handleDeleteImage}
-                onImageClick={(i) => setIndex(i)}
+                onImageClick={(i) => setLightboxImageId(filteredImages[i]?.id ?? null)}
                 onRatingUpdated={handleRatingUpdated}
               />
+              {visibleImages.length < filteredImages.length && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setVisibleLimit((limit) => limit + 100)}
+                >
+                  {t("common.loadMore")}
+                </Button>
+              )}
             </div>
           )}
 
@@ -564,7 +586,7 @@ export function SelectionContent({
         }}
         index={index}
         open={index >= 0}
-        close={() => setIndex(-1)}
+        close={() => setLightboxImageId(null)}
         toolbar={{ buttons: [<LightboxOriginalImageButton key="original" images={filteredImages} />, "close"] }}
         carousel={{ preload: 0 }}
         slides={filteredImages.map((img) => ({
@@ -586,6 +608,7 @@ export function SelectionContent({
                 onClick={(e) => e.stopPropagation()}
               >
                 <RatingControls
+                  key={slide.image.id}
                   projectId={projectId}
                   imageId={slide.image.id}
                   initialRating={slide.image.ratings}

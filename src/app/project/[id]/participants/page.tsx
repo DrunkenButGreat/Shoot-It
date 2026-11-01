@@ -6,6 +6,8 @@ import prisma from "@/lib/prisma"
 import { canAccessProject, canEditProject } from "@/lib/permissions"
 import { Button } from "@/components/ui/button"
 import { ParticipantsContent } from "@/components/participants/ParticipantsContent"
+import { cookies } from "next/headers"
+import { getDictionary, getLocale } from "@/lib/i18n"
 
 export default async function ParticipantsPage({
   params,
@@ -19,6 +21,7 @@ export default async function ParticipantsPage({
   }
 
   const { id } = await params
+  const dict = await getDictionary(getLocale(await cookies()))
 
   // Check access
   const hasAccess = await canAccessProject(session.user.id, id)
@@ -76,10 +79,10 @@ export default async function ParticipantsPage({
     // Add owner as a virtual participant or first item
     allParticipants.unshift({
       id: `owner-${project.owner.id}`,
-      name: project.owner.name || "Owner",
+      name: project.owner.name || dict.common.owner,
       email: project.owner.email,
       phone: project.owner.phone,
-      role: project.owner.role || "Project Owner",
+      role: project.owner.role || dict.publicProject.projectOwner,
       notes: project.owner.bio,
       createdAt: new Date(),
       images: [],
@@ -103,12 +106,12 @@ export default async function ParticipantsPage({
               <Link href={`/project/${id}`}>
                 <Button variant="ghost" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Project
+                  {dict.common.backToProject}
                 </Button>
               </Link>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">{project.name}</h1>
-                <p className="text-sm text-gray-500">Participants</p>
+                <p className="text-sm text-gray-500">{dict.participants.title}</p>
               </div>
             </div>
           </div>

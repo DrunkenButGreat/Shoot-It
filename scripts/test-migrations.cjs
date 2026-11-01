@@ -35,6 +35,12 @@ async function main() {
     }
     return { db, command }
   }
+  async function removeNewSchema(db) {
+    await db.$executeRawUnsafe('DROP TABLE "FileCleanupJob"')
+    for (const model of ['SelectionImage', 'ResultFile', 'MoodboardImage', 'ParticipantImage', 'ApplicationImage']) {
+      for (const field of ['path', 'thumbnail']) await db.$executeRawUnsafe(`DROP INDEX "${model}_${field}_idx"`)
+    }
+  }
   function readiness(db) {
     const filename = path.resolve('src/app/api/ready/route.ts')
     const mod = new Module(filename, module)
@@ -60,6 +66,7 @@ async function main() {
 
     const legacy = database()
     legacy.command([cli, 'db', 'push', '--skip-generate'])
+    await removeNewSchema(legacy.db)
     await legacy.db.$executeRawUnsafe('DROP TABLE "ProjectVisit", "SiteSettings"')
     await legacy.db.$executeRawUnsafe('ALTER TABLE "Project" DROP COLUMN "coverHidden", DROP COLUMN "coverPositionX", DROP COLUMN "coverPositionY"')
     const old = await legacy.db.user.create({ data: { email: 'legacy@example.test', isAdmin: true } })
@@ -81,6 +88,7 @@ async function main() {
 
     const before111 = database()
     before111.command([cli, 'db', 'push', '--skip-generate'])
+    await removeNewSchema(before111.db)
     await before111.db.$executeRawUnsafe('DROP TABLE "ProjectVisit", "SiteSettings"')
     await before111.db.$executeRawUnsafe('ALTER TABLE "Project" DROP COLUMN "coverHidden", DROP COLUMN "coverPositionX", DROP COLUMN "coverPositionY"')
     await before111.db.user.create({ data: { email: 'before111@example.test' } })
@@ -111,6 +119,7 @@ async function main() {
 
     const drift = database()
     drift.command([cli, 'db', 'push', '--skip-generate'])
+    await removeNewSchema(drift.db)
     await drift.db.$executeRawUnsafe('DROP TABLE "ProjectVisit", "SiteSettings"')
     await drift.db.$executeRawUnsafe('ALTER TABLE "Project" DROP COLUMN "coverHidden", DROP COLUMN "coverPositionX", DROP COLUMN "coverPositionY"')
     await drift.db.$executeRawUnsafe('ALTER TABLE "User" DROP COLUMN "isAdmin", DROP COLUMN "isOwner"')

@@ -37,6 +37,9 @@
     "accept": "Zusagen",
     "reject": "Absagen",
     "close": "Schließen",
+    "loadMore": "Mehr laden",
+    "previousPage": "Vorherige Seite",
+    "nextPage": "Nächste Seite",
     "deleteTitle": "Löschen bestätigen",
     "deleteConfirm": "Bist du sicher? Dieser Vorgang kann nicht rückgängig gemacht werden.",
     "error": "Fehler",
@@ -192,6 +195,7 @@
     "moveTo": "Verschieben nach",
     "folderDescription": "Erstelle oder bearbeite einen Ordner für deine Bildauswahl.",
     "folderName": "Ordnername",
+    "folderSaveError": "Der Ordner konnte nicht gespeichert werden.",
     "importToGroup": "Verzeichnis in Gruppe importieren"
   },
   "moodboard": {
@@ -531,6 +535,7 @@
     "loginToRate": "Melde dich an, um Bilder zu bewerten",
     "noPermissionToRate": "Du hast keine Berechtigung, Bilder in diesem Projekt zu bewerten",
     "loginNow": "Jetzt anmelden",
+    "contractsEmpty": "Noch keine Verträge.",
     "projectOwner": "Projekt-Besitzer",
     "privateProject": "Privates Projekt",
     "noProjectAccess": "Du hast keine Berechtigung, dieses Projekt anzusehen. Bitte wende dich an die Projektleitung."

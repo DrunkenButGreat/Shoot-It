@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.22.1] - 2026-11-01
+
+### Added
+- Durable, transactional file-cleanup jobs with background retries and shared-file protection.
+- Regression coverage for access boundaries, public media, streaming ranges, ratings, concurrent folders, cleanup failures, and PostgreSQL integration.
+- Working ESLint command and audit checks in CI and container builds.
+
+### Changed
+- Authorize recorded media on every request and stream originals/ranges without buffering entire files; prevent shared optimizer caching of private uploads.
+- Load only visible public modules, avoid duplicate selection payloads, scope download queries, and update ratings without a full page refresh.
+- Initially render 100 gallery cards with load-more controls while preserving complete filtering, exports, and lightbox navigation.
+- Cache project storage measurements for 30 seconds, include project/application assets, and exclude unrelated projects and backups.
+- Generate proportional previews for local moodboard imports and index media paths used by authorization.
+
+### Fixed
+- Enforce project membership for searches, contracts, folders, child mutations, and selected-file downloads.
+- Require public project/module visibility for guest ratings and downloads; enforce exact public-route boundaries.
+- Preserve private media access boundaries, including previews, revoked access, symbolic links, and suffix byte ranges.
+- Prevent foreign folder references, cycles, and duplicate siblings during parallel uploads; migrate existing duplicate names without removing folders or images.
+- Delete folder image records consistently, preserve shared moodboards, and retry file failures after committed database changes.
+- Clear application expiry when accepted and run rejected-application cleanup independently of health probes.
+- Reset rating controls on image changes, roll back failed saves, repair folder-delete routing, and localize affected screens.
+- Display contracts explicitly marked public and route authenticated non-members to public module pages.
+
 ## [1.22.0] - 2026-11-01
 
 ### Added

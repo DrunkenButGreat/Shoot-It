@@ -43,6 +43,7 @@ export function PublicResults({ projectId }: { projectId: string }) {
   const [rootImages, setRootImages] = useState<ResultFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [visibleLimit, setVisibleLimit] = useState(100);
   const [selectedImageIds, setSelectedImageIds] = useState<Set<string>>(
     new Set(),
   );
@@ -86,12 +87,14 @@ export function PublicResults({ projectId }: { projectId: string }) {
     const folder = folders.find((f) => f.id === selectedFolderId);
     return folder ? folder.images : [];
   }, [selectedFolderId, folders, rootImages]);
+  const visibleImages = filteredImages.slice(0, visibleLimit);
   const allSelected =
     filteredImages.length > 0 &&
     filteredImages.every((image) => selectedImageIds.has(image.id));
   const selectFolder = (id: string | null) => {
     setSelectedFolderId(id);
     setSelectedImageIds(new Set());
+    setVisibleLimit(100);
   };
 
   const handleDownload = async () => {
@@ -302,13 +305,23 @@ export function PublicResults({ projectId }: { projectId: string }) {
               </div>
 
               <ResultImageGrid
-                images={filteredImages}
+                images={visibleImages}
+                allImages={filteredImages}
                 selectedIds={selectedImageIds}
                 onToggleSelect={toggleImageSelection}
                     showDelete={false}
                 projectId={projectId}
                 layout={galleryLayout}
               />
+              {visibleImages.length < filteredImages.length && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setVisibleLimit((limit) => limit + 100)}
+                >
+                  {t("common.loadMore")}
+                </Button>
+              )}
             </>
           )}
         </div>
