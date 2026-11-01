@@ -52,7 +52,7 @@ tar -xf "$work/uploads.tar" -C "$work/restored"
 [ "$(cat "$work/restored/smoke.txt")" = synthetic-upload ]
 # Recreate the stock 1.8 schema, retaining the existing user and uploads.
 sql 'DROP TABLE "_prisma_migrations"; DROP TABLE "RegistrationInvite"; DROP TABLE "RegistrationSettings";
-DROP TABLE "ProjectVisit", "SiteSettings", "FileCleanupJob";
+DROP TABLE "ProjectVisit", "SiteSettings", "FileCleanupJob", "PocketIdSettings";
 DROP INDEX "SelectionFolder_root_name_key", "SelectionFolder_child_name_key", "ResultFolder_root_name_key", "ResultFolder_child_name_key";
 DROP INDEX "SelectionImage_path_idx"; DROP INDEX "SelectionImage_thumbnail_idx"; DROP INDEX "ResultFile_path_idx"; DROP INDEX "ResultFile_thumbnail_idx"; DROP INDEX "MoodboardImage_path_idx"; DROP INDEX "MoodboardImage_thumbnail_idx"; DROP INDEX "ParticipantImage_path_idx"; DROP INDEX "ParticipantImage_thumbnail_idx"; DROP INDEX "ApplicationImage_path_idx"; DROP INDEX "ApplicationImage_thumbnail_idx";
 DROP TYPE "RegistrationMode"; ALTER TABLE "User" DROP COLUMN "isAdmin", DROP COLUMN "isOwner", DROP COLUMN "brandingColor", DROP COLUMN "brandingImage";

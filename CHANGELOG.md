@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.23.0] - 2026-11-01
+
+### Added
+- Optional Pocket ID OIDC sign-in configured through the bilingual administration UI, including discovery diagnostics and an encrypted client secret.
+- Verified-email linking to existing accounts and atomic provisioning independent of local registration settings, without granting new users administrator or project permissions.
+- Explicit ID-token signature verification, conflict protection, issuer locking after account linking, and additive settings migration.
+- OIDC integration tests covering PKCE, state, nonce, signatures, concurrent linking, secret rotation, admin API access and registration policies; setup and recovery documentation.
+
+### Changed
+- Load Pocket ID configuration without restarting the app; preserve password/Google sign-in and existing local profiles, permissions and sessions.
+- Extend migration/container fixtures and CI for the optional integration.
+
+### Fixed
+- Validate login return destinations consistently for password and external-provider sign-in.
+- Await the Auth.js lazy middleware wrapper so proxy routing remains functional with database-backed provider configuration.
+
 ## [1.22.3] - 2026-11-01
 
 ### Fixed

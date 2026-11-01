@@ -7,6 +7,8 @@ A comprehensive self-hosted web application for managing photoshoot projects, bu
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)](https://www.typescriptlang.org/)
 [![Prisma](https://img.shields.io/badge/Prisma-6.2-2D3748)](https://www.prisma.io/)
 
+Optional Pocket ID sign-in can be configured in the administration UI. See the [setup and upgrade guide](deploy/POCKET-ID.md).
+
 ## 🎯 Overview
 
 PhotoShoot Organizer is a production-ready platform designed specifically for photographers and creative teams to manage all aspects of photoshoots, from initial planning to final delivery.

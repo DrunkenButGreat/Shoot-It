@@ -152,6 +152,7 @@ async function main() {
       'next-auth/providers/google': value => value,
       'next-auth/providers/credentials': value => value,
     })
+    config = await config()
     const account = { type: 'oauth', provider: 'google', providerAccountId: 'synthetic-google' }
     assert.equal(await config.callbacks.signIn({ account }), '/login?error=oauthInviteRequired')
     await denied(config.adapter.createUser(user('oauth-invite')), 'invalidInvite')

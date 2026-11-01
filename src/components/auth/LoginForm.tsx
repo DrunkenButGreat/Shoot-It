@@ -7,14 +7,15 @@ import { useSearchParams } from "next/navigation";
 import { useI18n } from "@/components/I18nProvider";
 
 import type { RegistrationMode } from "@prisma/client";
+import { authReturnPath } from "@/lib/auth-return-path";
 
-export default function LoginForm({ mode }: { mode: RegistrationMode }) {
+export default function LoginForm({ mode, pocketIdEnabled = false }: { mode: RegistrationMode; pocketIdEnabled?: boolean }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const callbackUrl = authReturnPath(searchParams.get("callbackUrl"));
   const { t } = useI18n();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,8 +43,12 @@ export default function LoginForm({ mode }: { mode: RegistrationMode }) {
   };
 
   const authError = searchParams.get("error");
+  const pocketIdReason = searchParams.get("reason");
+  const pocketIdMessage = authError === "pocketId"
+    ? t(`pocketId.${["unverifiedEmail", "accountConflict", "configurationChanged"].includes(pocketIdReason || "") ? pocketIdReason : "errorOccurred"}`)
+    : authError === "pocketIdUnavailable" ? t("pocketId.unavailable") : "";
   const message =
-    error ||
+    error || pocketIdMessage ||
     (authError
       ? t(
           `auth.${["registrationClosed", "oauthInviteRequired"].includes(authError) ? authError : "errorOccurred"}`,
@@ -127,6 +132,12 @@ export default function LoginForm({ mode }: { mode: RegistrationMode }) {
         <span className="font-bold text-blue-600">G</span>
         {t("auth.signInWithGoogle")}
       </button>
+
+      {pocketIdEnabled && <button
+        type="button"
+        onClick={() => signIn("pocket-id", { callbackUrl })}
+        className="flex h-11 w-full items-center justify-center rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50"
+      >{t("pocketId.signIn")}</button>}
 
       {mode !== "CLOSED" && (
         <div className="text-center text-sm text-gray-600 mt-4">
