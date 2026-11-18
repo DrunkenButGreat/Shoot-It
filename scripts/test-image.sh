@@ -52,6 +52,7 @@ tar -xf "$work/uploads.tar" -C "$work/restored"
 [ "$(cat "$work/restored/smoke.txt")" = synthetic-upload ]
 # Recreate the stock 1.8 schema, retaining the existing user and uploads.
 sql 'ALTER TABLE "SelectionImage" DROP COLUMN "capturedAt";
+DROP TABLE "DeliveryLink", "PlanItem", "ProofNote", "ProofPick", "ProofList"; ALTER TABLE "SelectionImage" DROP COLUMN "editStatus"; ALTER TABLE "Project" DROP COLUMN "selectionTarget", DROP COLUMN "selectionDue", DROP COLUMN "isTemplate";
 DROP TABLE "_prisma_migrations"; DROP TABLE "RegistrationInvite"; DROP TABLE "RegistrationSettings";
 DROP TABLE "ProjectVisit", "SiteSettings", "FileCleanupJob", "PocketIdSettings";
 DROP INDEX "SelectionFolder_root_name_key", "SelectionFolder_child_name_key", "ResultFolder_root_name_key", "ResultFolder_child_name_key";

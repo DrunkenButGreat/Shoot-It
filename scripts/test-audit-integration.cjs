@@ -48,6 +48,8 @@ async function main() {
     const outsider = await db.user.create({ data: { email: `other-${schema}@example.test` } })
     const a = await db.project.create({ data: { name: 'A', shortCode: `${schema}-a`, ownerId: owner.id } })
     const b = await db.project.create({ data: { name: 'B', shortCode: `${schema}-b`, ownerId: outsider.id } })
+    await require('./test-planner.cjs')({ db, load, owner, outsider, a, b, params, request, signIn: user => { session = user ? { user } : null } })
+    await require('./test-proof-flows.cjs')({ db, load, owner, outsider, params, request, signIn: user => { session = user ? { user } : null } })
     const { canAccessProject, canEditProject } = load('src/lib/permissions')
     assert.equal(await canAccessProject(owner.id, a.id), true)
     assert.equal(await canAccessProject(owner.id, b.id), false)

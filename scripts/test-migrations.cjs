@@ -36,6 +36,9 @@ async function main() {
     return { db, command }
   }
   async function removeNewSchema(db) {
+    await db.$executeRawUnsafe('DROP TABLE "DeliveryLink", "PlanItem", "ProofNote", "ProofPick", "ProofList"')
+    await db.$executeRawUnsafe('ALTER TABLE "SelectionImage" DROP COLUMN "editStatus"')
+    await db.$executeRawUnsafe('ALTER TABLE "Project" DROP COLUMN "selectionTarget", DROP COLUMN "selectionDue", DROP COLUMN "isTemplate"')
     await db.$executeRawUnsafe('ALTER TABLE "SelectionImage" DROP COLUMN "capturedAt"')
     await db.$executeRawUnsafe('DROP TABLE "PocketIdSettings"')
     await db.$executeRawUnsafe('DROP TABLE "FileCleanupJob"')
@@ -117,7 +120,9 @@ async function main() {
     }
     await before111.db.$executeRawUnsafe('INSERT INTO "Project" (id,name,"shortCode","ownerId","updatedAt") SELECT \'old-project\',\'Preserved project\',\'old\',id,NOW() FROM "User" LIMIT 1')
     await before111.db.$executeRawUnsafe(`INSERT INTO "SelectionImage" (id, filename, path, "projectId", "importedAt") VALUES ('old-image', 'preserved.jpg', '/api/uploads/selection/old-project/preserved.jpg', 'old-project', NOW())`)
+    await before111.db.$executeRawUnsafe(`INSERT INTO "image_rating" (id,"imageId",stars,"updatedAt") VALUES ('old-rating','old-image',5,NOW())`)
     before111.command([migrate, 'upgrade'])
+    assert.equal((await before111.db.imageRating.findUniqueOrThrow({ where: { id: 'old-rating' } })).stars, 5)
     before111.command([migrate, 'upgrade'])
     assert.equal((await before111.db.user.findUnique({ where: { email: 'before111@example.test' } })).isAdmin, true)
     assert.equal((await before111.db.user.findUnique({ where: { email: 'before111@example.test' } })).isOwner, true)

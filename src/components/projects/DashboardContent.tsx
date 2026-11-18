@@ -7,6 +7,8 @@ import { ProjectCard } from "./ProjectCard"
 import { StorageOverview, type StorageOverviewData } from "./StorageOverview"
 import { ProjectForm } from "./ProjectForm"
 import { Input } from "@/components/ui/input"
+import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 import { useI18n } from "@/components/I18nProvider"
 
 export interface DashboardProject {
@@ -25,12 +27,15 @@ export interface DashboardProject {
   resultCount: number
   storageBytes: number
   canDelete?: boolean
+  isTemplate?: boolean
 }
 
 export function DashboardContent({ projects, storage }: { projects: DashboardProject[]; storage: StorageOverviewData }) {
   const router = useRouter()
   const [tab, setTab] = useState<"active" | "archived">("active")
   const [query, setQuery] = useState("")
+  const templates = projects.filter(p => p.isTemplate && p.canDelete)
+  const [creating, setCreating] = useState(false)
   const { t, locale } = useI18n()
   const activeProjects = projects.filter(project => !project.isArchived)
   const upcoming = useMemo(() => activeProjects.filter(project => project.date && new Date(project.date) >= new Date(new Date().setHours(0, 0, 0, 0))).sort((a, b) => +new Date(a.date!) - +new Date(b.date!)).slice(0, 3), [projects])
@@ -40,7 +45,24 @@ export function DashboardContent({ projects, storage }: { projects: DashboardPro
     <div className="mx-auto max-w-[1500px]">
       <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div><h1 className="studio-page-title">{t("dashboard.studioOverview")}</h1><p className="studio-page-subtitle">{t("dashboard.studioOverviewDescription")}</p></div>
-        <ProjectForm onSuccess={() => router.refresh()} />
+        <div className="space-y-2"><ProjectForm onSuccess={() => router.refresh()} />
+          {!!templates.length && <details className="studio-panel p-3"><summary className="cursor-pointer">{t('proof.fromTemplate')}</summary>
+            <form className="mt-3 grid gap-2" onSubmit={async e => {
+              e.preventDefault(); if (creating) return
+              const data = new FormData(e.currentTarget); setCreating(true)
+              try {
+                const response = await fetch(`/api/projects/${data.get('template')}/template`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: data.get('name'), date: data.get('date'), zone: Intl.DateTimeFormat().resolvedOptions().timeZone }) })
+                if (!response.ok) throw Error()
+                const project = await response.json(); router.push(`/project/${project.id}`); router.refresh()
+              } catch { toast.error(t('proof.templateFailed')) } finally { setCreating(false) }
+            }}>
+              <label>{t('proof.template')} <select name="template" className="rounded border p-2">{templates.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
+              <label>{t('proof.projectName')}<Input name="name" required maxLength={100} /></label>
+              <label>{t('proof.projectDate')}<Input name="date" type="date" required /></label>
+              <p className="max-w-sm text-sm">{t('proof.templateHint')}</p>
+              <Button disabled={creating}>{t('proof.fromTemplate')}</Button>
+            </form></details>}
+        </div>
       </div>
       <div className="mb-8 flex flex-wrap gap-x-10 gap-y-4 border-b border-[#e2e5ea] pb-7">
         {[[activeProjects.length, t("dashboard.activeProjects")], [upcoming.length, t("dashboard.upcomingShoots")], [activeProjects.filter(project => project.selectionCount > 0 && project.resultCount === 0).length, t("dashboard.openSelections")]].map(([count, label]) => <div key={label} className="flex min-w-[170px] items-baseline gap-3 border-r border-[#e2e5ea] pr-10 last:border-0"><strong className="text-3xl text-slate-950">{count}</strong><span className="text-sm text-slate-500">{label}</span></div>)}

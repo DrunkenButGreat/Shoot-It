@@ -6,6 +6,7 @@ import prisma from "@/lib/prisma"
 import { canAccessProject } from "@/lib/permissions"
 import { Button } from "@/components/ui/button"
 import { SelectionContent } from "@/components/selection/SelectionContent"
+import { PersonalSelection } from "@/components/selection/PersonalSelection"
 import { getLocale, getDictionary } from "@/lib/i18n"
 import { cookies } from "next/headers"
 
@@ -82,7 +83,7 @@ export default async function SelectionPage({
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <SelectionContent
+        <PersonalSelection key={id} projectId={id}><SelectionContent
           projectId={id}
           initialImages={images as any}
           initialFolders={folders.map(folder => ({ ...folder, images: [] }))}
@@ -90,7 +91,7 @@ export default async function SelectionPage({
           galleryLayout={project.galleryLayout}
           hasLocalMedia={!!process.env.LOCAL_MEDIA_PATH}
           showFolders={project.showSelectionFolders}
-        />
+        /></PersonalSelection>
       </main>
     </div>
   )

@@ -24,6 +24,7 @@ export async function DELETE(
     }
 
     const deleted = await prisma.$transaction(async tx => {
+      await tx.$queryRaw`SELECT id FROM "Project" WHERE id = ${id} FOR UPDATE`
       const folder = await tx.selectionFolder.findFirst({ where: { id: folderId, projectId: id } })
       if (!folder) return false
       const folders = await tx.selectionFolder.findMany({ where: { projectId: id }, select: { id: true, parentId: true } })
@@ -32,11 +33,13 @@ export async function DELETE(
         for (const child of folders) if (child.parentId === ids[i] && !ids.includes(child.id)) ids.push(child.id)
       }
       const images = await tx.selectionImage.findMany({ where: { projectId: id, folderId: { in: ids } } })
+      if (await tx.proofPick.count({ where: { imageId: { in: images.map(i => i.id) }, list: { projectId: id, submittedAt: { not: null } } } })) return 'locked'
       await queueFileCleanup(tx, images.flatMap(image => [image.path, image.thumbnail]), `selection/${id}`)
       await tx.selectionImage.deleteMany({ where: { projectId: id, folderId: { in: ids } } })
       await tx.selectionFolder.delete({ where: { id: folderId, projectId: id } })
       return true
     }, { isolationLevel: 'Serializable' })
+    if (deleted === 'locked') return NextResponse.json({ error: 'submittedPicks' }, { status: 409 })
     if (!deleted) return NextResponse.json({ error: 'Folder not found' }, { status: 404 })
 
     return NextResponse.json({ success: true })

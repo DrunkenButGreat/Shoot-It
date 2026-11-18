@@ -17,6 +17,7 @@ import { ProjectForm } from "./ProjectForm";
 interface ProjectActionsProps {
   project: {
     shortCode: string;
+    isTemplate: boolean;
     brandingImage?: string | null;
     coverPositionX: number;
     coverPositionY: number;
@@ -69,6 +70,13 @@ export function ProjectActions({ project }: ProjectActionsProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onSelect={async () => {
+            try {
+              const result = await fetch(`/api/projects/${project.id}/template`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ isTemplate: !project.isTemplate }) })
+              if (!result.ok) throw Error()
+              router.refresh(); toast.success(t(project.isTemplate ? 'proof.unmarked' : 'proof.marked'))
+            } catch { toast.error(t('proof.templateFailed')) }
+          }}>{t(project.isTemplate ? 'proof.unmark' : 'proof.mark')}</DropdownMenuItem>
           <DropdownMenuItem
             onSelect={async () => {
               try {

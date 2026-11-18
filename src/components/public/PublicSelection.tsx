@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button"
 import { matchesSelectionFilters } from "@/lib/selection-filters"
 import { ImageCard } from "../selection/ImageCard"
 import { RatingControls, type RatingUpdateHandler } from "../selection/RatingControls"
+import { PersonalSelection, ProofToolbar, ProofHeart, ProofFeedback, useProofFilter } from '../selection/PersonalSelection'
 import { useI18n } from "@/components/I18nProvider"
 import { supportsDirectDownload, directDownloadViaManifest } from "@/lib/direct-download"
 
@@ -62,7 +63,12 @@ interface PublicSelectionProps {
   brandColor?: string | null
 }
 
-export function PublicSelection({
+export function PublicSelection(props: PublicSelectionProps) {
+  const gallery = <PublicSelectionGallery {...props} />
+  return props.userHasAccess || props.allowGuestSelection ? <PersonalSelection key={props.projectId} projectId={props.projectId}>{gallery}</PersonalSelection> : gallery
+}
+
+function PublicSelectionGallery({
   projectId,
   images,
   folders,
@@ -87,7 +93,7 @@ export function PublicSelection({
   const [mounted, setMounted] = useState(false)
   const [isDownloadingAll, setIsDownloadingAll] = useState(false)
   const [downloadMode, setDownloadMode] = useState<'zip' | 'files'>('zip')
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [markedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [canDirectDownload, setCanDirectDownload] = useState(false)
   useEffect(() => { setCanDirectDownload(supportsDirectDownload()) }, [])
   const { t } = useI18n()
@@ -97,9 +103,11 @@ export function PublicSelection({
   const isGuest = !userHasAccess && !!allowGuestSelection
   const canRate = !!userHasAccess || !!allowGuestSelection
 
-  const filteredImages = useMemo(() => sortSelectionImages(selectionImages.filter(image => matchesSelectionFilters(image, {
+  const proofFilter = useProofFilter()
+  const selectedIds = useMemo(() => proofFilter ? new Set([...markedIds].filter(id => proofFilter.has(id))) : markedIds, [markedIds, proofFilter])
+  const filteredImages = useMemo(() => sortSelectionImages(selectionImages.filter(image => (!proofFilter || proofFilter.has(image.id)) && matchesSelectionFilters(image, {
     folderId: selectedFolderId, stars, colors, unrated,
-  })), sort), [selectionImages, selectedFolderId, stars, colors, unrated, sort])
+  })), sort), [selectionImages, selectedFolderId, stars, colors, unrated, sort, proofFilter])
   const selectedIndex = filteredImages.findIndex(image => image.id === selectedImageId)
   const setActiveImage = (id: string | null) => setSelectedImageId(id)
   const visibleImages = filteredImages.slice(0, visibleLimit)
@@ -335,6 +343,8 @@ export function PublicSelection({
                 className="scale-125"
                 isGuest={isGuest}
               />
+              <ProofHeart imageId={filteredImages[selectedIndex].id} />
+              <ProofFeedback key={filteredImages[selectedIndex].id} imageId={filteredImages[selectedIndex].id} />
             </div>
           ) : (
             <div className="text-white/50 text-xs italic bg-black/40 backdrop-blur-md px-4 py-2 rounded-xl border border-white/5">
@@ -349,6 +359,7 @@ export function PublicSelection({
 
   return (
     <div className="flex flex-col gap-6">
+      <ProofToolbar />
       <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
         <div className="flex flex-wrap items-center gap-2">
           {view !== "list" && <GallerySizeControl />}

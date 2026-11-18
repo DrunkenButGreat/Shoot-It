@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.28.0] - 2026-11-18
+
+### Added
+- Shoot planner with shot and task checklists, due reminders, per-image editing status and project calendar export.
+- Original and web JPEG downloads with scoped, expiring and revocable delivery links.
+- Personal favorites and comparisons, selection targets and due dates, final submission with organizer reopening, and per-image retouch feedback. Existing stars and colors remain shared.
+- Owner-managed project templates for creating private projects with settings, linked moodboards, rescheduled callsheets and unsigned contracts.
+
 ## [1.27.1] - 2026-11-01
 
 ### Fixed

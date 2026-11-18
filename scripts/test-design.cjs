@@ -85,6 +85,11 @@ for (const locale of ['de', 'en']) {
   const dictionary = load(`src/dictionaries/${locale}.json`);
   const render = (component, props) => renderToStaticMarkup(React.createElement(I18nProvider,
     { initialLocale: locale, initialDictionary: dictionary }, React.createElement(component, props)));
+  const planner = load('src/components/projects/ShootingPlan').ShootingPlan;
+  const plan = { id:'p',items:[{id:'t',kind:'task',due:'2000-01-01',done:false,title:'Bring camera'}],images:[{id:'i',filename:'test.png',editStatus:'editing'}],files:[{id:'f',filename:'result.png',isVideo:false,expires:null}] };
+  const editable = render(planner,{...plan,editor:true}), readOnly = render(planner,{...plan,editor:false});
+  assert.ok(editable.includes(dictionary.plan.reminder)); assert.ok(editable.includes(dictionary.plan.share));
+  assert.ok(!readOnly.includes(dictionary.plan.share)); assert.ok(readOnly.includes('/api/delivery/f?variant=web')); assert.ok(!editable.includes('plan.'));
   // Schedule timestamps must survive server serialization and render in the browser locale.
   const time = '2026-10-14T07:30:00.000Z';
   const schedule = scheduleItemSchema.parse({ time, activity: 'Lighting setup', notes: 'Test studio' });

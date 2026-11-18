@@ -82,6 +82,7 @@ export default async function ProjectPage({
     project.moodboardLinks[0]?.group.images[0]?.thumbnail ||
     project.moodboardLinks[0]?.group.images[0]?.path;
   const modules: Array<[string, string, string, LucideIcon]> = [
+    [dict.plan.title, dict.plan.subtitle, `/project/${id}/plan`, ClipboardList],
     [
       dict.project.moodboard,
       dict.project.groups.replace(

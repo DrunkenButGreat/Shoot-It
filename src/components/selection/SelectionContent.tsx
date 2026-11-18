@@ -46,6 +46,7 @@ import { ExportDialog } from "./ExportDialog";
 import { FilterBar } from "./FilterBar";
 import { LocalMediaPicker } from "./LocalMediaPicker";
 import { RatingControls, type RatingUpdateHandler } from "./RatingControls";
+import { ProofToolbar, ProofHeart, ProofFeedback, useProofFilter } from './PersonalSelection';
 import { SelectionFolderForm } from "./SelectionFolderForm";
 import { SelectionFolderTree } from "./SelectionFolderTree";
 import { SelectionImageGrid } from "./SelectionImageGrid";
@@ -109,7 +110,7 @@ export function SelectionContent({
   const [unrated, setUnrated] = useState(false);
   const [lightboxImageId, setLightboxImageId] = useState<string | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-  const [selectedImageIds, setSelectedImageIds] = useState<Set<string>>(
+  const [markedIds, setSelectedImageIds] = useState<Set<string>>(
     new Set(),
   );
   const [showFolderForm, setShowFolderForm] = useState(false);
@@ -122,19 +123,21 @@ export function SelectionContent({
   useEffect(() => setImages(initialImages), [initialImages]);
   useEffect(() => setVisibleLimit(100), [selectedFolderId, unrated, searchParams]);
 
+  const proofFilter = useProofFilter();
+  const selectedImageIds = useMemo(() => proofFilter ? new Set([...markedIds].filter(id => proofFilter.has(id))) : markedIds, [markedIds, proofFilter]);
   const filteredImages = useMemo(() => {
     const stars = searchParams.getAll("stars");
     const colors = searchParams.getAll("color");
     return sortSelectionImages(images.filter(
       (img) =>
-        (selectedFolderId === "unassigned"
+        (!proofFilter || proofFilter.has(img.id)) && (selectedFolderId === "unassigned"
           ? !img.folderId
           : !selectedFolderId || img.folderId === selectedFolderId) &&
         (!unrated || (!img.ratings?.stars && !img.ratings?.color)) &&
         (!stars.length || stars.includes(String(img.ratings?.stars))) &&
         (!colors.length || colors.includes(img.ratings?.color || "")),
     ), sort);
-  }, [images, searchParams, selectedFolderId, unrated, sort]);
+  }, [images, searchParams, selectedFolderId, unrated, sort, proofFilter]);
   const index = filteredImages.findIndex((image) => image.id === lightboxImageId);
   useEffect(() => {
     if (lightboxImageId && index < 0) setLightboxImageId(null);
@@ -180,6 +183,7 @@ export function SelectionContent({
         body: JSON.stringify({ imageIds: [imageId] })
       })
 
+      if (res.status === 409) { toast.error(t('proof.submittedPicks')); return }
       if (!res.ok) throw new Error()
 
       toast.success(t('selection.deletedImageSuccess'))
@@ -203,6 +207,7 @@ export function SelectionContent({
         },
       );
 
+      if (res.status === 409) { toast.error(t('proof.submittedPicks')); return }
       if (!res.ok) throw new Error();
 
       toast.success(t("selection.deletedSuccess"));
@@ -253,6 +258,7 @@ export function SelectionContent({
         },
       );
 
+      if (res.status === 409) { toast.error(t('proof.submittedPicks')); return }
       if (!res.ok) throw new Error();
 
       toast.success(t("selection.folderDeleted"));
@@ -284,6 +290,7 @@ export function SelectionContent({
 
   return (
     <div className="flex flex-col h-full gap-6">
+      <ProofToolbar />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="studio-page-title">{t("selection.title")}</h2>
@@ -624,6 +631,8 @@ export function SelectionContent({
                   initialRating={slide.image.ratings}
                   onRatingUpdated={handleRatingUpdated}
                 />
+                <ProofHeart imageId={slide.image.id} />
+                <ProofFeedback key={slide.image.id} imageId={slide.image.id} />
               </div>
             </div>
           ),

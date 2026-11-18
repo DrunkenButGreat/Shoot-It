@@ -67,6 +67,7 @@ export default async function DashboardPage() {
       shortCode: project.shortCode,
       isArchived: project.isArchived,
       canDelete: project.ownerId === currentUserId,
+      isTemplate: project.isTemplate,
       coverPositionX: project.coverPositionX,
       coverPositionY: project.coverPositionY,
       previewImage: project.coverHidden ? null : project.brandingImage || project.moodboardLinks[0]?.group.images[0]?.thumbnail || project.moodboardLinks[0]?.group.images[0]?.path || null,

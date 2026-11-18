@@ -26,7 +26,7 @@ const base = { '@/auth': { auth: async () => ({ user: { id: 'user' } }) }, '@/li
   let deleted = false
   const folders = { findFirst: async () => null, findMany: async () => { throw Error('must not read foreign folders') } }
   const db = { selectionFolder: folders, selectionImage: { findMany: async () => { throw Error('must not read foreign images') } } }
-  db.$transaction = fn => fn(db)
+  db.$queryRaw = async () => []; db.$transaction = fn => fn(db)
   let route = load('src/app/api/projects/[id]/selection/folders/[folderId]/route.ts', { ...base, '@/lib/prisma': db, '@/lib/file-cleanup': { queueFileCleanup: async () => { deleted = true } } })
   assert.equal((await route.DELETE(req({}), ctx)).status, 404)
   assert.equal((await route.PATCH(req({ name: 'test' }), ctx)).status, 404)
@@ -36,6 +36,7 @@ const base = { '@/auth': { auth: async () => ({ user: { id: 'user' } }) }, '@/li
 
   const actions = []
   const ownDb = {
+    $queryRaw: async () => [], proofPick: { count: async () => 0 },
     selectionFolder: {
       findFirst: async () => ({ id: 'root', projectId: 'a' }),
       findMany: async () => [{ id: 'root', parentId: null }, { id: 'child', parentId: 'root' }],
@@ -66,6 +67,7 @@ const base = { '@/auth': { auth: async () => ({ user: { id: 'user' } }) }, '@/li
       delete: async () => events.push('delete'),
       deleteMany: async () => { events.push('delete'); return { count: 1 } },
     } }
+    mediaDb.$queryRaw = async () => []; mediaDb.proofPick = { count: async () => 0 }
     mediaDb.$transaction = fn => fn(mediaDb)
     const mediaRoute = load(file, { ...base, '@/lib/prisma': mediaDb, '@/lib/file-cleanup': { queueFileCleanup: async (_, paths) => { assert.deepEqual(paths, [row.path, null].filter(Boolean)); events.push('queue') } } })
     const response = await mediaRoute.DELETE(req(body), { params: Promise.resolve({ id: 'a', imageId: 'image' }) })

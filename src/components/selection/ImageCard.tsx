@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useRef } from "react";
 import { RatingControls, type RatingUpdateHandler } from "./RatingControls";
+import { ProofHeart } from './PersonalSelection';
 
 interface Rating {
   id: string;
@@ -257,6 +258,7 @@ export function ImageCard({
       {/* Rating controls */}
       {!hideRatings && (
         <div className="px-2 pb-2 pt-1">
+          <ProofHeart imageId={image.id} />
           <RatingControls
             key={image.id}
             projectId={projectId}
