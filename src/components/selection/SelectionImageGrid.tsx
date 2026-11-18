@@ -2,14 +2,12 @@
 
 import { SelectionImageList } from "./SelectionImageList";
 import { ImageCard } from "./ImageCard";
-import type { RatingUpdateHandler } from "./RatingControls";
 
 interface SelectionImageGridProps {
   images: any[];
   layout: "grid" | "masonry" | "justified" | "list";
   projectId: string;
   onImageClick: (index: number) => void;
-  onRatingUpdated: RatingUpdateHandler;
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string | string[]) => void;
   onDelete?: (id: string) => void;
@@ -20,7 +18,6 @@ export function SelectionImageGrid({
   layout,
   projectId,
   onImageClick,
-  onRatingUpdated,
   selectedIds,
   onToggleSelect,
   onDelete,
@@ -28,7 +25,7 @@ export function SelectionImageGrid({
   if (images.length === 0) return null;
 
   if (layout === "list") {
-    return <SelectionImageList images={images} projectId={projectId} onPreview={onImageClick} onRatingUpdated={onRatingUpdated} selectedIds={selectedIds} onToggleSelect={onToggleSelect} onDelete={onDelete} />;
+    return <SelectionImageList images={images} projectId={projectId} onPreview={onImageClick} selectedIds={selectedIds} onToggleSelect={onToggleSelect} onDelete={onDelete} />;
   }
 
   if (layout === "grid") {
@@ -40,7 +37,7 @@ export function SelectionImageGrid({
             image={image}
             projectId={projectId}
             onDelete={onDelete ? () => onDelete(image.id) : undefined}
-            onRatingUpdated={onRatingUpdated}
+
             onImageClick={() => onImageClick(i)}
             onPreview={() => onImageClick(i)}
             selected={selectedIds?.has(image.id)}
@@ -74,7 +71,7 @@ export function SelectionImageGrid({
                 image={image}
                 projectId={projectId}
                 onDelete={onDelete ? () => onDelete(image.id) : undefined}
-                onRatingUpdated={onRatingUpdated}
+
                 onImageClick={() => onImageClick(i)}
             onPreview={() => onImageClick(i)}
                 justified={true}
@@ -100,7 +97,7 @@ export function SelectionImageGrid({
             image={image}
             projectId={projectId}
             onDelete={onDelete ? () => onDelete(image.id) : undefined}
-            onRatingUpdated={onRatingUpdated}
+
             onImageClick={() => onImageClick(index)}
             onPreview={() => onImageClick(index)}
             masonry

@@ -17,8 +17,8 @@ import { FilterBar } from "../selection/FilterBar"
 import { Button } from "@/components/ui/button"
 import { matchesSelectionFilters } from "@/lib/selection-filters"
 import { ImageCard } from "../selection/ImageCard"
-import { RatingControls, type RatingUpdateHandler } from "../selection/RatingControls"
-import { PersonalSelection, ProofToolbar, ProofHeart, ProofFeedback, useProofFilter } from '../selection/PersonalSelection'
+import { RatingControls } from "../selection/RatingControls"
+import { PersonalSelection, ProofToolbar, ProofFeedback, useProofFilter, useRatedImages } from '../selection/PersonalSelection'
 import { useI18n } from "@/components/I18nProvider"
 import { supportsDirectDownload, directDownloadViaManifest } from "@/lib/direct-download"
 
@@ -84,7 +84,7 @@ function PublicSelectionGallery({
   const [sort, setSort] = useState<SelectionSort>("imported")
   const isIOS = useIOSDevice()
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null)
-  const [selectionImages, setSelectionImages] = useState(images)
+  const selectionImages = useRatedImages(images)
   const [visibleLimit, setVisibleLimit] = useState(100)
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const [stars, setStars] = useState<string[]>([])
@@ -103,7 +103,7 @@ function PublicSelectionGallery({
   const isGuest = !userHasAccess && !!allowGuestSelection
   const canRate = !!userHasAccess || !!allowGuestSelection
 
-  const proofFilter = useProofFilter()
+  const proofFilter = useProofFilter(unrated)
   const selectedIds = useMemo(() => proofFilter ? new Set([...markedIds].filter(id => proofFilter.has(id))) : markedIds, [markedIds, proofFilter])
   const filteredImages = useMemo(() => sortSelectionImages(selectionImages.filter(image => (!proofFilter || proofFilter.has(image.id)) && matchesSelectionFilters(image, {
     folderId: selectedFolderId, stars, colors, unrated,
@@ -111,9 +111,6 @@ function PublicSelectionGallery({
   const selectedIndex = filteredImages.findIndex(image => image.id === selectedImageId)
   const setActiveImage = (id: string | null) => setSelectedImageId(id)
   const visibleImages = filteredImages.slice(0, visibleLimit)
-  const handleRatingUpdated: RatingUpdateHandler = (imageId, rating) => {
-    setSelectionImages(current => current.map(item => item.id === imageId ? { ...item, ratings: rating } : item))
-  }
   const handleFilterChange = (type: string, value: string | null) => {
     const update = (previous: string[]) => value === null ? []
       : previous.includes(value) ? previous.filter(item => item !== value) : [...previous, value]
@@ -162,7 +159,6 @@ function PublicSelectionGallery({
     document.body.style.overflow = 'unset'
   }
 
-  useEffect(() => setSelectionImages(images), [images])
 
   useEffect(() => {
     if (selectedImageId && selectedIndex < 0) closeLightbox()
@@ -339,11 +335,10 @@ function PublicSelectionGallery({
                 projectId={projectId}
                 imageId={filteredImages[selectedIndex].id}
                 initialRating={filteredImages[selectedIndex].ratings || undefined}
-                onRatingUpdated={handleRatingUpdated}
+
                 className="scale-125"
                 isGuest={isGuest}
               />
-              <ProofHeart imageId={filteredImages[selectedIndex].id} />
               <ProofFeedback key={filteredImages[selectedIndex].id} imageId={filteredImages[selectedIndex].id} />
             </div>
           ) : (
@@ -484,7 +479,7 @@ function PublicSelectionGallery({
         ) : (
           <>
             {view === "list" ? (
-              <SelectionImageList images={visibleImages} projectId={projectId} onPreview={openLightbox} onRatingUpdated={handleRatingUpdated} readOnly={!canRate} isGuest={isGuest} selectedIds={selectedIds} onToggleSelect={allowDownload ? toggleSelect : undefined} onDownload={allowDownload ? downloadSingle : undefined} />
+              <SelectionImageList images={visibleImages} projectId={projectId} onPreview={openLightbox}  readOnly={!canRate} isGuest={isGuest} selectedIds={selectedIds} onToggleSelect={allowDownload ? toggleSelect : undefined} onDownload={allowDownload ? downloadSingle : undefined} />
             ) : view === "grid" ? (
               <div className="shootit-gallery-grid">
                 {visibleImages.map((image, index) => (
@@ -493,7 +488,7 @@ function PublicSelectionGallery({
                     image={image}
                     projectId={projectId}
                     onImageClick={() => openLightbox(index)}
-                    onRatingUpdated={handleRatingUpdated}
+
                     readOnly={!canRate}
                     isGuest={isGuest}
                     selected={selectedIds.has(image.id)}
@@ -522,7 +517,7 @@ function PublicSelectionGallery({
                         image={image}
                         projectId={projectId}
                         onImageClick={() => openLightbox(index)}
-                        onRatingUpdated={handleRatingUpdated}
+
                         justified={true}
                         readOnly={!canRate}
                         isGuest={isGuest}
@@ -544,7 +539,7 @@ function PublicSelectionGallery({
                     image={image}
                     projectId={projectId}
                     onImageClick={() => openLightbox(index)}
-                    onRatingUpdated={handleRatingUpdated}
+
                     masonry={true}
                     readOnly={!canRate}
                     isGuest={isGuest}

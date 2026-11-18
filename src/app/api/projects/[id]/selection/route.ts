@@ -25,6 +25,7 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    const actor = "user:" + session.user.id
     // Build filter conditions
     const ratingFilter: any = {}
     if (filterStars) {
@@ -38,19 +39,16 @@ export async function GET(
       where: {
         projectId: id,
         ...(Object.keys(ratingFilter).length > 0 && {
-          ratings: {
-            isNot: null,
-            ...ratingFilter,
-          },
+          proofPicks: { some: { list: { actor }, ...ratingFilter } },
         }),
       },
       include: {
-        ratings: true,
+        proofPicks: { where: { list: { actor } }, select: { imageId: true, stars: true, color: true } },
       },
       orderBy: { importedAt: 'desc' },
     })
 
-    return NextResponse.json({ images })
+    return NextResponse.json({ images: images.map(({proofPicks, ...image}) => ({ ...image, ratings: proofPicks[0] ? { id: image.id, stars: proofPicks[0].stars, color: proofPicks[0].color } : null })) })
   } catch (error) {
     console.error('Error fetching selection images:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

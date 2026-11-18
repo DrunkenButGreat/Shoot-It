@@ -76,7 +76,7 @@ export async function GET(
       include: {
         images: {
           include: {
-            ratings: true
+            proofPicks: { where: { list: { actor: "user:" + session.user.id } }, select: { stars: true, color: true } }
           }
         },
         _count: {
@@ -86,7 +86,7 @@ export async function GET(
       orderBy: { createdAt: 'asc' }
     })
 
-    return NextResponse.json(folders)
+    return NextResponse.json(folders.map(folder => ({ ...folder, images: folder.images.map(({proofPicks, ...image}) => ({ ...image, ratings: proofPicks[0] ? { id: image.id, ...proofPicks[0] } : null })) })))
   } catch (error) {
     console.error('Error fetching selection folders:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

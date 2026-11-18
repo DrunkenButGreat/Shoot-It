@@ -2,7 +2,7 @@
 
 import { useI18n } from "@/components/I18nProvider";
 import { Star } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useProof } from "./PersonalSelection";
 
 interface Rating {
   id: string;
@@ -14,122 +14,21 @@ interface RatingControlsProps {
   projectId: string;
   imageId: string;
   initialRating?: Rating;
-  onRatingUpdated?: RatingUpdateHandler;
   disabled?: boolean;
   className?: string;
   isGuest?: boolean;
 }
 
-export type RatingUpdateHandler = (imageId: string, rating: Rating) => void;
 
 export function RatingControls({
-  projectId,
-  imageId,
-  initialRating,
-  onRatingUpdated,
-  disabled: externalDisabled,
-  className,
-  isGuest,
+  imageId, initialRating, disabled: externalDisabled, className,
 }: RatingControlsProps) {
   const { t } = useI18n();
-  const [stars, setStars] = useState<number>(initialRating?.stars || 0);
-  const [color, setColor] = useState<string | null>(
-    initialRating?.color || null,
-  );
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [guestId, setGuestId] = useState<string | null>(null);
-  const requestId = useRef(0);
-  const busy = useRef(false);
-
-  useEffect(() => {
-    requestId.current++;
-    busy.current = false;
-    setIsUpdating(false);
-    setStars(initialRating?.stars || 0);
-    setColor(initialRating?.color || null);
-  }, [imageId, initialRating?.stars, initialRating?.color]);
-
-  useEffect(() => {
-    if (isGuest) {
-      let id = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("shoot_it_guest_id="))
-        ?.split("=")[1];
-      if (!id) {
-        id = `guest_${Math.random().toString(36).substring(2, 15)}_${Date.now()}`;
-        document.cookie = `shoot_it_guest_id=${id}; path=/; max-age=${60 * 60 * 24 * 365}`;
-      }
-      setGuestId(id);
-    }
-  }, [isGuest]);
-
-  const disabled = externalDisabled || isUpdating || (isGuest && !guestId);
-
-  const handleStarClick = async (rating: number) => {
-    if (busy.current) return;
-    const newStars = stars === rating ? 0 : rating;
-    setStars(newStars);
-    await updateRating({ stars: newStars > 0 ? newStars : null, color });
-  };
-
-  const handleColorClick = async (newColor: string) => {
-    if (busy.current) return;
-    const selectedColor = color === newColor ? null : newColor;
-    setColor(selectedColor);
-    await updateRating({
-      stars: stars > 0 ? stars : null,
-      color: selectedColor,
-    });
-  };
-
-  const updateRating = async (data: {
-    stars: number | null;
-    color: string | null;
-  }) => {
-    const id = imageId;
-    const currentRequest = ++requestId.current;
-    const previous = { stars, color };
-    busy.current = true;
-    setIsUpdating(true);
-    try {
-      const response = await fetch(
-        `/api/projects/${projectId}/selection/${id}/rating`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...data,
-            guestId: isGuest ? guestId : undefined,
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        alert(error.error || t("common.error"));
-        if (requestId.current === currentRequest) {
-          setStars(previous.stars);
-          setColor(previous.color);
-        }
-        return;
-      }
-      const rating: Rating = await response.json();
-      if (requestId.current === currentRequest) {
-        setStars(rating.stars || 0);
-        setColor(rating.color || null);
-      }
-      onRatingUpdated?.(id, rating);
-    } catch (error) {
-      alert(t("common.error"));
-      if (requestId.current === currentRequest) {
-        setStars(previous.stars);
-        setColor(previous.color);
-      }
-    } finally {
-      if (requestId.current === currentRequest) busy.current = false;
-      if (requestId.current === currentRequest) setIsUpdating(false);
-    }
-  };
+  const proof = useProof();
+  const stars = initialRating?.stars ?? 0, color = initialRating?.color ?? null;
+  const disabled = !!externalDisabled || !proof?.editable || proof.busy;
+  const handleStarClick = (value: number) => !disabled && proof?.send({ action: 'rate', imageId, stars: stars === value ? null : value });
+  const handleColorClick = (value: 'RED' | 'YELLOW' | 'GREEN') => !disabled && proof?.send({ action: 'rate', imageId, color: color === value ? null : value });
 
   return (
     <div

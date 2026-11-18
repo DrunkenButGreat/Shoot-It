@@ -50,7 +50,7 @@ export default async function SelectionPage({
     }),
     prisma.selectionImage.findMany({
       where: { projectId: id },
-      select: { id: true, filename: true, path: true, thumbnail: true, width: true, height: true, folderId: true, capturedAt: true, ratings: { select: { id: true, stars: true, color: true } } },
+      select: { id: true, filename: true, path: true, thumbnail: true, width: true, height: true, folderId: true, capturedAt: true },
       orderBy: { importedAt: 'desc' },
     }),
   ])

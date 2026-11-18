@@ -84,7 +84,7 @@ export async function DELETE(
 
     const deleted = await prisma.$transaction(async tx => {
       await tx.$queryRaw`SELECT id FROM "Project" WHERE id = ${projectId} FOR UPDATE`
-      if (await tx.proofPick.count({ where: { imageId: { in: ids }, list: { projectId, submittedAt: { not: null } } } })) return null
+      if (await tx.proofPick.count({ where: { included: true, imageId: { in: ids }, list: { projectId, submittedAt: { not: null } } } })) return null
       const images = await tx.selectionImage.findMany({ where: { id: { in: ids }, projectId } })
       await queueFileCleanup(tx, images.flatMap(image => [image.path, image.thumbnail]).filter(url => url?.startsWith('/api/uploads/')), `selection/${projectId}`)
       return tx.selectionImage.deleteMany({ where: { id: { in: ids }, projectId } })

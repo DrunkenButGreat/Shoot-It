@@ -9,6 +9,7 @@ export function SelectionSortControl({ value, onChange }: { value: SelectionSort
     <select aria-label={t("common.sortBy")} value={value} onChange={event => onChange(event.target.value as SelectionSort)} className="h-11 max-w-full rounded-md border bg-white px-2 text-sm">
       <option value="imported">{t("common.sortNewest")}</option>
       <option value="name">{t("common.sortAlphabetical")}</option>
+      {["stars-asc", "stars-desc", "color-asc", "color-desc"].map(key => <option key={key} value={key}>{t("proof." + key)}</option>)}
       <option value="captured-asc">{t("common.sortCapturedAsc")}</option>
       <option value="captured-desc">{t("common.sortCapturedDesc")}</option>
     </select>

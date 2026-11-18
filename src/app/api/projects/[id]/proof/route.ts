@@ -7,14 +7,14 @@ import { canAccessProject, canEditProject } from '@/lib/permissions'
 
 const key = z.string().min(1).max(128)
 const action = z.discriminatedUnion('action', [
-  z.object({ action: z.literal('pick'), imageId: key, value: z.boolean() }),
+  z.object({ action: z.literal('rate'), imageId: key, stars: z.number().int().min(1).max(5).nullable().optional(), color: z.enum(['RED','YELLOW','GREEN']).nullable().optional() }),
   z.object({ action: z.literal('note'), imageId: key, text: z.string().trim().min(1).max(2000) }),
   z.object({ action: z.literal('submit'), name: z.string().trim().max(100).optional() }),
   z.object({ action: z.literal('reopen'), listId: key }),
   z.object({ action: z.literal('resolve'), noteId: key, done: z.boolean() }),
   z.object({ action: z.literal('settings'), target: z.number().int().min(1).max(100000).nullable(), due: z.iso.date().nullable() }),
 ])
-const listSelect = { id: true, name: true, submittedAt: true, picks: { select: { imageId: true } }, notes: {
+const listSelect = { id: true, name: true, submittedAt: true, picks: { select: { imageId: true, stars: true, color: true, included: true } }, notes: {
   orderBy: { createdAt: 'asc' as const }, select: { id: true, imageId: true, text: true, done: true },
 } }
 const fail = (error: string, status: number) => NextResponse.json({ error }, { status })
@@ -55,6 +55,7 @@ export async function POST(request: NextRequest, context: Context) {
   const parsed = action.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return fail('invalid', 400)
   const cmd = parsed.data
+  if (cmd.action === 'rate' && cmd.stars === undefined && cmd.color === undefined) return fail('invalid', 400)
   try {
     return await prisma.$transaction(async tx => {
       await tx.$queryRaw`SELECT id FROM "Project" WHERE id = ${id} FOR UPDATE`
@@ -62,6 +63,7 @@ export async function POST(request: NextRequest, context: Context) {
         if (!viewer.editor) return fail('denied', 403)
         if (cmd.action === 'settings') await tx.project.update({ where: { id }, data: { selectionTarget: cmd.target, selectionDue: cmd.due ? new Date(cmd.due) : null } })
         if (cmd.action === 'reopen' && !(await tx.proofList.updateMany({ where: { projectId: id, id: cmd.listId }, data: { submittedAt: null } })).count) return fail('missing', 404)
+        if (cmd.action === 'reopen') await tx.proofPick.updateMany({ where: { listId: cmd.listId, list: { projectId: id } }, data: { included: true } })
         if (cmd.action === 'resolve' && !(await tx.proofNote.updateMany({ where: { list: { projectId: id }, id: cmd.noteId }, data: { done: cmd.done } })).count) return fail('missing', 404)
       } else {
         const project = await tx.project.findUniqueOrThrow({ where: { id }, select: { selectionTarget: true, isPublic: true, showSelectionPublicly: true, allowGuestSelection: true } })
@@ -70,14 +72,15 @@ export async function POST(request: NextRequest, context: Context) {
         const list = await tx.proofList.upsert({ where: { projectId_actor: { projectId: id, actor: viewer.actor } }, update: {}, create: { projectId: id, actor: viewer.actor, name: viewer.name }, select: { id: true, submittedAt: true } })
         if (list.submittedAt) return fail('locked', 409)
         const listId = list.id
-        if (cmd.action === 'pick') {
+        if (cmd.action === 'rate') {
           const pick = { listId, imageId: cmd.imageId }
-          if (cmd.value) await tx.proofPick.upsert({ where: { listId_imageId: pick }, create: pick, update: {} })
-          else await tx.proofPick.deleteMany({ where: pick })
+          const data = { stars: cmd.stars, color: cmd.color, included: true }
+          const rating = await tx.proofPick.upsert({ where: { listId_imageId: pick }, create: { ...pick, ...data }, update: data })
+          if (!rating.stars && !rating.color) await tx.proofPick.delete({ where: { listId_imageId: pick } })
         } else if (cmd.action === 'note') {
           await tx.proofNote.create({ data: { listId, imageId: cmd.imageId, text: cmd.text } })
         } else {
-          const count = await tx.proofPick.count({ where: { listId } })
+          const count = await tx.proofPick.count({ where: { listId, included: true } })
           if (!count || (project.selectionTarget !== null && count !== project.selectionTarget)) return fail('count', 409)
           if (!viewer.name && !cmd.name) return fail('nameRequired', 400)
           await tx.proofList.update({ where: { id: listId }, data: { submittedAt: new Date(), name: viewer.name || cmd.name } })

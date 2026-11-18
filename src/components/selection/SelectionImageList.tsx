@@ -3,8 +3,7 @@
 import { Download, Trash2 } from "lucide-react";
 import { imagePreviewSource } from "@/lib/image-preview";
 import { useI18n } from "@/components/I18nProvider";
-import { RatingControls, type RatingUpdateHandler } from "./RatingControls";
-import { ProofHeart } from './PersonalSelection';
+import { RatingControls } from "./RatingControls";
 
 type ListImage = {
   id: string;
@@ -14,11 +13,10 @@ type ListImage = {
   ratings: { id: string; stars: number | null; color: string | null } | null;
 };
 
-export function SelectionImageList({ images, projectId, onPreview, onRatingUpdated, selectedIds, onToggleSelect, onDelete, onDownload, readOnly, isGuest }: {
+export function SelectionImageList({ images, projectId, onPreview, selectedIds, onToggleSelect, onDelete, onDownload, readOnly, isGuest }: {
   images: ListImage[];
   projectId: string;
   onPreview: (index: number) => void;
-  onRatingUpdated: RatingUpdateHandler;
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string) => void;
   onDelete?: (id: string) => void;
@@ -38,7 +36,7 @@ export function SelectionImageList({ images, projectId, onPreview, onRatingUpdat
             <img src={imagePreviewSource(image)} alt="" loading="lazy" className="h-12 w-16 shrink-0 rounded object-contain" />
             <span className="truncate text-sm">{image.filename}</span>
           </button>
-          <ProofHeart imageId={image.id} /><RatingControls projectId={projectId} imageId={image.id} initialRating={image.ratings || undefined} onRatingUpdated={onRatingUpdated} disabled={readOnly} isGuest={isGuest} />
+          <RatingControls projectId={projectId} imageId={image.id} initialRating={image.ratings || undefined} disabled={readOnly} isGuest={isGuest} />
           {onDownload && <button onClick={() => onDownload(image)} aria-label={`${t("common.download")}: ${image.filename}`} className="flex h-11 w-11 items-center justify-center"><Download className="h-4 w-4" /></button>}
           {onDelete && <button onClick={() => onDelete(image.id)} aria-label={`${t("common.delete")}: ${image.filename}`} className="flex h-11 w-11 items-center justify-center text-slate-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>}
         </div>

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.29.0] - 2026-11-18
+
+### Changed
+- Personal stars and colors replace selection hearts. Filter by reviewer and sort stars or colors independently; preserve existing submissions and migrate attributed ratings.
+- Existing hearts without an attributed rating become green labels. The old shared rating endpoint returns HTTP 410; reload open galleries after updating.
+
 ## [1.28.0] - 2026-11-18
 
 ### Added

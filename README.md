@@ -607,11 +607,13 @@ could not be processed. It does not modify originals. Images without EXIF
 wall-clock time is stored as UTC so server timezone changes do not affect sorting.
 ## Auswahl und Projektvorlagen (1.28)
 
-- In der Bildauswahl setzt jede Person eigene Herzen. Die Projektleitung kann im Auswahlfilter einzelne Personen oder Überschneidungen (mindestens zwei Personen) ansehen. Gäste benötigen freigeschaltete Gastauswahl und denselben Browser mit Cookies.
-- Unter **Abgaben und Vorgaben verwalten** lassen sich Bildanzahl und gewünschter Abgabetermin setzen. Die Anzahl wird bei der Abgabe geprüft, der Termin dient zur Orientierung. Nach Abgabe sind Favoriten und neue Kommentare dieser Person gesperrt, bis die Projektleitung die Auswahl wieder öffnet.
+- Jede Person bewertet Bilder mit 1–5 Sternen und/oder einer Farbe. Das Personenmenü wechselt die Bewertungsansicht; Sterne und Farben lassen sich getrennt sortieren und kombiniert filtern. Fremde Bewertungen sind schreibgeschützt. Die Projektleitung kann im Auswahlfilter einzelne Personen oder Überschneidungen (mindestens zwei Personen) ansehen. Gäste benötigen freigeschaltete Gastauswahl und denselben Browser mit Cookies.
+- Unter **Abgaben und Vorgaben verwalten** lassen sich Bildanzahl und gewünschter Abgabetermin setzen. Die Anzahl wird bei der Abgabe geprüft, der Termin dient zur Orientierung. Nach Abgabe sind Bewertungen und neue Kommentare dieser Person gesperrt, bis die Projektleitung die Auswahl wieder öffnet.
 - Kommentare und Retuschewünsche stehen in der Einzelbildansicht. Die Projektleitung sieht die Rückmeldungen und kann sie als erledigt markieren.
 - Im Menü **…** eines eigenen Projekts **Als Projektvorlage verwenden** wählen. Im Dashboard **Projekt aus Vorlage erstellen**, Namen und neues Shootingdatum angeben. Die Vorlage bleibt mit dem Originalprojekt verbunden; spätere Änderungen dort gelten für künftige Kopien. Eigene Moodboards bleiben verknüpft; Callsheet und unsignierte Verträge werden kopiert. Personen, Zugriffsrechte, Signaturen, Auswahl-/Ergebnisbilder und Abgaben werden nicht übernommen. Das neue Projekt startet privat.
 
 Im **Shootingplan** des Projekts können Mitglieder Shotlist, Aufgaben und Bildstatus einsehen; Bearbeitende pflegen Fortschritt und Fälligkeiten. Fällige offene Einträge sind markiert. Der Kalenderexport enthält Shootingdatum, Terminvorschläge, Callsheet und offene Fälligkeiten mit Erinnerung einen Tag vorher (abhängig von der Kalender-App). Er ist eine Momentaufnahme.
 
 Ergebnisdateien lassen sich als Original und Fotos zusätzlich als Web-JPEG (max. 1600 px) herunterladen. Ein privater Downloadlink gibt genau eine Variante einer Datei für 1–30 Tage frei, auch bei privaten Projekten. Wer den Link besitzt, kann herunterladen. Ersetzen oder Widerrufen beendet die bisherige Freigabe.
+
+Beim Upgrade werden vorhandene Sterne und Farben dem zuletzt gespeicherten Urheber zugeordnet. Frühere, bereits überschriebene Bewertungen sind nicht rekonstruierbar. Alte Herzen ohne Bewertung werden grün; der Umfang abgeschlossener Abgaben bleibt unverändert. Frühere Gastbewertungen bleiben als separate historische Gastlisten sichtbar.

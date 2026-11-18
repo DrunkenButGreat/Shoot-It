@@ -57,8 +57,9 @@ async function main() {
     assert.deepEqual(sortSelectionImages(images, 'name').map(i => i.id), ['old', 'new', 'unknown', 'invalid'])
     assert.equal(images[0].id, 'unknown', 'Sorting must not mutate source images')
 
+    const byRating = [{filename:'a',ratings:{stars:5,color:'GREEN'}},{filename:'b',ratings:{stars:2,color:'RED'}},{filename:'c',ratings:null},{filename:'d',ratings:{stars:4,color:'YELLOW'}}]
+    for(const [key,order] of [['stars-desc','adbc'],['stars-asc','bdac'],['color-asc','bdac'],['color-desc','adbc']]) assert.equal(sortSelectionImages(byRating,key).map(i=>i.filename).join(''),order)
     const { SelectionImageList } = load('src/components/selection/SelectionImageList.tsx', {
-        './PersonalSelection': { ProofHeart: () => null },
         '@/components/I18nProvider': { useI18n: () => ({ t: key => key }) },
         '@/lib/image-preview': { imagePreviewSource: image => image.thumbnail || image.path },
         './RatingControls': { RatingControls: props => React.createElement('span', { 'data-readonly': props.disabled, 'data-guest': props.isGuest }, 'ratings') },
@@ -69,7 +70,7 @@ async function main() {
     first[0].props.children.props.onChange()
     first[1].props.onClick()
     first[4].props.onClick()
-    first[5].props.onClick()
+    first[3].props.onClick()
     assert.equal(preview, 0); assert.equal(selected, 'unknown'); assert.equal(deleted, 'unknown'); assert.equal(downloaded, 'unknown')
     const html = renderToStaticMarkup(tree)
     assert.ok(html.includes('/preview.webp')); assert.ok(html.includes('checked=""')); assert.ok(html.includes('img10.jpg'))

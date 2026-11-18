@@ -77,10 +77,10 @@ async function handlers() {
     assert.deepEqual((await result.json()).files, [{ url: '/api/uploads/own.jpg', relativePath: 'Parent/Child/own.jpg' }])
   }
   for (const flags of [{ isPublic: false, showSelectionPublicly: true }, { isPublic: true, showSelectionPublicly: false }]) {
-    route = load('src/app/api/projects/[id]/selection/[imageId]/rating/route.ts', {
+    route = load('src/app/api/projects/[id]/proof/route.ts', {
       ...base, '@/auth': { auth: async () => null }, '@/lib/prisma': { project: { findUnique: async () => ({ ...flags, allowGuestSelection: true }) } },
     })
-    assert.equal((await route.PUT(req({ stars: 5, guestId: 'guest' }), ctx({ imageId: 'image' }))).status, 401)
+    assert.equal((await route.POST(req({ action: 'rate', stars: 5, imageId: 'image' }), ctx())).status, 403)
   }
   route = load('src/proxy.ts', { '@/auth': { auth: async fn => fn } })
   for (const pathname of ['/', '/login', '/signup', '/p/share', '/api/auth/callback/google', '/images/design/coastal-editorial.webp', '/robots.txt']) {

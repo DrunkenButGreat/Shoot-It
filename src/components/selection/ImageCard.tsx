@@ -19,8 +19,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useRef } from "react";
-import { RatingControls, type RatingUpdateHandler } from "./RatingControls";
-import { ProofHeart } from './PersonalSelection';
+import { RatingControls } from "./RatingControls";
 
 interface Rating {
   id: string;
@@ -48,7 +47,6 @@ function formatDuration(seconds: number): string {
 interface ImageCardProps {
   image: SelectionImage;
   projectId: string;
-  onRatingUpdated?: RatingUpdateHandler;
   onImageClick?: () => void;
   masonry?: boolean;
   justified?: boolean;
@@ -67,7 +65,6 @@ interface ImageCardProps {
 export function ImageCard({
   image,
   projectId,
-  onRatingUpdated,
   onImageClick,
   masonry,
   justified,
@@ -258,13 +255,12 @@ export function ImageCard({
       {/* Rating controls */}
       {!hideRatings && (
         <div className="px-2 pb-2 pt-1">
-          <ProofHeart imageId={image.id} />
           <RatingControls
             key={image.id}
             projectId={projectId}
             imageId={image.id}
             initialRating={currentRating || undefined}
-            onRatingUpdated={onRatingUpdated}
+
             disabled={readOnly}
             isGuest={isGuest}
           />

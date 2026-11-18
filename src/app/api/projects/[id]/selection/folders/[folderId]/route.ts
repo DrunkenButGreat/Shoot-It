@@ -33,7 +33,7 @@ export async function DELETE(
         for (const child of folders) if (child.parentId === ids[i] && !ids.includes(child.id)) ids.push(child.id)
       }
       const images = await tx.selectionImage.findMany({ where: { projectId: id, folderId: { in: ids } } })
-      if (await tx.proofPick.count({ where: { imageId: { in: images.map(i => i.id) }, list: { projectId: id, submittedAt: { not: null } } } })) return 'locked'
+      if (await tx.proofPick.count({ where: { included: true, imageId: { in: images.map(i => i.id) }, list: { projectId: id, submittedAt: { not: null } } } })) return 'locked'
       await queueFileCleanup(tx, images.flatMap(image => [image.path, image.thumbnail]), `selection/${id}`)
       await tx.selectionImage.deleteMany({ where: { projectId: id, folderId: { in: ids } } })
       await tx.selectionFolder.delete({ where: { id: folderId, projectId: id } })

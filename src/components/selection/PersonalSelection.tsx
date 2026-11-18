@@ -1,17 +1,28 @@
 "use client"
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Heart } from 'lucide-react'
 import { useI18n } from '@/components/I18nProvider'
 import { Button } from '@/components/ui/button'
 
 type Note = { id: string; imageId: string; text: string; done: boolean }
-type List = { id: string; name: string; submittedAt: string | null; picks: { imageId: string }[]; notes: Note[] }
+type Vote = { imageId: string; stars: number | null; color: string | null; included: boolean }
+type List = { id: string; name: string; submittedAt: string | null; picks: Vote[]; notes: Note[] }
 type State = { mine: List | null; lists: List[]; guest: boolean; editor: boolean; target: number | null; due: string | null }
-type Command = { action: 'pick'; imageId: string; value: boolean } | { action: 'note'; imageId: string; text: string } | { action: 'submit'; name: string } | { action: 'resolve'; noteId: string; done: boolean } | { action: 'reopen'; listId: string } | { action: 'settings'; target: number | null; due: string | null }
-type Proof = { state: State; picks: Set<string>; busy: boolean; send: (command: Command) => Promise<boolean>; filter: Set<string> | null; view: string; setView: (value: string) => void }
+type Command = { action: 'rate'; imageId: string; stars?: number | null; color?: 'RED' | 'YELLOW' | 'GREEN' | null } | { action: 'note'; imageId: string; text: string } | { action: 'submit'; name: string } | { action: 'resolve'; noteId: string; done: boolean } | { action: 'reopen'; listId: string } | { action: 'settings'; target: number | null; due: string | null }
+type Proof = { ratings: Map<string, Vote>; editable: boolean; state: State; picks: Set<string>; busy: boolean; send: (command: Command) => Promise<boolean>; filter: Set<string> | null; view: string; setView: (value: string) => void }
 const Context = createContext<Proof | null>(null)
-export const useProofFilter = () => useContext(Context)?.filter
+export const useProof = () => useContext(Context)
+export const useProofFilter = (unrated: boolean) => {
+  const proof = useProof()
+  return unrated && proof?.view !== 'overlap' ? null : proof?.filter
+}
+export function useRatedImages<T extends { id: string }>(images: T[]) {
+  const ratings = useProof()?.ratings
+  return useMemo(() => images.map(image => {
+    const vote = ratings?.get(image.id)
+    return { ...image, ratings: vote ? { id: image.id, stars: vote.stars, color: vote.color } : null }
+  }), [images, ratings])
+}
 
 export function PersonalSelection({ projectId, children }: { projectId: string; children: ReactNode }) {
   const { t } = useI18n()
@@ -42,7 +53,7 @@ export function PersonalSelection({ projectId, children }: { projectId: string; 
     } catch { setError('failed'); return false }
     finally { pending.current = false; setBusy(false) }
   }
-  const picks = useMemo(() => new Set(state?.mine?.picks.map(p => p.imageId)), [state])
+  const picks = useMemo(() => new Set(state?.mine?.picks.filter(p => p.included).map(p => p.imageId)), [state])
   const filter = useMemo(() => {
     if (view === 'all') return null
     if (view === 'mine') return picks
@@ -53,7 +64,10 @@ export function PersonalSelection({ projectId, children }: { projectId: string; 
     }
     return new Set(state?.lists.find(list => list.id === view)?.picks.map(p => p.imageId))
   }, [view, state, picks])
-  return <Context.Provider value={state ? { state, picks, filter, view, setView, busy, send } : null}>
+  const ownView = ['all','mine','overlap'].includes(view)
+  const viewed = ownView ? state?.mine : state?.lists.find(l => l.id === view)
+  const ratings = useMemo(() => new Map(viewed?.picks.map(p => [p.imageId, p])), [viewed])
+  return <Context.Provider value={state ? { ratings, editable: ownView && !state.mine?.submittedAt, state, picks, filter, view, setView, busy, send } : null}>
     {error && <div role="alert" className="rounded border p-3 text-red-800">{t(`proof.${error}`)} <button type="button" className="underline" onClick={() => load().then(() => setError('')).catch(() => setError('failed'))}>{t('proof.reload')}</button></div>}
     {children}
   </Context.Provider>
@@ -91,19 +105,12 @@ export function ProofToolbar() {
         <label>{t('proof.due')} <input className="rounded border p-2" type="date" name="due" defaultValue={state.due ?? ''} /></label>
         <Button variant="outline" disabled={busy}>{t('common.save')}</Button>
       </form>
-      {state.lists.map(list => <div key={list.id} className="flex flex-wrap items-center gap-3 border-t py-2"><button type="button" className="underline" onClick={() => setView(list.id === state.mine?.id ? 'mine' : list.id)}>{listName(list)} ({list.picks.length})</button>
+      {state.lists.map(list => <div key={list.id} className="flex flex-wrap items-center gap-3 border-t py-2"><button type="button" className="underline" onClick={() => setView(list.id === state.mine?.id ? 'mine' : list.id)}>{listName(list)} ({list.picks.filter(p => p.included).length})</button>
         <span>{t(list.submittedAt ? 'proof.submitted' : 'proof.draft')}</span>
         {list.submittedAt && <Button variant="outline" size="sm" disabled={busy} onClick={() => send({ action: 'reopen', listId: list.id })}>{t('proof.reopen')}</Button>}
       </div>)}
     </details>}
   </section>
-}
-
-export function ProofHeart({ imageId }: { imageId: string }) {
-  const proof = useContext(Context), { t } = useI18n()
-  if (!proof) return null
-  const checked = proof.picks.has(imageId)
-  return <button type="button" className="inline-flex min-h-10 min-w-10 items-center justify-center rounded text-rose-600" aria-pressed={checked} aria-label={t('proof.favorite')} title={t('proof.favorite')} disabled={proof.busy || !!proof.state.mine?.submittedAt} onClick={event => { event.stopPropagation(); void proof.send({ action: 'pick', imageId, value: !checked }) }}><Heart size={20} fill={checked ? 'currentColor' : 'none'} /></button>
 }
 
 export function ProofFeedback({ imageId }: { imageId: string }) {

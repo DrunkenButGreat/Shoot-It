@@ -417,6 +417,9 @@ model ProofList {
 }
 
 model ProofPick {
+  stars Int? @db.SmallInt
+  color RatingColor?
+  included Boolean @default(true)
   listId  String
   imageId String
   list    ProofList      @relation(fields: [listId], references: [id], onDelete: Cascade)

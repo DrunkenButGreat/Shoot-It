@@ -45,8 +45,8 @@ import ImageUpload from "../moodboard/ImageUpload";
 import { ExportDialog } from "./ExportDialog";
 import { FilterBar } from "./FilterBar";
 import { LocalMediaPicker } from "./LocalMediaPicker";
-import { RatingControls, type RatingUpdateHandler } from "./RatingControls";
-import { ProofToolbar, ProofHeart, ProofFeedback, useProofFilter } from './PersonalSelection';
+import { RatingControls } from "./RatingControls";
+import { ProofToolbar, ProofFeedback, useProofFilter, useRatedImages } from './PersonalSelection';
 import { SelectionFolderForm } from "./SelectionFolderForm";
 import { SelectionFolderTree } from "./SelectionFolderTree";
 import { SelectionImageGrid } from "./SelectionImageGrid";
@@ -118,12 +118,11 @@ export function SelectionContent({
     null,
   );
   const [visibleLimit, setVisibleLimit] = useState(100);
-  const [images, setImages] = useState(initialImages);
+  const images = useRatedImages(initialImages);
 
-  useEffect(() => setImages(initialImages), [initialImages]);
   useEffect(() => setVisibleLimit(100), [selectedFolderId, unrated, searchParams]);
 
-  const proofFilter = useProofFilter();
+  const proofFilter = useProofFilter(unrated);
   const selectedImageIds = useMemo(() => proofFilter ? new Set([...markedIds].filter(id => proofFilter.has(id))) : markedIds, [markedIds, proofFilter]);
   const filteredImages = useMemo(() => {
     const stars = searchParams.getAll("stars");
@@ -143,8 +142,6 @@ export function SelectionContent({
     if (lightboxImageId && index < 0) setLightboxImageId(null);
   }, [lightboxImageId, index]);
 
-  const handleRatingUpdated: RatingUpdateHandler = (imageId, rating) =>
-    setImages((current) => current.map((image) => image.id === imageId ? { ...image, ratings: rating } : image));
   const visibleImages = filteredImages.slice(0, visibleLimit);
 
   const handleToggleSelectAll = () => {
@@ -479,7 +476,7 @@ export function SelectionContent({
                 onToggleSelect={handleToggleImage}
                 onDelete={handleDeleteImage}
                 onImageClick={(i) => setLightboxImageId(filteredImages[i]?.id ?? null)}
-                onRatingUpdated={handleRatingUpdated}
+
               />
               {visibleImages.length < filteredImages.length && (
                 <GalleryLoadMore
@@ -629,9 +626,8 @@ export function SelectionContent({
                   projectId={projectId}
                   imageId={slide.image.id}
                   initialRating={slide.image.ratings}
-                  onRatingUpdated={handleRatingUpdated}
+
                 />
-                <ProofHeart imageId={slide.image.id} />
                 <ProofFeedback key={slide.image.id} imageId={slide.image.id} />
               </div>
             </div>
